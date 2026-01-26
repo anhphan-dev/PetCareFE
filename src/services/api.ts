@@ -1,8 +1,20 @@
 import type { Service, TeamMember, NewsArticle, ContactInfo } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:54813/api';
 
 export const apiService = {
+  async login(email: string, password: string) {
+    const response = await fetch(`${API_BASE_URL}/Auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) throw new Error('Failed to login');
+    return response.json();
+  },
+
   async getServices(): Promise<Service[]> {
     const response = await fetch(`${API_BASE_URL}/services`);
     if (!response.ok) throw new Error('Failed to fetch services');

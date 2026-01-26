@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PawPrint, Mail, Lock, User, Phone } from 'lucide-react';
+import { AuthService } from '../../services/AuthAPI';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -10,13 +11,38 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.password !== form.confirmPassword) return;
-    // TODO: Gọi API đăng ký
-    navigate('/dang-nhap');
+    setError('');
+
+    if (form.password !== form.confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    if (!form.name || !form.email || !form.password) {
+      setError('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await AuthService.register({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      navigate('/dang-nhap');
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,6 +55,12 @@ export default function RegisterPage() {
         </div>
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">Đăng ký tài khoản</h1>
         <p className="text-center text-gray-500 text-sm mb-6">Tạo tài khoản để đặt lịch và quản lý thú cưng.</p>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
@@ -87,9 +119,10 @@ export default function RegisterPage() {
           </div>
           <button
             type="submit"
-            className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+            disabled={loading}
+            className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:bg-teal-400 disabled:cursor-not-allowed"
           >
-            Đăng ký
+            {loading ? 'Đang đăng ký...' : 'Đăng ký'}
           </button>
         </form>
 

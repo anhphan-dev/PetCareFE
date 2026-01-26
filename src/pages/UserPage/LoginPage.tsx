@@ -1,17 +1,38 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PawPrint, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { AuthService } from '../../services/AuthAPI';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Gọi API đăng nhập
-    navigate('/');
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await AuthService.login({ email, password });
+      
+      // Lưu token và user info
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('tokenExpiresAt', response.expiresAt);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setUser(response.user); // Cập nhật ngay Header (icon/avatar + dropdown)
+
+      navigate('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,6 +50,12 @@ export default function LoginPage() {
             <p className="text-center text-gray-500 text-sm mb-6">
               Chào mừng bạn trở lại VetCare
             </p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -84,9 +111,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+                disabled={loading}
+                className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Đăng nhập
+                {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </button>
             </form>
 

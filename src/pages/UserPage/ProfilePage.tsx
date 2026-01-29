@@ -18,13 +18,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useState } from 'react';
 import { ProfileService } from '../../services/ProfileAPI';
 import { getImageUrl } from '../../utils/imageUtils';
-// Helper function to get full image URL
-// const getImageUrl = (path: string | null | undefined): string | undefined => {
-//   if (!path) return undefined;
-//   if (path.startsWith('http')) return path;
-//   const baseUrl = import.meta.env.VITE_API_URL || 'https://localhost:54813/api';
-//   return baseUrl.replace('/api', '') + path;
-// };
+
 
 
 export default function ProfilePage() {

@@ -11,7 +11,7 @@ export default function Footer() {
                 <PawPrint className="w-12 h-12 text-teal-600" />
               </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-800">VetCare Clinic</h3>
+            <h3 className="text-xl font-bold text-gray-800">PetCare Clinic</h3>
           </div>
 
           <div>
@@ -29,7 +29,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-3 text-gray-600">
                 <Mail className="w-5 h-5 text-teal-600 flex-shrink-0" />
-                <p className="text-sm">contact@vetcare.com</p>
+                <p className="text-sm">contact@petcare.com</p>
               </div>
             </div>
           </div>
@@ -47,7 +47,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-gray-600">
-          <p>&copy; 2024 VetCare Clinic. All rights reserved.</p>
+          <p>&copy; 2024 PetCare Clinic. All rights reserved.</p>
         </div>
       </div>
 

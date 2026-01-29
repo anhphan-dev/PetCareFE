@@ -13,6 +13,7 @@ import BookingPage from './pages/BookingPage';
 import LoginPage from './pages/UserPage/LoginPage';
 import RegisterPage from './pages/UserPage/RegisterPage';
 import ForgotPasswordPage from './pages/UserPage/ForgotPasswordPage';
+import ProfilePage from './pages/UserPage/ProfilePage';
 // import DashBoard from './pages/AdminPage/DashBoard';
 
 createRoot(document.getElementById('root')!).render(
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="dang-nhap" element={<LoginPage />} />
             <Route path="dang-ky" element={<RegisterPage />} />
             <Route path="quen-mat-khau" element={<ForgotPasswordPage />} />
+          <Route path="tai-khoan" element={<ProfilePage />} />
           </Route>
           {/* <Route path="/admin" element={<DashBoard />} /> */}
         </Routes>

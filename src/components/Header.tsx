@@ -2,6 +2,7 @@ import { PawPrint, Menu, X, User, LogOut, UserCircle, Briefcase, Dog, List } fro
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getImageUrl } from '../utils/imageUtils';
 
 const menuItems: { label: string; path: string }[] = [
   { label: 'TRANG CHỦ', path: '/' },
@@ -50,7 +51,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
             <PawPrint className="w-8 h-8 text-teal-600" />
-            <span className="text-xl font-bold text-teal-700">VetCare</span>
+            <span className="text-xl font-bold text-teal-700">PetCare</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -83,7 +84,7 @@ export default function Header() {
                 >
                   {user.avatarUrl ? (
                     <img
-                      src={user.avatarUrl}
+                      src={getImageUrl(user.avatarUrl)}
                       alt={user.fullName}
                       className="w-9 h-9 rounded-full object-cover border-2 border-teal-100"
                     />

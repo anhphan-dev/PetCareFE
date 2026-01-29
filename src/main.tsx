@@ -14,6 +14,8 @@ import LoginPage from './pages/UserPage/LoginPage';
 import RegisterPage from './pages/UserPage/RegisterPage';
 import ForgotPasswordPage from './pages/UserPage/ForgotPasswordPage';
 import ProfilePage from './pages/UserPage/ProfilePage';
+import PetsPage from './pages/UserPage/PetsPage.tsx';
+import ShopCategoryPage from './pages/ShopCategoryPage.tsx';
 // import DashBoard from './pages/AdminPage/DashBoard';
 
 createRoot(document.getElementById('root')!).render(
@@ -32,6 +34,9 @@ createRoot(document.getElementById('root')!).render(
             <Route path="dang-ky" element={<RegisterPage />} />
             <Route path="quen-mat-khau" element={<ForgotPasswordPage />} />
           <Route path="tai-khoan" element={<ProfilePage />} />
+          <Route path="thu-cung" element={<PetsPage />} />
+          <Route path="cua-hang" element={<ShopCategoryPage />} />
+          <Route path="cua-hang/:category" element={<ShopCategoryPage />} />
           </Route>
           {/* <Route path="/admin" element={<DashBoard />} /> */}
         </Routes>

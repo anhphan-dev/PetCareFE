@@ -1,29 +1,38 @@
+// src/lib/httpClient.ts  (hoặc src/services/httpClient.ts)
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:54813/api';
 
 interface RequestOptions extends RequestInit {
-  params?: Record<string, string | number | boolean>;
+  params?: Record<string, string | number | boolean | undefined>;
 }
 
 const httpClient = {
-  async request<T>(url: string, options: RequestOptions = {}): Promise<T> {
+  async request<T>(
+    url: string,
+    options: RequestOptions = {}
+  ): Promise<T> {
     const { params, ...fetchOptions } = options;
 
-    // Build URL with query params
+    // Build full URL with query params
     let fullUrl = `${API_BASE_URL}${url}`;
     if (params) {
-      const queryString = new URLSearchParams();
+      const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
-        queryString.append(key, String(value));
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
       });
-      fullUrl += `?${queryString.toString()}`;
+      const query = searchParams.toString();
+      if (query) fullUrl += `?${query}`;
     }
 
-    // Add auth token if exists
+    // Headers + Auth
     const token = localStorage.getItem('authToken');
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...fetchOptions.headers,
     };
+
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
@@ -33,12 +42,21 @@ const httpClient = {
       headers,
     });
 
+    // Xử lý lỗi chi tiết hơn
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      let errorMessage = 'Đã có lỗi xảy ra';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.title || errorMessage;
+      } catch {
+        errorMessage = response.statusText || `HTTP ${response.status}`;
+      }
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    // Nếu response rỗng (204 No Content), trả về null
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
   },
 
   get<T>(url: string, options?: RequestOptions) {

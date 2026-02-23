@@ -1,14 +1,7 @@
-<<<<<<< HEAD
+
 import type { ContactInfo, NewsArticle, Service, TeamMember } from '../types';
-=======
-import type { Service, TeamMember, NewsArticle, ContactInfo } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
->>>>>>> origin/Anh
-
-const API_BASE_URL = 
-  import.meta.env.VITE_API_URL 
-  || 'https://petcare-api-2026-bad653588c75.herokuapp.com';
   
 export const apiService = {
   async login(email: string, password: string) {

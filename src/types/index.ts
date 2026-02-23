@@ -52,3 +52,11 @@ export interface Product {
   isActive: boolean;
   createdAt?: string;
 }
+
+export interface ProductCategory {
+  id: number;
+  name: string;
+  description?: string;
+  parentId?: number | null;
+  isActive: boolean;
+}

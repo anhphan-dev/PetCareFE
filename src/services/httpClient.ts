@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:54813/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean>;
@@ -20,10 +21,12 @@ const httpClient = {
 
     // Add auth token if exists
     const token = localStorage.getItem('authToken');
-    const headers: HeadersInit = {
+
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...fetchOptions.headers,
+      ...(fetchOptions.headers as Record<string, string>),
     };
+
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dog, Plus, Trash2, Heart, Calendar, ClipboardList } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import PetAPI from '../../services/PetAPI';
 
 type Pet = {
   id: string;
@@ -35,7 +36,7 @@ export default function PetsPage() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'add' | 'health'>('add');
+  // const [activeTab, setActiveTab] = useState<'add' | 'health'>('add');
 
   const [form, setForm] = useState({
     name: '',
@@ -56,22 +57,40 @@ export default function PetsPage() {
 
   useEffect(() => {
     if (!user?.id) return;
-    try {
-      const rawPets = localStorage.getItem(storageKey(user.id));
-      setPets(rawPets ? (JSON.parse(rawPets) as Pet[]) : []);
-      
-      const rawHealth = localStorage.getItem(healthStorageKey(user.id));
-      setHealthChecks(rawHealth ? (JSON.parse(rawHealth) as HealthCheck[]) : []);
-    } catch {
-      setPets([]);
-      setHealthChecks([]);
-    }
+
+    (async () => {
+      // Try loading pets from API, fall back to localStorage
+      try {
+        const apiPets = await PetAPI.getMyPets();
+        setPets(apiPets ?? []);
+        try {
+          localStorage.setItem(storageKey(user.id), JSON.stringify(apiPets ?? []));
+        } catch {}
+      } catch (err) {
+        try {
+          const rawPets = localStorage.getItem(storageKey(user.id));
+          setPets(rawPets ? (JSON.parse(rawPets) as Pet[]) : []);
+        } catch {
+          setPets([]);
+        }
+      }
+
+      // Health checks remain local for now
+      try {
+        const rawHealth = localStorage.getItem(healthStorageKey(user.id));
+        setHealthChecks(rawHealth ? (JSON.parse(rawHealth) as HealthCheck[]) : []);
+      } catch {
+        setHealthChecks([]);
+      }
+    })();
   }, [user?.id]);
 
   const persist = (next: Pet[]) => {
     setPets(next);
     if (!user?.id) return;
-    localStorage.setItem(storageKey(user.id), JSON.stringify(next));
+    try {
+      localStorage.setItem(storageKey(user.id), JSON.stringify(next));
+    } catch {}
   };
 
   const persistHealth = (next: HealthCheck[]) => {
@@ -80,24 +99,39 @@ export default function PetsPage() {
     localStorage.setItem(healthStorageKey(user.id), JSON.stringify(next));
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
     if (!form.name.trim()) return;
 
-    const next: Pet[] = [
-      {
-        id: crypto.randomUUID(),
+    // Try create via API, fallback to local storage when API fails
+    try {
+      const created = await PetAPI.createPet({
         name: form.name.trim(),
         species: form.species,
         breed: form.breed.trim() || undefined,
         age: form.age.trim() || undefined,
         note: form.note.trim() || undefined,
-      },
-      ...pets,
-    ];
-    persist(next);
-    setForm({ name: '', species: 'Chó', breed: '', age: '', note: '' });
+      });
+
+      const next: Pet[] = [created, ...pets];
+      persist(next);
+      setForm({ name: '', species: 'Chó', breed: '', age: '', note: '' });
+    } catch (err) {
+      const next: Pet[] = [
+        {
+          id: crypto.randomUUID(),
+          name: form.name.trim(),
+          species: form.species,
+          breed: form.breed.trim() || undefined,
+          age: form.age.trim() || undefined,
+          note: form.note.trim() || undefined,
+        },
+        ...pets,
+      ];
+      persist(next);
+      setForm({ name: '', species: 'Chó', breed: '', age: '', note: '' });
+    }
   };
 
   const handleAddHealth = (e: React.FormEvent) => {
@@ -120,10 +154,17 @@ export default function PetsPage() {
     setHealthForm({ weight: '', temperature: '', notes: '', status: 'Khỏe mạnh' });
   };
 
-  const handleRemove = (id: string) => {
+  const handleRemove = async (id: string) => {
     const next = pets.filter((p) => p.id !== id);
     persist(next);
     if (selectedPetId === id) setSelectedPetId('');
+
+    try {
+      await PetAPI.deletePet(id);
+    } catch (err) {
+      // If API delete failed, we already removed locally. Log error.
+      console.error('Failed to delete pet from API', err);
+    }
   };
 
   const handleRemoveHealth = (id: string) => {

@@ -1,28 +1,28 @@
 import {
-  PawPrint,
-  Menu,
-  X,
-  User,
-  LogOut,
-  UserCircle,
   Briefcase,
-  Dog,
-  List,
   ChevronDown,
-  Sparkles,
-  Home,
+  Dog,
   Heart,
+  Home,
+  List,
+  LogOut,
+  Menu,
+  PawPrint,
   Scissors,
   Smile,
-  Utensils,
-  ToyBrick,
+  Sparkles,
   SprayCan,
+  ToyBrick,
+  User,
+  UserCircle,
+  Utensils,
+  X,
 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getImageUrl } from '../utils/imageUtils';
 import { useDropdown } from '../hooks/useDropdown';
+import { getImageUrl } from '../utils/imageUtils';
 
 const homeDropdownItems = [
   { label: 'Giới thiệu', path: '/gioi-thieu', icon: Home },
@@ -211,6 +211,7 @@ export default function Header() {
                   shopDropdown.toggle();
                   homeDropdown.close();
                   servicesDropdown.close();
+                  navigate("cua-hang")
                 }}
                 className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors inline-flex items-center gap-1"
               >

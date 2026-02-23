@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-// src/lib/httpClient.ts  (hoặc src/services/httpClient.ts)
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
-=======
-const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
->>>>>>> origin/Anh
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;

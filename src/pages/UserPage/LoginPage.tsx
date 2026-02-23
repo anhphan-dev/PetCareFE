@@ -38,7 +38,7 @@ export default function LoginPage() {
         navigate('/provider', { replace: true });
       } else {
         // user hoặc Customer hoặc role lạ → về trang customer hoặc home
-        navigate('/customer', { replace: true });
+        navigate('/', { replace: true });
         // Nếu chưa có /customer → dùng navigate('/', { replace: true });
       }
     } catch (err) {

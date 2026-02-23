@@ -12,10 +12,16 @@ import HomePage from './pages/homePage';
 import ShopPage from './pages/ShopPage/ShopPage';
 import StaffDashBoard from './pages/StaffPage/DashBoard';
 import ForgotPasswordPage from './pages/UserPage/ForgotPasswordPage';
+<<<<<<< HEAD
 import LoginPage from './pages/UserPage/LoginPage';
 import NewsPage from './pages/UserPage/NewsPage';
 import RegisterPage from './pages/UserPage/RegisterPage';
 import ServicePage from './pages/UserPage/ServicePage';
+=======
+import ProfilePage from './pages/UserPage/ProfilePage';
+import PetsPage from './pages/UserPage/PetsPage.tsx';
+import ShopCategoryPage from './pages/ShopCategoryPage.tsx';
+>>>>>>> origin/Anh
 // import DashBoard from './pages/AdminPage/DashBoard';
 
 createRoot(document.getElementById('root')!).render(
@@ -33,9 +39,16 @@ createRoot(document.getElementById('root')!).render(
             <Route path="dang-nhap" element={<LoginPage />} />
             <Route path="dang-ky" element={<RegisterPage />} />
             <Route path="quen-mat-khau" element={<ForgotPasswordPage />} />
+<<<<<<< HEAD
 
              <Route path="shop" element={<ShopPage />} />
 
+=======
+          <Route path="tai-khoan" element={<ProfilePage />} />
+          <Route path="thu-cung" element={<PetsPage />} />
+          <Route path="cua-hang" element={<ShopCategoryPage />} />
+          <Route path="cua-hang/:category" element={<ShopCategoryPage />} />
+>>>>>>> origin/Anh
           </Route>
           <Route path="/admin" element={<DashBoard />} />
           <Route path="/staff" element={<StaffDashBoard />} />

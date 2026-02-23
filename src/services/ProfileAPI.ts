@@ -77,7 +77,7 @@ export const ProfileService = {
     formData.append('file', file);
 
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL || 'https://localhost:54813/api'}/Profile/avatar`,
+      `${import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api'}/Profile/avatar`,
       {
         method: 'POST',
         headers: {
@@ -106,7 +106,7 @@ export const ProfileService = {
     formData.append('file', file);
 
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL || 'https://localhost:54813/api'}/Profile/upload-image`,
+      `${import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api'}/Profile/upload-image`,
       {
         method: 'POST',
         headers: {

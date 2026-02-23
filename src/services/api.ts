@@ -1,7 +1,9 @@
-import type { Service, TeamMember, NewsArticle, ContactInfo } from '../types';
+import type { ContactInfo, NewsArticle, Service, TeamMember } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:54813/api';
-
+const API_BASE_URL = 
+  import.meta.env.VITE_API_URL 
+  || 'https://petcare-api-2026-bad653588c75.herokuapp.com';
+  
 export const apiService = {
   async login(email: string, password: string) {
     const response = await fetch(`${API_BASE_URL}/Auth/login`, {

@@ -1,6 +1,8 @@
 // src/lib/httpClient.ts  (hoặc src/services/httpClient.ts)
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:54813/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;

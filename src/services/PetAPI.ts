@@ -1,20 +1,37 @@
 import httpClient from './httpClient';
 
 export type PetPayload = {
-  name: string;
-  species: string;
-  breed?: string;
-  age?: string;
-  note?: string;
+  userId: string;
+  petName: string;
+  speciesId?: string;
+  breedId?: string;
+  dateOfBirth?: string | null;
+  age?: string | null;
+  gender?: 'Đực' | 'Cái' | null;
+  weight?: number | null;
+  color?: string | null;
+  specialNotes?: string | null;
+  microchipId?: string | null;
+  avatarUrl?: string; // Base64 image
+  isActive?: boolean; // allow toggling active state on update
 };
 
 export type Pet = {
   id: string;
-  name: string;
-  species: 'Chó' | 'Mèo' | 'Khác';
-  breed?: string;
-  age?: string;
-  note?: string;
+  userId: string;
+  petName: string;
+  speciesName: string;
+  breedName?: string | null;
+  dateOfBirth?: string | null;
+  gender?: 'Đực' | 'Cái' | null;
+  weight?: number | null;
+  age?: string | null;
+  color?: string | null;
+  microchipId?: string | null;
+  specialNotes?: string | null;
+  avatarUrl?: string | null; // Base64 or image URL
+  isActive: boolean;
+  createdAt: string;
 };
 
 const PetAPI = {

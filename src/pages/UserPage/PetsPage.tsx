@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dog, Plus, Trash2, Heart, Calendar, ClipboardList } from 'lucide-react';
+import { Dog, Plus, Trash2, Heart, Calendar, ClipboardList, Upload, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import PetAPI from '../../services/PetAPI';
+import PetAPI, { type Pet as PetType, type PetPayload } from '../../services/PetAPI';
+import PetSpeciesAPI, { type PetSpecies } from '../../services/PetSpeciesAPI';
+import { convertImageToBase64, isValidImageFile } from '../../utils/imageUtils';
 
-type Pet = {
-  id: string;
-  name: string;
-  species: 'Chó' | 'Mèo' | 'Khác';
-  breed?: string;
-  age?: string;
-  note?: string;
-};
+// alias for the imported type so we can use `Pet` throughout this file
+export type Pet = PetType;
+
+
+
+// Health checks keep their own internal shape
 
 type HealthCheck = {
   id: string;
@@ -33,18 +33,29 @@ function healthStorageKey(userId: string) {
 export default function PetsPage() {
   const { user } = useAuth();
 
-  const [pets, setPets] = useState<Pet[]>([]);
+  const [pets, setPets] = useState<Pet[]>([]); // Pet is alias imported above
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string>('');
-  // const [activeTab, setActiveTab] = useState<'add' | 'health'>('add');
+  const [petSpecies, setPetSpecies] = useState<PetSpecies[]>([]);
+  const [loadingSpecies, setLoadingSpecies] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
-    species: 'Chó' as Pet['species'],
-    breed: '',
+    speciesId: '' as string,
+    speciesName: '' as string,
+    breedId: '' as string,
+    breedName: '' as string,
+    dateOfBirth: '' as string,
+    gender: '' as 'Đực' | 'Cái' | '',
+    weight: '' as string,
+    color: '',
+    microchipId: '',
     age: '',
     note: '',
+    image: '' as string | null,
   });
+
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const [healthForm, setHealthForm] = useState({
     weight: '',
@@ -55,13 +66,47 @@ export default function PetsPage() {
 
   const canUse = useMemo(() => !!user?.id, [user?.id]);
 
+  const [addOpen, setAddOpen] = useState(true);
+
+  // Helper to extract array from API response (handles both array and paginated response)
+  const extractArray = <T,>(response: any): T[] => {
+    if (Array.isArray(response)) {
+      return response;
+    }
+    if (response?.data && Array.isArray(response.data)) {
+      return response.data;
+    }
+    if (response?.items && Array.isArray(response.items)) {
+      return response.items;
+    }
+    return [];
+  };
+
+  useEffect(() => {
+    // Fetch species with breeds
+    (async () => {
+      try {
+        setLoadingSpecies(true);
+        const data = await PetSpeciesAPI.getWithBreeds();
+        const speciesArray = extractArray<PetSpecies>(data);
+        setPetSpecies(speciesArray ?? []);
+      } catch (err) {
+        console.error('Failed to load pet species:', err);
+        setPetSpecies([]);
+      } finally {
+        setLoadingSpecies(false);
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     if (!user?.id) return;
 
     (async () => {
       // Try loading pets from API, fall back to localStorage
       try {
-        const apiPets = await PetAPI.getMyPets();
+        const apiResponse = await PetAPI.getMyPets();
+        const apiPets = extractArray<Pet>(apiResponse);
         setPets(apiPets ?? []);
         try {
           localStorage.setItem(storageKey(user.id), JSON.stringify(apiPets ?? []));
@@ -85,6 +130,12 @@ export default function PetsPage() {
     })();
   }, [user?.id]);
 
+  // Get breeds for selected species id
+  const getSelectedSpeciesBreeds = () => {
+    const selected = petSpecies.find(s => s.id === form.speciesId);
+    return selected?.breeds ?? [];
+  };
+
   const persist = (next: Pet[]) => {
     setPets(next);
     if (!user?.id) return;
@@ -104,34 +155,116 @@ export default function PetsPage() {
     if (!user?.id) return;
     if (!form.name.trim()) return;
 
+    // translate form values into the new backend payload shape
+
+    const payload: PetPayload = {
+      userId: user.id,
+      petName: form.name.trim(),
+      speciesId: form.speciesId || undefined,
+      breedId: form.breedId || undefined,
+      dateOfBirth: form.dateOfBirth || undefined,
+      age: form.age.trim() || undefined,
+      gender: (form.gender as PetPayload['gender']) || undefined,
+      weight: form.weight ? Number(form.weight) : undefined,
+      color: form.color.trim() || undefined,
+      microchipId: form.microchipId.trim() || undefined,
+      specialNotes: form.note.trim() || undefined,
+      avatarUrl: form.image || undefined,
+      isActive: true,
+    };
+
     // Try create via API, fallback to local storage when API fails
     try {
-      const created = await PetAPI.createPet({
-        name: form.name.trim(),
-        species: form.species,
-        breed: form.breed.trim() || undefined,
-        age: form.age.trim() || undefined,
-        note: form.note.trim() || undefined,
-      });
+      const created = await PetAPI.createPet(payload);
 
       const next: Pet[] = [created, ...pets];
       persist(next);
-      setForm({ name: '', species: 'Chó', breed: '', age: '', note: '' });
+      setForm({
+        name: '',
+        speciesId: '',
+        speciesName: '',
+        breedId: '',
+        breedName: '',
+        dateOfBirth: '',
+        gender: '',
+        weight: '',
+        color: '',
+        microchipId: '',
+        age: '',
+        note: '',
+        image: null,
+      });
+      setImagePreview('');
     } catch (err) {
+      // fallback object uses the UI-friendly Pet shape
+      const speciesName = petSpecies.find(s => s.id === form.speciesId)?.speciesName || '';
+      const breedName = petSpecies
+        .find(s => s.id === form.speciesId)
+        ?.breeds?.find(b => b.id === form.breedId)
+        ?.breedName || '';
+
       const next: Pet[] = [
         {
           id: crypto.randomUUID(),
-          name: form.name.trim(),
-          species: form.species,
-          breed: form.breed.trim() || undefined,
+          userId: user.id,
+          petName: form.name.trim(),
+          speciesName,
+          breedName: breedName || undefined,
+          dateOfBirth: form.dateOfBirth || undefined,
+          gender: form.gender || undefined,
+          weight: form.weight ? Number(form.weight) : undefined,
           age: form.age.trim() || undefined,
-          note: form.note.trim() || undefined,
+          color: form.color.trim() || undefined,
+          microchipId: form.microchipId.trim() || undefined,
+          specialNotes: form.note.trim() || undefined,
+          avatarUrl: form.image || undefined,
+          isActive: true,
+          createdAt: new Date().toISOString(),
         },
         ...pets,
       ];
       persist(next);
-      setForm({ name: '', species: 'Chó', breed: '', age: '', note: '' });
+      setForm({
+        name: '',
+        speciesId: '',
+        speciesName: '',
+        breedId: '',
+        breedName: '',
+        dateOfBirth: '',
+        gender: '',
+        weight: '',
+        color: '',
+        microchipId: '',
+        age: '',
+        note: '',
+        image: null,
+      });
+      setImagePreview('');
     }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!isValidImageFile(file)) {
+      alert('Vui lòng chọn ảnh hợp lệ (JPG, PNG, GIF, WebP) dưới 5MB');
+      return;
+    }
+
+    try {
+      const base64 = await convertImageToBase64(file);
+      setForm((p) => ({ ...p, image: base64 }));
+      setImagePreview(base64);
+    } catch (err) {
+      alert('Không thể tải ảnh');
+      console.error(err);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setForm((p) => ({ ...p, image: null }));
+    setImagePreview('');
   };
 
   const handleAddHealth = (e: React.FormEvent) => {
@@ -164,6 +297,16 @@ export default function PetsPage() {
     } catch (err) {
       // If API delete failed, we already removed locally. Log error.
       console.error('Failed to delete pet from API', err);
+    }
+  };
+
+  const handleToggleActive = async (id: string, active: boolean) => {
+    const next = pets.map((p) => (p.id === id ? { ...p, isActive: active } : p));
+    persist(next);
+    try {
+      await PetAPI.updatePet(id, { isActive: active });
+    } catch (err) {
+      console.error('Failed to toggle pet active state', err);
     }
   };
 
@@ -259,12 +402,23 @@ export default function PetsPage() {
           <div className="lg:col-span-1 space-y-6">
             {/* Add Pet Section */}
             <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Plus className="w-5 h-5 text-teal-600" />
-                <h2 className="text-lg font-semibold text-gray-800">Thêm Thú cưng</h2>
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-teal-600" />
+                  <h2 className="text-lg font-semibold text-gray-800">Thêm Thú cưng</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAddOpen((s) => !s)}
+                  aria-expanded={addOpen}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <ChevronDown className={`w-5 h-5 transform ${addOpen ? 'rotate-180' : ''}`} />
+                </button>
               </div>
 
-              <form onSubmit={handleAdd} className="space-y-3">
+              {addOpen && (
+                <form onSubmit={handleAdd} className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tên thú cưng *
@@ -278,41 +432,184 @@ export default function PetsPage() {
                   />
                 </div>
 
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Hình ảnh</label>
+                  {imagePreview ? (
+                    <div className="relative w-full">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-32 object-cover rounded-lg border border-gray-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition-colors"
+                        aria-label="Xóa ảnh"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="w-full flex items-center justify-center px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-teal-500 transition-colors">
+                      <div className="text-center">
+                        <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">Nhấp để chọn ảnh</p>
+                        <p className="text-xs text-gray-500 mt-1">JPG, PNG, GIF hoặc WebP (tối đa 5MB)</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                        disabled={!canUse}
+                      />
+                    </label>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Loài *</label>
                     <select
-                      value={form.species}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, species: e.target.value as Pet['species'] }))
-                      }
+                      value={form.speciesId}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        const sel = petSpecies.find(s => s.id === id);
+                        setForm((p) => ({
+                          ...p,
+                          speciesId: id,
+                          speciesName: sel?.speciesName || '',
+                          breedId: '',
+                          breedName: '',
+                        }));
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
-                      disabled={!canUse}
+                      disabled={!canUse || loadingSpecies}
                     >
-                      <option value="Chó">Chó</option>
-                      <option value="Mèo">Mèo</option>
-                      <option value="Khác">Khác</option>
+                      <option value="">
+                        {loadingSpecies ? 'Đang tải...' : 'Chọn loài'}
+                      </option>
+                      {petSpecies.map((species) => (
+                        <option key={species.id} value={species.id}>
+                          {species.speciesName}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tuổi</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Giống</label>
+                    {getSelectedSpeciesBreeds().length > 0 ? (
+                      <select
+                        value={form.breedId}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          const sel = getSelectedSpeciesBreeds().find(b => b.id === id);
+                          setForm((p) => ({
+                            ...p,
+                            breedId: id,
+                            breedName: sel?.breedName || '',
+                          }));
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
+                        disabled={!canUse || !form.speciesId}
+                      >
+                        <option value="">Chọn giống</option>
+                        {getSelectedSpeciesBreeds().map((breed) => (
+                          <option key={breed.id} value={breed.id}>
+                            {breed.breedName}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        value={form.breedName}
+                        onChange={(e) => setForm((p) => ({ ...p, breedName: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="Ví dụ: Poodle"
+                        disabled={!canUse || !form.speciesId}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ngày sinh
+                    </label>
                     <input
-                      value={form.age}
-                      onChange={(e) => setForm((p) => ({ ...p, age: e.target.value }))}
+                      type="date"
+                      value={form.dateOfBirth}
+                      onChange={(e) => setForm((p) => ({ ...p, dateOfBirth: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Ví dụ: 2"
+                      disabled={!canUse}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Giới tính
+                    </label>
+                    <select
+                      value={form.gender}
+                      onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as 'Đực' | 'Cái' | '' }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
+                      disabled={!canUse}
+                    >
+                      <option value="">Chọn giới tính</option>
+                      <option value="Đực">Đực</option>
+                      <option value="Cái">Cái</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Cân nặng (kg)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={form.weight}
+                      onChange={(e) => setForm((p) => ({ ...p, weight: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      disabled={!canUse}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Màu sắc
+                    </label>
+                    <input
+                      value={form.color}
+                      onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                       disabled={!canUse}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Giống</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số microchip
+                  </label>
                   <input
-                    value={form.breed}
-                    onChange={(e) => setForm((p) => ({ ...p, breed: e.target.value }))}
+                    value={form.microchipId}
+                    onChange={(e) => setForm((p) => ({ ...p, microchipId: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="Ví dụ: Poodle"
+                    disabled={!canUse}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tuổi</label>
+                  <input
+                    value={form.age}
+                    onChange={(e) => setForm((p) => ({ ...p, age: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    placeholder="Ví dụ: 2"
                     disabled={!canUse}
                   />
                 </div>
@@ -337,7 +634,8 @@ export default function PetsPage() {
                   <Plus className="w-4 h-4" />
                   Thêm thú cưng
                 </button>
-              </form>
+                </form>
+              )}
             </section>
 
             {/* Pet List */}
@@ -361,22 +659,50 @@ export default function PetsPage() {
                           : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="font-semibold text-gray-800">{p.name}</div>
-                          <div className="text-xs text-gray-600 mt-1">
-                            {p.species}
-                            {p.breed ? ` • ${p.breed}` : ''}
-                            {p.age ? ` • ${p.age} tuổi` : ''}
+                      <div className="flex justify-end">
+                        <label className="inline-flex items-center space-x-1">
+                          <input
+                            type="checkbox"
+                            checked={p.isActive}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleToggleActive(p.id, !p.isActive);
+                            }}
+                            disabled={!canUse}
+                            className="form-checkbox h-4 w-4 text-teal-600"
+                          />
+                          <span className="text-xs">{p.isActive ? 'On' : 'Off'}</span>
+                        </label>
+                      </div>
+                      <div className="flex items-start justify-between gap-3">
+                        {p.avatarUrl && (
+                          <div className="flex-shrink-0">
+                            <img
+                              src={p.avatarUrl}
+                              alt={p.petName}
+                              className="w-12 h-12 object-cover rounded-lg"
+                            />
                           </div>
-                          {p.note && <div className="text-xs text-gray-500 mt-1">{p.note}</div>}
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-gray-800">{p.petName}</div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {p.speciesName}
+                            {p.breedName ? ` • ${p.breedName}` : ''}
+                            {p.age ? ` • ${p.age} tuổi` : ''}
+                            {p.color ? ` • ${p.color}` : ''}
+                          </div>
+                          {p.specialNotes && <div className="text-xs text-gray-500 mt-1 truncate">{p.specialNotes}</div>}
+                          <div className="text-xs text-gray-500 mt-1">
+                            {p.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                          </div>
                         </div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemove(p.id);
                           }}
-                          className="text-red-600 hover:bg-red-50 rounded p-1 transition-colors"
+                          className="text-red-600 hover:bg-red-50 rounded p-1 transition-colors flex-shrink-0"
                           aria-label="Xóa"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -398,7 +724,7 @@ export default function PetsPage() {
                   <div className="flex items-center gap-2 mb-4">
                     <Heart className="w-5 h-5 text-red-600" />
                     <h2 className="text-lg font-semibold text-gray-800">
-                      Kiểm tra sức khỏe - {pets.find((p) => p.id === selectedPetId)?.name}
+                      Kiểm tra sức khỏe - {pets.find((p) => p.id === selectedPetId)?.petName}
                     </h2>
                   </div>
 

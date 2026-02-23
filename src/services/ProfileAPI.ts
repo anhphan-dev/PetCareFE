@@ -77,7 +77,11 @@ export const ProfileService = {
     formData.append('file', file);
 
     const response = await fetch(
+<<<<<<< HEAD
       `${import.meta.env.VITE_API_URL || 'https://localhost:54813/api'}/Profile/avatar`,
+=======
+      `${import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api'}/Profile/avatar`,
+>>>>>>> e24f4b7 (fix something)
       {
         method: 'POST',
         headers: {

@@ -1,6 +1,10 @@
 import type { Service, TeamMember, NewsArticle, ContactInfo } from '../types';
 
+<<<<<<< HEAD
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:54813/api';
+=======
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
+>>>>>>> e24f4b7 (fix something)
 
 export const apiService = {
   async login(email: string, password: string) {

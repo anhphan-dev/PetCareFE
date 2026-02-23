@@ -5,10 +5,12 @@ import Layout from './components/Layout';
 import { AuthProvider } from './contexts/AuthContext';
 import './index.css';
 import AboutPage from './pages/AboutPage';
+import DashBoard from './pages/AdminPage/DashBoard';
 import BookingPage from './pages/BookingPage';
 import ContactPage from './pages/ContactPage';
 import HomePage from './pages/homePage';
 import ShopPage from './pages/ShopPage/ShopPage';
+import StaffDashBoard from './pages/StaffPage/DashBoard';
 import ForgotPasswordPage from './pages/UserPage/ForgotPasswordPage';
 import LoginPage from './pages/UserPage/LoginPage';
 import NewsPage from './pages/UserPage/NewsPage';
@@ -35,7 +37,9 @@ createRoot(document.getElementById('root')!).render(
              <Route path="shop" element={<ShopPage />} />
 
           </Route>
-          {/* <Route path="/admin" element={<DashBoard />} /> */}
+          <Route path="/admin" element={<DashBoard />} />
+          <Route path="/staff" element={<StaffDashBoard />} />
+          {/* <Route path="/provider" element={<DashBoard />} /> */}
         </Routes>
       </AuthProvider>
     </BrowserRouter>

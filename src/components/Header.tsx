@@ -363,7 +363,9 @@ export default function Header() {
 
             {/* DỊCH VỤ (dropdown) */}
             <button
-              onClick={() => setIsServicesDropdownOpenMobile((o) => !o)}
+              onClick={() => 
+                setIsServicesDropdownOpenMobile((o) => !o)
+              }
               className="w-full flex items-center justify-between py-2 text-sm font-medium text-gray-700"
             >
               <span>DỊCH VỤ</span>

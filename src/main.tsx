@@ -9,6 +9,7 @@ import DashBoard from './pages/AdminPage/DashBoard';
 import BookingPage from './pages/BookingPage';
 import ContactPage from './pages/ContactPage';
 import HomePage from './pages/homePage';
+import ProductDetailPage from './pages/ProductsPage/ProductDetailPage';
 import ProductsPage from './pages/ProductsPage/ProductsPage';
 import AddProductPage from './pages/StaffPage/AddProductPage';
 import StaffDashBoard from './pages/StaffPage/DashBoard';
@@ -38,6 +39,7 @@ createRoot(document.getElementById('root')!).render(
 
             {/*SHOP ROUTE*/}
             <Route path="cua-hang" element={<ProductsPage/>} />
+            <Route path="/san-pham/:id" element={<ProductDetailPage />} />
 
           </Route>
           <Route path="/admin" element={<DashBoard />} />

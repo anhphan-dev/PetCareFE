@@ -1,75 +1,154 @@
-// src/services/productService.ts
+// src/services/ProductService/productService.ts
 import { Product } from '../../types';
 import httpClient from '../httpClient';
 
+interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const productService = {
-  async getAllProducts(): Promise<Product[]> {
+  /**
+   * Lấy tất cả sản phẩm (phân trang)
+   */
+  async getAllProducts(
+    page: number = 1,
+    pageSize: number = 8
+  ): Promise<PaginatedResponse<Product> | null> {
     try {
-      const response = await httpClient.get('/Products');
-      if (response.data?.success && Array.isArray(response.data.data)) {
-        return response.data.data;
+      const response = await httpClient.get('/Products', {
+        params: { page, pageSize },
+      });
+
+      const data = response.data;
+
+      if (data?.items && Array.isArray(data.items)) {
+        return {
+          items: data.items,
+          totalCount: data.totalCount || data.items.length,
+          page: data.page || page,
+          pageSize: data.pageSize || pageSize,
+          totalPages: data.totalPages || Math.ceil((data.totalCount || data.items.length) / pageSize),
+        };
       }
-      if (Array.isArray(response.data)) {
-        return response.data;
+
+      // Fallback nếu API trả mảng trực tiếp
+      if (Array.isArray(data)) {
+        return {
+          items: data,
+          totalCount: data.length,
+          page,
+          pageSize,
+          totalPages: 1,
+        };
       }
-      return [];
-    } catch (error) {
-      console.error('Lỗi lấy tất cả sản phẩm:', error);
-      return [];
+
+      console.warn('API /Products trả format không chuẩn:', data);
+      return null;
+    } catch (error: any) {
+      console.error('Lỗi lấy tất cả sản phẩm:', error.message);
+      return null;
     }
   },
 
   /**
-   * Lấy sản phẩm theo category ID (GUID)
-   * GET /Products/category/{categoryId}
+   * Lấy sản phẩm theo category ID (phân trang)
    */
-  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+  async getProductsByCategory(
+    categoryId: string,
+    page: number = 1,
+    pageSize: number = 8
+  ): Promise<PaginatedResponse<Product> | null> {
     try {
-      const response = await httpClient.get(`/Products/category/${categoryId}`);
+      const response = await httpClient.get(`/Products/category/${categoryId}`, {
+        params: { page, pageSize },
+      });
 
-      if (response.data?.success && Array.isArray(response.data.data)) {
-        return response.data.data;
+      const data = response.data;
+
+      if (data?.items && Array.isArray(data.items)) {
+        return {
+          items: data.items,
+          totalCount: data.totalCount || data.items.length,
+          page: data.page || page,
+          pageSize: data.pageSize || pageSize,
+          totalPages: data.totalPages || Math.ceil((data.totalCount || data.items.length) / pageSize),
+        };
       }
-      if (Array.isArray(response.data)) {
-        return response.data;
+
+      if (Array.isArray(data)) {
+        return {
+          items: data,
+          totalCount: data.length,
+          page,
+          pageSize,
+          totalPages: 1,
+        };
       }
-      return [];
-    } catch (error) {
-      console.error(`Lỗi lấy sản phẩm theo categoryId ${categoryId}:`, error);
-      return [];
+
+      console.warn(`API /Products/category/${categoryId} trả format không chuẩn:`, data);
+      return null;
+    } catch (error: any) {
+      console.error(`Lỗi lấy sản phẩm category ${categoryId}:`, error.message);
+      return null;
     }
   },
 
-  async searchProducts(searchTerm: string): Promise<Product[]> {
+  /**
+   * Tìm kiếm sản phẩm (phân trang)
+   */
+  async searchProducts(
+    searchTerm: string,
+    page: number = 1,
+    pageSize: number = 8
+  ): Promise<PaginatedResponse<Product> | null> {
     try {
       const response = await httpClient.get('/Products/search', {
-        params: { searchTerm },
+        params: { searchTerm, page, pageSize },
       });
-      if (response.data?.success && Array.isArray(response.data.data)) {
-        return response.data.data;
+
+      const data = response.data;
+
+      if (data?.items && Array.isArray(data.items)) {
+        return {
+          items: data.items,
+          totalCount: data.totalCount || data.items.length,
+          page: data.page || page,
+          pageSize: data.pageSize || pageSize,
+          totalPages: data.totalPages || Math.ceil((data.totalCount || data.items.length) / pageSize),
+        };
       }
-      if (Array.isArray(response.data)) {
-        return response.data;
+
+      if (Array.isArray(data)) {
+        return {
+          items: data,
+          totalCount: data.length,
+          page,
+          pageSize,
+          totalPages: 1,
+        };
       }
-      return [];
-    } catch (error) {
-      console.error('Lỗi tìm kiếm sản phẩm:', error);
-      return [];
+
+      console.warn('API /Products/search trả format không chuẩn:', data);
+      return null;
+    } catch (error: any) {
+      console.error('Lỗi tìm kiếm sản phẩm:', error.message);
+      return null;
     }
   },
 
+  /**
+   * Lấy chi tiết sản phẩm theo ID
+   */
   async getProductById(id: string): Promise<Product | null> {
     try {
       const response = await httpClient.get(`/Products/${id}`);
-      if (response.data?.success && response.data.data) {
-        return response.data.data;
-      }
-      if (response.data) {
-        return response.data;
-      }
-      return null;
-    } catch (error) {
-      console.error(`Lỗi lấy sản phẩm ID ${id}:`, error);
+      return response.data ?? null;
+    } catch (error: any) {
+      console.error(`Lỗi lấy sản phẩm ID ${id}:`, error.message);
       return null;
     }
   },

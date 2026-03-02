@@ -1,80 +1,97 @@
-import { ShoppingCart } from 'lucide-react';
-import type { Product } from '../types/product';
+import { Heart, ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Product } from "../../types";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const displayPrice = product.sale_price ?? product.price;
-  const hasDiscount = product.sale_price && product.sale_price < product.price;
-  const imageUrl = product.images && product.images.length > 0
-    ? product.images[0]
-    : 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400';
+  const hasSale =
+    product.salePrice && product.salePrice > 0 && product.salePrice < product.price;
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(price);
-  };
+  const displayPrice = hasSale ? product.salePrice : product.price ?? 0;
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-100">
-      <div className="relative overflow-hidden aspect-square bg-gray-50">
+    <div className="group bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:scale-[1.03] transition-all duration-300">
+      {/* Image */}
+      <Link
+        to={`/san-pham/${product.id}`}
+        className="block relative aspect-square overflow-hidden"
+      >
         <img
-          src={imageUrl}
-          alt={product.product_name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          src={
+            product.images?.[0] ||
+            "https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg"
+          }
+          alt={product.productName}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        {hasDiscount && (
-          <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-            -{Math.round(((product.price - product.sale_price!) / product.price) * 100)}%
+
+        {/* Sale badge */}
+        {hasSale && (
+          <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-10">
+            -{Math.round(((product.price! - product.salePrice!) / product.price!) * 100)}%
           </div>
         )}
-        {product.stock_quantity === 0 && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="bg-white text-gray-800 px-4 py-2 rounded-lg font-semibold">
+
+        {/* Out of stock overlay */}
+        {product.stockQuantity === 0 && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+            <span className="bg-white/90 px-6 py-3 rounded-xl font-semibold text-red-600 shadow-lg">
               Hết hàng
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-800 text-lg mb-2 line-clamp-2 min-h-[3.5rem]">
-          {product.product_name}
-        </h3>
+      {/* Content */}
+      <div className="p-5 space-y-3">
+        <Link to={`/san-pham/${product.id}`}>
+          <h3 className="font-semibold text-gray-800 line-clamp-2 min-h-[2.8rem] group-hover:text-[#2C2C2C] transition-colors duration-200">
+            {product.productName}
+          </h3>
+        </Link>
 
-        <p className="text-sm text-gray-500 mb-3 line-clamp-2 min-h-[2.5rem]">
-          {product.description}
-        </p>
-
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            {hasDiscount && (
-              <span className="text-sm text-gray-400 line-through">
-                {formatPrice(product.price)}
-              </span>
-            )}
-            <span className="text-xl font-bold text-teal-600">
-              {formatPrice(displayPrice)}
-            </span>
-          </div>
-
-          <button
-            disabled={product.stock_quantity === 0}
-            className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-3 rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-          >
-            <ShoppingCart className="w-5 h-5" />
-          </button>
+        {/* Price */}
+        <div className="flex items-end gap-2.5">
+          <p className="text-xl font-bold text-[#2C2C2C]">
+            {displayPrice > 0 ? formatPrice(displayPrice) : "Liên hệ"}
+          </p>
+          {/* {hasSale && product.price && (
+            <p className="text-sm text-gray-400 line-through">
+              {formatPrice(product.price)}
+            </p>
+          )} */}
         </div>
 
-        {product.stock_quantity > 0 && product.stock_quantity <= 10 && (
-          <div className="mt-3 text-xs text-amber-600 bg-amber-50 px-3 py-1 rounded-lg inline-block">
-            Chỉ còn {product.stock_quantity} sản phẩm
-          </div>
-        )}
+        {/* Stock info */}
+        <p className="text-sm text-gray-500">
+          {product.stockQuantity > 0
+            ? `Còn ${product.stockQuantity} sản phẩm`
+            : "Hết hàng"}
+        </p>
+
+        {/* Actions */}
+        <div className="flex items-center justify-between pt-3">
+          <button
+            className="text-gray-500 hover:text-[#2C2C2C] transition p-1"
+            title="Thêm vào yêu thích"
+          >
+            <Heart className="w-5 h-5" />
+          </button>
+
+          <button
+            disabled={product.stockQuantity === 0}
+            className="bg-[#5DD3B6] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#3EBFA0] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Thêm
+          </button>
+        </div>
       </div>
     </div>
   );

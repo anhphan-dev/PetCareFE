@@ -9,8 +9,8 @@ import DashBoard from './pages/AdminPage/DashBoard';
 import BookingPage from './pages/BookingPage';
 import ContactPage from './pages/ContactPage';
 import HomePage from './pages/homePage';
-import ShopCategoryPage from './pages/ShopPage/ShopCategoryPage';
-import ShopCategoryProducts from './pages/ShopPage/ShopCategoryProducts';
+import ProductDetailPage from './pages/ProductsPage/ProductDetailPage';
+import ProductsPage from './pages/ProductsPage/ProductsPage';
 import AddProductPage from './pages/StaffPage/AddProductPage';
 import StaffDashBoard from './pages/StaffPage/DashBoard';
 import ForgotPasswordPage from './pages/UserPage/ForgotPasswordPage';
@@ -38,8 +38,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="quen-mat-khau" element={<ForgotPasswordPage />} />
 
             {/*SHOP ROUTE*/}
-            <Route path="cua-hang" element={<ShopCategoryPage/>} />
-            <Route path="/cua-hang/:category" element={<ShopCategoryProducts />} />
+            <Route path="cua-hang" element={<ProductsPage/>} />
+            <Route path="/san-pham/:id" element={<ProductDetailPage />} />
 
           </Route>
           <Route path="/admin" element={<DashBoard />} />

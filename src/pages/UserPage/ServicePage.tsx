@@ -1,5 +1,4 @@
-import { Heart, Home, Scissors, ShoppingBag, Smile } from 'lucide-react';
-import { Link } from 'react-router-dom'; // ← import Link từ react-router-dom
+import { Heart, Home, Scissors, Smile } from 'lucide-react';
 import type { Service } from '../../types';
 
 const services: Service[] = [
@@ -54,7 +53,7 @@ export default function ServicePage() {
       </section>
 
       {/* Services grid */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gradient-to-br from-teal-50 to-emerald-50 border-t border-teal-100">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {services.map((service) => {
@@ -88,7 +87,7 @@ export default function ServicePage() {
       </section>
 
       {/* Phần mới: CTA dẫn đến Shop */}
-      <section className="py-16 bg-gradient-to-br from-teal-50 to-emerald-50 border-t border-teal-100">
+      {/* <section className="">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-teal-100 rounded-full mb-6">
@@ -112,7 +111,7 @@ export default function ServicePage() {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
     </>
   );
 }

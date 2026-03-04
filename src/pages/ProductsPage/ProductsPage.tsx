@@ -252,7 +252,7 @@ export default function ProductsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full pl-14 pr-14 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-500 transition-all shadow-inner bg-white/80"
+                  className="w-full pl-14 pr-14 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#5DD3B6]/50 focus:border-[#5DD3B6] transition-all shadow-inner bg-white/80"
                 />
                 {searchTerm && (
                   <button

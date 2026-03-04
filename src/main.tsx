@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import './index.css';
@@ -27,6 +28,7 @@ import ServicePage from './pages/UserPage/ServicePage';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+    <ScrollToTop/>
       <AuthProvider>
         <CartProvider>
         <Routes>

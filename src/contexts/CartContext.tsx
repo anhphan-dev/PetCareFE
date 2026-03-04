@@ -14,7 +14,7 @@ interface CartContextType {
   loading: boolean;
   addToCart: (productId: string, quantity?: number) => Promise<void>;
   updateQuantity: (cartItemId: string, quantity: number) => Promise<void>;
-  removeItem: (cartItemId: string) => Promise<void>;
+  removeItem: (cartItemId: string, quantityToRemove?: number) => Promise<void>;
   clearCart: () => Promise<void>;
   refreshCart: () => Promise<void>;
 }
@@ -57,13 +57,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await removeItem(cartItemId);
       return;
     }
-    const success = await cartService.updateCartItem(cartItemId, quantity);
-    if (success) await refreshCart();
+
+    let success = await cartService.updateCartItem(cartItemId, quantity);
+    
+    // Retry 1 lần nếu concurrency error (thường là 400)
+    if (!success) {
+      await new Promise(r => setTimeout(r, 400));
+      success = await cartService.updateCartItem(cartItemId, quantity);
+    }
+
+    if (success) {
+      await refreshCart();
+    } else {
+      await refreshCart(); // Đồng bộ lại từ server
+    }
   };
 
-  const removeItem = async (cartItemId: string) => {
-    const success = await cartService.removeCartItem(cartItemId);
-    if (success) await refreshCart();
+  const removeItem = async (cartItemId: string, quantityToRemove: number = 1) => {
+    let success = await cartService.removeCartItem(cartItemId, quantityToRemove);
+    
+    if (!success) {
+      await new Promise(r => setTimeout(r, 400));
+      success = await cartService.removeCartItem(cartItemId, quantityToRemove);
+    }
+
+    if (success) {
+      await refreshCart();
+    } else {
+      await refreshCart();
+    }
   };
 
   const clearCart = async () => {

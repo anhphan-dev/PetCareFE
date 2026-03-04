@@ -48,20 +48,18 @@ export default function ProductDetailPage() {
   const displayPrice = hasValidSale ? product!.salePrice : product?.price ?? 0;
 
   const handleAddToCart = async () => {
-    if (!product || product.stockQuantity < quantity) {
-      toast.error("Số lượng không đủ hoặc sản phẩm hết hàng");
-      return;
-    }
+  if (!product || product.stockQuantity < quantity) {
+    toast.error("Số lượng không đủ hoặc sản phẩm hết hàng");
+    return;
+  }
 
-    try {
-      await addToCart(product.id, quantity);
-      toast.success(`Đã thêm ${quantity} ${product.productName} vào giỏ hàng!`);
-      navigate("/gio-hang");
-    } catch {
-      toast.error("Thêm vào giỏ hàng thất bại");
-    }
-  };
-
+  try {
+    await addToCart(product.id, quantity);
+    navigate("/gio-hang"); // chuyển trang
+  } catch {
+    toast.error("Thêm vào giỏ hàng thất bại");
+  }
+};
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -122,15 +120,17 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="flex flex-col">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.productName}</h1>
+            <h1 className="text-3xl font-bold text-[#5DD3B6] mb-4">{product.productName}</h1>
 
             <div className="mb-6">
               <p className="text-4xl font-bold text-[#2C2C2C]">
                 {displayPrice > 0 ? formatPrice(displayPrice) : "Liên hệ"}
               </p>
-              {hasValidSale && (
-                <p className="text-gray-500 mt-1 line-through">{formatPrice(product.price!)}</p>
-              )}
+              {hasValidSale === true ? (
+  <p className="text-gray-500 mt-1 line-through">
+    {formatPrice(product.price!)}
+  </p>
+) : null}
               <p className="text-gray-600 mt-2">
                 {product.stockQuantity > 0
                   ? `Còn ${product.stockQuantity} sản phẩm trong kho`

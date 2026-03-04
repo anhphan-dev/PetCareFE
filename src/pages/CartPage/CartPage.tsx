@@ -1,5 +1,5 @@
-// src/pages/CartPage.tsx
 import { ArrowLeft, Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 
@@ -16,9 +16,14 @@ export default function CartPage() {
     clearCart,
   } = useCart();
 
+  const { refreshCart } = useCart();
+
+  useEffect(() => {
+  refreshCart();
+}, []);
+
   const navigate = useNavigate();
 
-  // Tính tổng tiền dựa trên price / salePrice trực tiếp từ item
   const totalPrice = cartItems.reduce((sum, item) => {
     const price = item.salePrice && item.salePrice > 0 ? item.salePrice : item.price ?? 0;
     return sum + price * item.quantity;
@@ -75,7 +80,6 @@ export default function CartPage() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-10">
-          {/* Danh sách sản phẩm */}
           <div className="lg:col-span-2 space-y-6">
             {cartItems.map((item) => {
               const price = item.salePrice && item.salePrice > 0 ? item.salePrice : item.price ?? 0;
@@ -135,7 +139,7 @@ export default function CartPage() {
                       </div>
 
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.id, item.quantity)}  // Xóa hết số lượng của item
                         className="text-red-500 hover:text-red-700 p-2"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -147,7 +151,6 @@ export default function CartPage() {
             })}
           </div>
 
-          {/* Tổng kết */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 sticky top-10">
               <h3 className="text-xl font-bold mb-6">Tổng thanh toán</h3>

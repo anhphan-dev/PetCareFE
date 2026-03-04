@@ -1,12 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 import Layout from './components/Layout';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import './index.css';
 import AboutPage from './pages/AboutPage';
 import DashBoard from './pages/AdminPage/DashBoard';
 import BookingPage from './pages/BookingPage';
+import CartPage from './pages/CartPage/CartPage';
 import ContactPage from './pages/ContactPage';
 import HomePage from './pages/homePage';
 import ProductDetailPage from './pages/ProductsPage/ProductDetailPage';
@@ -25,6 +28,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
+        <CartProvider>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -40,6 +44,8 @@ createRoot(document.getElementById('root')!).render(
             {/*SHOP ROUTE*/}
             <Route path="cua-hang" element={<ProductsPage/>} />
             <Route path="/san-pham/:id" element={<ProductDetailPage />} />
+            <Route path="/gio-hang" element={<CartPage />} />
+        {/* <Route path="/thanh-toan" element={<YourCheckoutSandboxPage />} /> */}
 
           </Route>
           <Route path="/admin" element={<DashBoard />} />
@@ -53,7 +59,9 @@ createRoot(document.getElementById('root')!).render(
 
           {/* <Route path="/provider" element={<DashBoard />} /> */}
         </Routes>
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
+    <ToastContainer />
   </StrictMode>
 );

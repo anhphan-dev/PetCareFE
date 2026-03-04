@@ -9,6 +9,7 @@ import {
   Menu,
   PawPrint,
   Scissors,
+  ShoppingBag,
   Smile,
   Sparkles,
   SprayCan,
@@ -49,6 +50,8 @@ const userMenuItems = [
   { icon: List, label: 'Xem dịch vụ', path: '/dich-vu' },
   { icon: Briefcase, label: 'Dịch vụ đã đặt', path: '/tai-khoan/dich-vu' },
   { icon: Dog, label: 'Thú cưng của tôi', path: '/thu-cung' },
+  { icon: ShoppingBag, label: 'Giỏ hàng của bạn', path: '/gio-hang' },
+
 ];
 
 export default function Header() {

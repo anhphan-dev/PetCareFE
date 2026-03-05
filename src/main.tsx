@@ -13,6 +13,7 @@ import ShopCategoryPage from './pages/ShopPage/ShopCategoryPage';
 import ShopCategoryProducts from './pages/ShopPage/ShopCategoryProducts';
 import AddProductPage from './pages/StaffPage/AddProductPage';
 import StaffDashBoard from './pages/StaffPage/DashBoard';
+import ProviderAppointmentsPage from './pages/ProviderPage/ProviderAppointmentsPage';
 import ForgotPasswordPage from './pages/UserPage/ForgotPasswordPage';
 import LoginPage from './pages/UserPage/LoginPage';
 import NewsPage from './pages/UserPage/NewsPage';
@@ -49,7 +50,7 @@ createRoot(document.getElementById('root')!).render(
 
 
           {/*PROVIDER ROUTE*/}
-          {/* <Route path="/provider" element={<ProviderDashBoard />} /> */}
+          <Route path="/provider/lich-dat" element={<ProviderAppointmentsPage />} />
 
           {/* <Route path="/provider" element={<DashBoard />} /> */}
         </Routes>

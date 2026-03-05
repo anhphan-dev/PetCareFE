@@ -1,4 +1,4 @@
-import httpClient from './httpClient';
+import httpClient from '../httpClient';
 import { User } from './AuthAPI';
 
 // Profile Response Types

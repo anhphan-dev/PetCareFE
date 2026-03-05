@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { User } from '../services/AuthAPI';
+import type { User } from '../services/AuthService/AuthAPI';
 
 const USER_STORAGE_KEY = 'user';
 

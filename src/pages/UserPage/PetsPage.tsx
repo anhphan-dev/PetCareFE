@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dog, Plus, Trash2, Heart, Calendar, ClipboardList, Upload, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import PetAPI, { type Pet as PetType, type PetPayload } from '../../services/PetAPI';
-import PetSpeciesAPI, { type PetSpecies } from '../../services/PetSpeciesAPI';
+import PetAPI, { type Pet as PetType, type PetPayload } from '../../services/PetService/PetAPI';
+import PetSpeciesAPI, { type PetSpecies } from '../../services/PetService/PetSpeciesAPI';
 import { convertImageToBase64, isValidImageFile } from '../../utils/imageUtils';
 
 // alias for the imported type so we can use `Pet` throughout this file

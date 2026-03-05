@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PawPrint, Mail, Lock, User, Phone } from 'lucide-react';
-import { AuthService } from '../../services/AuthAPI';
+import { AuthService } from '../../services/AuthService/AuthAPI';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useState } from 'react';
-import { ProfileService } from '../../services/ProfileAPI';
+import { ProfileService } from '../../services/AuthService/ProfileAPI';
 import { getImageUrl } from '../../utils/imageUtils';
 
 

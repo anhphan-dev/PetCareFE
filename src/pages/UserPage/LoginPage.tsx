@@ -2,7 +2,7 @@ import { Eye, EyeOff, Lock, Mail, PawPrint } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { AuthService } from '../../services/AuthAPI';
+import { AuthService } from '../../services/AuthService/AuthAPI';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +35,7 @@ export default function LoginPage() {
       } else if (role === 'staff') {
         navigate('/staff', { replace: true });
       } else if (role === 'service_provider') {
-        navigate('/provider', { replace: true });
+        navigate('/prov ider/lich-dat', { replace: true });
       } else {
         // user hoặc Customer hoặc role lạ → về trang customer hoặc home
         navigate('/', { replace: true });

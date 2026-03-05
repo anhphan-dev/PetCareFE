@@ -1,16 +1,20 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import './index.css';
 import AboutPage from './pages/AboutPage';
 import DashBoard from './pages/AdminPage/DashBoard';
 import BookingPage from './pages/BookingPage';
+import CartPage from './pages/CartPage/CartPage';
 import ContactPage from './pages/ContactPage';
 import HomePage from './pages/homePage';
-import ShopCategoryPage from './pages/ShopPage/ShopCategoryPage';
-import ShopCategoryProducts from './pages/ShopPage/ShopCategoryProducts';
+import ProductDetailPage from './pages/ProductsPage/ProductDetailPage';
+import ProductsPage from './pages/ProductsPage/ProductsPage';
 import AddProductPage from './pages/StaffPage/AddProductPage';
 import StaffDashBoard from './pages/StaffPage/DashBoard';
 import ProviderAppointmentsPage from './pages/ProviderPage/ProviderAppointmentsPage';
@@ -25,7 +29,9 @@ import ServicePage from './pages/UserPage/ServicePage';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+    <ScrollToTop/>
       <AuthProvider>
+        <CartProvider>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -39,8 +45,10 @@ createRoot(document.getElementById('root')!).render(
             <Route path="quen-mat-khau" element={<ForgotPasswordPage />} />
 
             {/*SHOP ROUTE*/}
-            <Route path="cua-hang" element={<ShopCategoryPage/>} />
-            <Route path="/cua-hang/:category" element={<ShopCategoryProducts />} />
+            <Route path="cua-hang" element={<ProductsPage/>} />
+            <Route path="/san-pham/:id" element={<ProductDetailPage />} />
+            <Route path="/gio-hang" element={<CartPage />} />
+        {/* <Route path="/thanh-toan" element={<YourCheckoutSandboxPage />} /> */}
 
           </Route>
           <Route path="/admin" element={<DashBoard />} />
@@ -54,7 +62,9 @@ createRoot(document.getElementById('root')!).render(
 
           {/* <Route path="/provider" element={<DashBoard />} /> */}
         </Routes>
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
+    <ToastContainer />
   </StrictMode>
 );

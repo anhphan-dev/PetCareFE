@@ -1,6 +1,7 @@
 import {
   Briefcase,
   ChevronDown,
+  Crown,
   Dog,
   Heart,
   Home,
@@ -47,11 +48,11 @@ const shopDropdownItems = [
 
 const userMenuItems = [
   { icon: UserCircle, label: 'Hồ sơ của tôi', path: '/tai-khoan' },
+  { icon: Crown, label: 'Gói thành viên', path: '/membership' },
   { icon: List, label: 'Xem dịch vụ', path: '/dich-vu' },
   { icon: Briefcase, label: 'Dịch vụ đã đặt', path: '/tai-khoan/dich-vu' },
   { icon: Dog, label: 'Thú cưng của tôi', path: '/thu-cung' },
   { icon: ShoppingBag, label: 'Giỏ hàng của bạn', path: '/gio-hang' },
-
 ];
 
 export default function Header() {

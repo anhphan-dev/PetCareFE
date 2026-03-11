@@ -22,6 +22,9 @@ import LoginPage from './pages/UserPage/LoginPage';
 import NewsPage from './pages/UserPage/NewsPage';
 import RegisterPage from './pages/UserPage/RegisterPage';
 import ServicePage from './pages/UserPage/ServicePage';
+import SubscriptionPage from './pages/SubscriptionPage/SubscriptionPage';
+import SubscriptionSuccessPage from './pages/SubscriptionPage/SubscriptionSuccessPage';
+import SubscriptionCancelPage from './pages/SubscriptionPage/SubscriptionCancelPage';
 
 // import DashBoard from './pages/AdminPage/DashBoard';
 
@@ -47,7 +50,11 @@ createRoot(document.getElementById('root')!).render(
             <Route path="cua-hang" element={<ProductsPage/>} />
             <Route path="/san-pham/:id" element={<ProductDetailPage />} />
             <Route path="/gio-hang" element={<CartPage />} />
-        {/* <Route path="/thanh-toan" element={<YourCheckoutSandboxPage />} /> */}
+
+            {/*SUBSCRIPTION ROUTES*/}
+            <Route path="membership" element={<SubscriptionPage />} />
+            <Route path="subscription/success" element={<SubscriptionSuccessPage />} />
+            <Route path="subscription/cancel" element={<SubscriptionCancelPage />} />
 
           </Route>
           <Route path="/admin" element={<DashBoard />} />

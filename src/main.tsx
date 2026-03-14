@@ -28,6 +28,8 @@ import SubscriptionSuccessPage from './pages/SubscriptionPage/SubscriptionSucces
 import SubscriptionCancelPage from './pages/SubscriptionPage/SubscriptionCancelPage';
 import ProfilePage from './pages/UserPage/ProfilePage';
 import PetsPage from './pages/UserPage/PetsPage';
+import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 
 // import DashBoard from './pages/AdminPage/DashBoard';
 
@@ -54,6 +56,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="cua-hang" element={<ProductsPage/>} />
             <Route path="/san-pham/:id" element={<ProductDetailPage />} />
             <Route path="/gio-hang" element={<CartPage />} />
+            <Route path="thanh-toan" element={<CheckoutPage />} />
+            <Route path="thanh-toan/thanh-cong" element={<CheckoutSuccessPage />} />
 
             {/*USER ROUTES*/}
             <Route path="tai-khoan" element={<ProfilePage />} />

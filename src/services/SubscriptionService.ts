@@ -53,6 +53,13 @@ const SubscriptionService = {
     }
   },
 
+  async confirmPayment(orderCode: number): Promise<boolean> {
+    const res = await httpClient.post<{ success: boolean; data: boolean }>(
+      `/subscriptions/confirm-payment?orderCode=${orderCode}`
+    );
+    return !!res.success;
+  },
+
   async cancelSubscription(): Promise<void> {
     await httpClient.delete<{ success: boolean }>('/subscriptions/cancel');
   },

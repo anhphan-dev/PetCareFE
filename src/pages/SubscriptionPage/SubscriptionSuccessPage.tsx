@@ -27,6 +27,10 @@ export default function SubscriptionSuccessPage() {
     // Give the webhook a moment to process before fetching status
     const timer = setTimeout(async () => {
       try {
+        const parsedOrderCode = orderCode ? Number(orderCode) : NaN;
+        if (Number.isFinite(parsedOrderCode) && parsedOrderCode > 0) {
+          await SubscriptionService.confirmPayment(parsedOrderCode);
+        }
         const sub = await SubscriptionService.getMySubscription();
         setSubscription(sub);
       } finally {

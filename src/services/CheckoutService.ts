@@ -56,4 +56,23 @@ export const CheckoutService = {
     const response = await httpClient.post<ApiResponse<PlaceOrderResult>>('/Checkout/place-order', payload);
     return response.data;
   },
+
+  async confirmPayment(orderCode?: number, orderNumber?: string): Promise<boolean> {
+    const params = new URLSearchParams();
+
+    if (orderCode && orderCode > 0) {
+      params.set('orderCode', String(orderCode));
+    }
+
+    if (orderNumber && orderNumber.trim().length > 0) {
+      params.set('orderNumber', orderNumber.trim());
+    }
+
+    const query = params.toString();
+    const response = await httpClient.post<ApiResponse<{ confirmed: boolean; alreadyConfirmed?: boolean }>>(
+      `/Checkout/confirm-payment${query ? `?${query}` : ''}`
+    );
+
+    return Boolean(response?.success);
+  },
 };

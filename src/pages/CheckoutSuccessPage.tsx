@@ -1,14 +1,43 @@
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { CheckoutService } from '../services/CheckoutService';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
 export default function CheckoutSuccessPage() {
   const [params] = useSearchParams();
+  const [confirmMessage, setConfirmMessage] = useState<string>('');
 
   const orderNumber = params.get('orderNumber') || 'N/A';
   const amount = Number(params.get('amount') || 0);
   const method = (params.get('method') || 'cod').toLowerCase();
+  const orderCode = Number(params.get('orderCode') || 0);
+
+  useEffect(() => {
+    const confirm = async () => {
+      if (method !== 'payos') {
+        return;
+      }
+
+      try {
+        const confirmed = await CheckoutService.confirmPayment(
+          Number.isFinite(orderCode) && orderCode > 0 ? orderCode : undefined,
+          orderNumber !== 'N/A' ? orderNumber : undefined
+        );
+
+        setConfirmMessage(
+          confirmed
+            ? 'Thanh toan PayOS da duoc dong bo vao he thong.'
+            : 'Khong the dong bo trang thai PayOS ngay luc nay.'
+        );
+      } catch {
+        setConfirmMessage('Khong the dong bo trang thai PayOS ngay luc nay.');
+      }
+    };
+
+    void confirm();
+  }, [method, orderCode, orderNumber]);
 
   return (
     <div className="min-h-[60vh] bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -20,6 +49,9 @@ export default function CheckoutSuccessPage() {
           <p className="text-sm text-gray-700"><span className="font-semibold">Mã đơn hàng:</span> {orderNumber}</p>
           <p className="text-sm text-gray-700"><span className="font-semibold">Thanh toán:</span> {method === 'payos' ? 'PayOS (Online)' : 'COD (khi nhận hàng)'}</p>
           <p className="text-sm text-gray-700"><span className="font-semibold">Tổng tiền:</span> {formatPrice(amount)}</p>
+          {method === 'payos' && confirmMessage && (
+            <p className="text-sm text-teal-700"><span className="font-semibold">Dong bo:</span> {confirmMessage}</p>
+          )}
         </div>
 
         <div className="flex justify-center gap-3">

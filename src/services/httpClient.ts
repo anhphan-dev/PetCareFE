@@ -38,13 +38,23 @@ const httpClient = {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await fetch(fullUrl, {
-      ...fetchOptions,
-      headers,
-    });
+    let response: Response;
+    try {
+      response = await fetch(fullUrl, {
+        ...fetchOptions,
+        headers,
+      });
+    } catch {
+      throw new Error('Khong the ket noi den may chu. Vui long thu lai.');
+    }
 
     // Xử lý lỗi chi tiết hơn
     if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        throw new Error('Phien dang nhap het han hoac chua dang nhap. Vui long dang nhap lai.');
+      }
+
       let errorMessage = 'Đã có lỗi xảy ra';
       try {
         const errorData = await response.json();

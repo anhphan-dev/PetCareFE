@@ -110,6 +110,7 @@ export default function AIHealthPage() {
   const [loading, setLoading] = useState(true);
   const [analysing, setAnalysing] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [membershipActive, setMembershipActive] = useState(false);
 
@@ -154,6 +155,14 @@ export default function AIHealthPage() {
         setHistoryLoading(true);
         const data = await AIHealthService.getHistory(selectedPetId);
         setHistory(data);
+        setCurrentResult((current) => {
+          if (!current || current.petId !== selectedPetId) {
+            return null;
+          }
+
+          const stillExists = data.some((item) => item.id === current.id);
+          return stillExists ? current : null;
+        });
       } catch {
         setHistory([]);
       } finally {
@@ -184,6 +193,21 @@ export default function AIHealthPage() {
     [membershipActive]
   );
 
+  const handleSelectHistory = async (analysisId: string) => {
+    try {
+      setError(null);
+      setDetailLoading(true);
+      const result = await AIHealthService.getById(analysisId);
+      setCurrentResult(result);
+      setAnalysisType(result.analysisType as AIAnalysisType);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Không thể tải lại chẩn đoán cũ.';
+      setError(msg);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   const handleAnalyse = async () => {
     if (!selectedPetId) {
       setError('Vui lòng chọn thú cưng để phân tích.');
@@ -199,6 +223,7 @@ export default function AIHealthPage() {
         additionalContext: additionalContext.trim() || undefined,
       });
       setCurrentResult(result);
+      setAdditionalContext('');
 
       const latestHistory = await AIHealthService.getHistory(selectedPetId);
       setHistory(latestHistory);
@@ -401,7 +426,9 @@ export default function AIHealthPage() {
                 <div className="px-6 py-5 lg:px-8 lg:py-6 border-b border-slate-100 bg-[linear-gradient(135deg,rgba(15,118,110,0.07),rgba(255,255,255,1))]">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-teal-700/70">Kết quả mới nhất</p>
+                      <p className="text-xs uppercase tracking-[0.18em] text-teal-700/70">
+                        {detailLoading ? 'Đang tải chẩn đoán cũ' : 'Kết quả đang hiển thị'}
+                      </p>
                       <h2 className="mt-2 text-2xl font-black text-slate-900">
                         {analysisTypeLabels[currentResult.analysisType] ?? currentResult.analysisType}
                       </h2>
@@ -411,6 +438,12 @@ export default function AIHealthPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                      {detailLoading && (
+                        <div className="rounded-full bg-teal-50 border border-teal-200 px-3 py-1.5 text-sm font-medium text-teal-700 inline-flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Đang tải
+                        </div>
+                      )}
                       {typeof currentResult.confidenceScore === 'number' && (
                         <div className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-sm font-semibold text-emerald-700">
                           Độ tin cậy {currentResult.confidenceScore}%
@@ -482,13 +515,23 @@ export default function AIHealthPage() {
               ) : (
                 <div className="space-y-3">
                   {history.map((item) => (
-                    <div key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:border-teal-200 hover:bg-white transition-colors">
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => void handleSelectHistory(item.id)}
+                      disabled={detailLoading}
+                      className={`w-full text-left rounded-2xl border p-4 transition-colors ${
+                        currentResult?.id === item.id
+                          ? 'border-teal-300 bg-teal-50/70'
+                          : 'border-slate-100 bg-slate-50 hover:border-teal-200 hover:bg-white'
+                      } disabled:cursor-not-allowed disabled:opacity-70`}
+                    >
                       <p className="text-sm font-semibold text-slate-800">
                         {analysisTypeLabels[item.analysisType] ?? item.analysisType}
                       </p>
                       <p className="text-xs text-slate-500 mt-1">{item.aiModel}</p>
                       <p className="text-xs text-slate-400 mt-2">{formatDateTime(item.createdAt)}</p>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

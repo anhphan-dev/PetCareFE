@@ -62,6 +62,13 @@ const AIHealthService = {
     );
     return unwrap(response) ?? [];
   },
+
+  async getById(id: string): Promise<AIHealthAnalysisResponse> {
+    const response = await httpClient.get<AIHealthAnalysisResponse | ApiResult<AIHealthAnalysisResponse>>(
+      `/ai-health/${id}`
+    );
+    return unwrap(response);
+  },
 };
 
 export default AIHealthService;

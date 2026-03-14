@@ -49,6 +49,7 @@ const shopDropdownItems = [
 const userMenuItems = [
   { icon: UserCircle, label: 'Hồ sơ của tôi', path: '/tai-khoan' },
   { icon: Crown, label: 'Gói thành viên', path: '/membership' },
+  { icon: Sparkles, label: 'AI Sức khỏe', path: '/ai-suc-khoe' },
   { icon: List, label: 'Xem dịch vụ', path: '/dich-vu' },
   { icon: Briefcase, label: 'Dịch vụ đã đặt', path: '/tai-khoan/dich-vu' },
   { icon: Dog, label: 'Thú cưng của tôi', path: '/thu-cung' },

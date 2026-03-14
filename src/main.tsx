@@ -23,6 +23,7 @@ import LoginPage from './pages/UserPage/LoginPage';
 import NewsPage from './pages/UserPage/NewsPage';
 import RegisterPage from './pages/UserPage/RegisterPage';
 import ServicePage from './pages/UserPage/ServicePage';
+import AIHealthPage from './pages/UserPage/AIHealthPage';
 import SubscriptionPage from './pages/SubscriptionPage/SubscriptionPage';
 import SubscriptionSuccessPage from './pages/SubscriptionPage/SubscriptionSuccessPage';
 import SubscriptionCancelPage from './pages/SubscriptionPage/SubscriptionCancelPage';
@@ -62,6 +63,7 @@ createRoot(document.getElementById('root')!).render(
             {/*USER ROUTES*/}
             <Route path="tai-khoan" element={<ProfilePage />} />
             <Route path="thu-cung" element={<PetsPage />} />
+            <Route path="ai-suc-khoe" element={<AIHealthPage />} />
 
             {/*SUBSCRIPTION ROUTES*/}
             <Route path="membership" element={<SubscriptionPage />} />

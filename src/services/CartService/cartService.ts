@@ -8,21 +8,19 @@ interface ApiResponse<T> {
   errors?: string[];
 }
 
+const unwrap = <T>(response: T | ApiResponse<T>): T | null => {
+  if (response && typeof response === 'object' && 'success' in (response as ApiResponse<T>)) {
+    return ((response as ApiResponse<T>).data as T) ?? null;
+  }
+  return (response as T) ?? null;
+};
+
 export const cartService = {
   async getCart(): Promise<CartItem[] | null> {
     try {
-      const response = await httpClient.get('/Cart');
-      const resData = response.data as ApiResponse<CartItem[]>;
-
-      if (resData?.success && Array.isArray(resData.data)) {
-        return resData.data;
-      }
-
-      if (Array.isArray(resData)) {
-        return resData as CartItem[];
-      }
-
-      return null;
+      const response = await httpClient.get<CartItem[] | ApiResponse<CartItem[]>>('/Cart');
+      const data = unwrap<CartItem[]>(response);
+      return Array.isArray(data) ? data : null;
     } catch (error: any) {
       console.error('[CartService] GET /Cart error:', error.message, error.response?.data);
       return null;
@@ -31,9 +29,8 @@ export const cartService = {
 
   async addToCart(productId: string, quantity: number = 1): Promise<boolean> {
     try {
-      const response = await httpClient.post('/Cart', { productId, quantity });
-      const resData = response.data as ApiResponse<any>;
-      return !!resData?.success;
+      const response = await httpClient.post<ApiResponse<any>>('/Cart', { productId, quantity });
+      return !!response?.success;
     } catch (error) {
       console.error('[CartService] POST /Cart error:', error);
       return false;
@@ -42,9 +39,8 @@ export const cartService = {
 
   async updateCartItem(cartItemId: string, quantity: number): Promise<boolean> {
     try {
-      const response = await httpClient.put(`/Cart/${cartItemId}`, { quantity });
-      const resData = response.data as ApiResponse<any>;
-      return !!resData?.success;
+      const response = await httpClient.put<ApiResponse<any>>(`/Cart/${cartItemId}`, { quantity });
+      return !!response?.success;
     } catch (error) {
       console.error('[CartService] PUT /Cart error:', error);
       return false;
@@ -55,9 +51,8 @@ export const cartService = {
   async removeCartItem(cartItemId: string, quantityToRemove: number = 1): Promise<boolean> {
     try {
       const params = quantityToRemove > 0 ? { quantity: quantityToRemove } : {};
-      const response = await httpClient.delete(`/Cart/${cartItemId}`, { params });
-      const resData = response.data as ApiResponse<any>;
-      return !!resData?.success;
+      const response = await httpClient.delete<ApiResponse<any>>(`/Cart/${cartItemId}`, { params });
+      return !!response?.success;
     } catch (error) {
       console.error('[CartService] DELETE /Cart/{id} error:', error);
       return false;
@@ -66,9 +61,8 @@ export const cartService = {
 
   async clearCart(): Promise<boolean> {
     try {
-      const response = await httpClient.delete('/Cart');
-      const resData = response.data as ApiResponse<any>;
-      return !!resData?.success;
+      const response = await httpClient.delete<ApiResponse<any>>('/Cart');
+      return !!response?.success;
     } catch (error) {
       console.error('[CartService] DELETE /Cart error:', error);
       return false;

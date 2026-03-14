@@ -55,12 +55,24 @@ export interface AdminDashboardData {
     blogs: number;
     publishedBlogs: number;
     totalBlogViews: number;
+    totalRevenue: number;
+    revenueThisMonth: number;
+    totalOrders: number;
+    paidOrders: number;
   };
   recentUsers: AdminUserSummary[];
   lowStockProducts: AdminProductSummary[];
   topPosts: AdminBlogSummary[];
   latestPosts: AdminBlogSummary[];
 }
+
+type AdminRevenueSummary = {
+  totalRevenue: number;
+  paidRevenueThisMonth: number;
+  totalOrders: number;
+  paidOrders: number;
+  generatedAt?: string;
+};
 
 const unwrap = <T>(response: T | ApiEnvelope<T>): T => {
   if (response && typeof response === 'object' && 'data' in (response as ApiEnvelope<T>)) {
@@ -86,7 +98,7 @@ const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1
 
 const AdminDashboardService = {
   async getOverview(): Promise<AdminDashboardData> {
-    const [usersResponse, productsResponse, activeProductsResponse, blogsResponse] = await Promise.all([
+    const [usersResponse, productsResponse, activeProductsResponse, blogsResponse, revenueResponse] = await Promise.all([
       httpClient.get<ApiEnvelope<PagedResult<AdminUserSummary>> | PagedResult<AdminUserSummary>>(
         '/Users',
         { params: { page: 1, pageSize: 200 } }
@@ -97,12 +109,19 @@ const AdminDashboardService = {
       ),
       httpClient.get<ApiEnvelope<AdminProductSummary[]> | AdminProductSummary[]>('/Products/active'),
       httpClient.get<ApiEnvelope<AdminBlogSummary[]> | AdminBlogSummary[]>('/Blogs/all'),
+      httpClient.get<ApiEnvelope<AdminRevenueSummary> | AdminRevenueSummary>('/AdminDashboard/revenue'),
     ]);
 
     const users = unwrapPaged(usersResponse);
     const products = unwrapPaged(productsResponse);
     const activeProducts = unwrap(activeProductsResponse) ?? [];
     const blogs = unwrap(blogsResponse) ?? [];
+    const revenue = unwrap(revenueResponse) ?? {
+      totalRevenue: 0,
+      paidRevenueThisMonth: 0,
+      totalOrders: 0,
+      paidOrders: 0,
+    };
 
     const activeUsers = users.items.filter((user) => user.isActive).length;
     const newUsersThisMonth = users.items.filter(
@@ -141,6 +160,10 @@ const AdminDashboardService = {
         blogs: blogs.length,
         publishedBlogs,
         totalBlogViews,
+        totalRevenue: Number(revenue.totalRevenue ?? 0),
+        revenueThisMonth: Number(revenue.paidRevenueThisMonth ?? 0),
+        totalOrders: Number(revenue.totalOrders ?? 0),
+        paidOrders: Number(revenue.paidOrders ?? 0),
       },
       recentUsers,
       lowStockProducts,

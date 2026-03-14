@@ -44,6 +44,13 @@ const formatCompactDate = (value: string) =>
     year: 'numeric',
   });
 
+const formatCurrencyVnd = (value: number) =>
+  new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(value);
+
 const normalizeRole = (roleName?: string | null) => roleName?.trim().toLowerCase() ?? '';
 
 const getPostStatusLabel = (status: string) => {
@@ -401,9 +408,9 @@ export default function DashBoard() {
                     accent="bg-sky-500"
                   />
                   <StatCard
-                    label="Tổng lượt xem blog"
-                    value={String(totals?.totalBlogViews ?? 0)}
-                    detail={`${totals?.activeUsers ?? 0} tài khoản đang hoạt động trong danh sách vừa tải`}
+                    label="Doanh thu đã ghi nhận"
+                    value={formatCurrencyVnd(totals?.totalRevenue ?? 0)}
+                    detail={`Tháng này ${formatCurrencyVnd(totals?.revenueThisMonth ?? 0)} từ ${totals?.paidOrders ?? 0}/${totals?.totalOrders ?? 0} đơn`}
                     icon={TrendingUp}
                     accent="bg-emerald-500"
                   />
@@ -471,7 +478,7 @@ export default function DashBoard() {
                   >
                     <div className="space-y-3">
                       {[
-                        'Bổ sung endpoint dashboard tổng hợp cho doanh thu, đơn hàng và lịch hẹn.',
+                        'Bổ sung endpoint dashboard tổng hợp cho lịch hẹn và hiệu suất dịch vụ.',
                         'Thêm bảng quản trị đơn hàng để theo dõi checkout và thanh toán PayOS.',
                         'Thêm module lịch hẹn dịch vụ để thay thế thẻ placeholder hiện tại.',
                         'Bổ sung route bảo vệ frontend cho toàn bộ các trang /admin/*.',

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   Mail,
@@ -23,6 +23,7 @@ import { getImageUrl } from '../../utils/imageUtils';
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -469,7 +470,7 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <button className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors">
+                <button onClick={() => navigate('/thu-cung')} className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors">
                   <Plus className="w-3 h-3" />
                   Thêm thú cưng
                 </button>

@@ -149,8 +149,15 @@ export default function ProductDetailPage() {
               <img
                 src={activeImage}
                 alt={product.productName}
-                className="w-full h-auto object-contain transition-transform duration-500 hover:scale-105"
+                className="w-full h-auto cursor-pointer object-contain transition-transform duration-500 hover:scale-105"
+                onClick={goToNextImage}
               />
+
+              {safeImages.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
+                  {selectedImageIndex + 1}/{safeImages.length}
+                </div>
+              )}
 
               {safeImages.length > 1 && (
                 <>
@@ -177,7 +184,8 @@ export default function ProductDetailPage() {
             {safeImages.length > 1 && (
               <div className="mt-6 grid grid-cols-4 gap-3">
                 {safeImages.map((img, idx) => (
-                  <div
+                  <button
+                    type="button"
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
                     className={`rounded-xl overflow-hidden border transition cursor-pointer shadow-sm hover:shadow-md ${
@@ -185,9 +193,10 @@ export default function ProductDetailPage() {
                         ? "border-[#5DD3B6] ring-2 ring-[#5DD3B6]/40"
                         : "border-gray-100 hover:border-[#5DD3B6]"
                     }`}
+                    aria-label={`Xem ảnh ${idx + 1}`}
                   >
                     <img src={img} alt={`${product.productName}-${idx}`} className="w-full h-20 object-cover" />
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

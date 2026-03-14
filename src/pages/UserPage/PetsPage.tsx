@@ -153,7 +153,10 @@ export default function PetsPage() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      alert('Vui lòng nhập tên thú cưng trước khi lưu.');
+      return;
+    }
 
     // translate form values into the new backend payload shape
 

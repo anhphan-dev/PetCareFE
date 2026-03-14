@@ -1,6 +1,7 @@
 import { Eye, EyeOff, Lock, Mail, PawPrint } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthService } from '../../services/AuthAPI';
 
@@ -12,6 +13,26 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { setUser } = useAuth();
+
+  const handleGoogleSuccess = async (idToken: string) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await AuthService.googleLogin(idToken);
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('tokenExpiresAt', response.expiresAt);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setUser(response.user);
+      const role = response.user.roleName?.trim().toLowerCase() || 'customer';
+      if (role === 'admin') navigate('/admin', { replace: true });
+      else if (role === 'staff') navigate('/staff', { replace: true });
+      else navigate('/', { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google login failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,6 +153,32 @@ export default function LoginPage() {
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </form>
+
+          <div className="mt-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-3 text-gray-400">hoặc</span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-center">
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    handleGoogleSuccess(credentialResponse.credential);
+                  }
+                }}
+                onError={() => setError('Google login was cancelled or failed.')}
+                width="368"
+                text="signin_with"
+                shape="rectangular"
+                theme="outline"
+                locale="vi"
+              />
+            </div>
+          </div>
 
           <p className="mt-6 text-center text-sm text-gray-600">
             Chưa có tài khoản?{' '}

@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Layout from './components/Layout';
 import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider } from './contexts/AuthContext';
@@ -30,6 +31,7 @@ import SubscriptionCancelPage from './pages/SubscriptionPage/SubscriptionCancelP
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
     <BrowserRouter>
     <ScrollToTop/>
       <AuthProvider>
@@ -71,6 +73,7 @@ createRoot(document.getElementById('root')!).render(
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
+    </GoogleOAuthProvider>
     <ToastContainer />
   </StrictMode>
 );

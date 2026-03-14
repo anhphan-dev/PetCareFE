@@ -244,6 +244,15 @@ export default function Header() {
                 </div>
               )}
             </div>
+
+            {/* THÀNH VIÊN */}
+            <Link
+              to="/membership"
+              className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors inline-flex items-center gap-1"
+            >
+              <Crown className="w-4 h-4" />
+              THÀNH VIÊN
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
@@ -412,6 +421,16 @@ export default function Header() {
                 ))}
               </div>
             )}
+
+            {/* THÀNH VIÊN */}
+            <Link
+              to="/membership"
+              className="flex items-center gap-2 py-2 text-sm font-medium text-gray-700 hover:text-teal-600"
+              onClick={closeAllMobile}
+            >
+              <Crown className="w-4 h-4" />
+              THÀNH VIÊN
+            </Link>
 
             <button
               onClick={() => {

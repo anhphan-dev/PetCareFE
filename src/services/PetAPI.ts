@@ -1,7 +1,6 @@
 import httpClient from './httpClient';
 
 export type PetPayload = {
-  userId: string;
   petName: string;
   speciesId?: string;
   breedId?: string;

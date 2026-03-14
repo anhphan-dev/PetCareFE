@@ -1,5 +1,7 @@
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   Loader2,
   ShoppingBag,
@@ -11,6 +13,7 @@ import { toast } from "react-toastify";
 import { useCart } from "../../contexts/CartContext";
 import { productService } from "../../services/ProductService/productService";
 import { Product } from "../../types";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +21,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -39,6 +43,10 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [product?.id]);
+
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
@@ -46,6 +54,28 @@ export default function ProductDetailPage() {
     product?.salePrice && product.salePrice > 0 && product.salePrice < product.price;
 
   const displayPrice = hasValidSale ? product!.salePrice : product?.price ?? 0;
+
+  const galleryImages =
+    product?.images
+      ?.map((img) => getImageUrl(img) || img)
+      .filter((img): img is string => Boolean(img && img.trim().length > 0)) ?? [];
+
+  const safeImages =
+    galleryImages.length > 0
+      ? galleryImages
+      : ["https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg"];
+
+  const activeImage = safeImages[Math.min(selectedImageIndex, safeImages.length - 1)] || safeImages[0];
+
+  const goToNextImage = () => {
+    if (safeImages.length <= 1) return;
+    setSelectedImageIndex((idx) => (idx + 1) % safeImages.length);
+  };
+
+  const goToPrevImage = () => {
+    if (safeImages.length <= 1) return;
+    setSelectedImageIndex((idx) => (idx - 1 + safeImages.length) % safeImages.length);
+  };
 
   const handleAddToCart = async () => {
   if (!product || product.stockQuantity < quantity) {
@@ -97,20 +127,46 @@ export default function ProductDetailPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <div>
-            <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+            <div className="relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
               <img
-                src={product.images?.[0] || "https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg"}
+                src={activeImage}
                 alt={product.productName}
                 className="w-full h-auto object-contain transition-transform duration-500 hover:scale-105"
               />
+
+              {safeImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={goToPrevImage}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow hover:bg-white"
+                    aria-label="Ảnh trước"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goToNextImage}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow hover:bg-white"
+                    aria-label="Ảnh tiếp theo"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
             </div>
 
-            {product.images?.length > 1 && (
+            {safeImages.length > 1 && (
               <div className="mt-6 grid grid-cols-4 gap-3">
-                {product.images.slice(1).map((img, idx) => (
+                {safeImages.map((img, idx) => (
                   <div
                     key={idx}
-                    className="rounded-xl overflow-hidden border border-gray-100 hover:border-[#5DD3B6] transition cursor-pointer shadow-sm hover:shadow-md"
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`rounded-xl overflow-hidden border transition cursor-pointer shadow-sm hover:shadow-md ${
+                      selectedImageIndex === idx
+                        ? "border-[#5DD3B6] ring-2 ring-[#5DD3B6]/40"
+                        : "border-gray-100 hover:border-[#5DD3B6]"
+                    }`}
                   >
                     <img src={img} alt={`${product.productName}-${idx}`} className="w-full h-20 object-cover" />
                   </div>

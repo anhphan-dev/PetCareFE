@@ -55,10 +55,22 @@ export default function ProductDetailPage() {
 
   const displayPrice = hasValidSale ? product!.salePrice : product?.price ?? 0;
 
-  const galleryImages =
-    product?.images
-      ?.map((img) => getImageUrl(img) || img)
-      .filter((img): img is string => Boolean(img && img.trim().length > 0)) ?? [];
+  const rawImages = Array.isArray(product?.images) ? product.images : [];
+
+  const galleryImages = rawImages
+    .map((img) => {
+      if (typeof img === "string") {
+        return getImageUrl(img) || img;
+      }
+
+      if (img && typeof img === "object" && "imageUrl" in (img as Record<string, unknown>)) {
+        const imageUrl = (img as { imageUrl?: string }).imageUrl;
+        return imageUrl ? getImageUrl(imageUrl) || imageUrl : "";
+      }
+
+      return "";
+    })
+    .filter((img): img is string => Boolean(img && img.trim().length > 0));
 
   const safeImages =
     galleryImages.length > 0
@@ -66,6 +78,12 @@ export default function ProductDetailPage() {
       : ["https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg"];
 
   const activeImage = safeImages[Math.min(selectedImageIndex, safeImages.length - 1)] || safeImages[0];
+
+  useEffect(() => {
+    if (selectedImageIndex >= safeImages.length) {
+      setSelectedImageIndex(0);
+    }
+  }, [safeImages.length, selectedImageIndex]);
 
   const goToNextImage = () => {
     if (safeImages.length <= 1) return;
@@ -139,7 +157,7 @@ export default function ProductDetailPage() {
                   <button
                     type="button"
                     onClick={goToPrevImage}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow hover:bg-white"
+                    className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow hover:bg-white"
                     aria-label="Ảnh trước"
                   >
                     <ChevronLeft className="h-5 w-5" />
@@ -147,7 +165,7 @@ export default function ProductDetailPage() {
                   <button
                     type="button"
                     onClick={goToNextImage}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow hover:bg-white"
+                    className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-700 shadow hover:bg-white"
                     aria-label="Ảnh tiếp theo"
                   >
                     <ChevronRight className="h-5 w-5" />

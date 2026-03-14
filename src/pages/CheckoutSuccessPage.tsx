@@ -8,6 +8,7 @@ export default function CheckoutSuccessPage() {
 
   const orderNumber = params.get('orderNumber') || 'N/A';
   const amount = Number(params.get('amount') || 0);
+  const method = (params.get('method') || 'cod').toLowerCase();
 
   return (
     <div className="min-h-[60vh] bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -17,7 +18,7 @@ export default function CheckoutSuccessPage() {
 
         <div className="rounded-xl bg-teal-50 border border-teal-200 p-4 text-left space-y-2 mb-6">
           <p className="text-sm text-gray-700"><span className="font-semibold">Mã đơn hàng:</span> {orderNumber}</p>
-          <p className="text-sm text-gray-700"><span className="font-semibold">Thanh toán:</span> COD (khi nhận hàng)</p>
+          <p className="text-sm text-gray-700"><span className="font-semibold">Thanh toán:</span> {method === 'payos' ? 'PayOS (Online)' : 'COD (khi nhận hàng)'}</p>
           <p className="text-sm text-gray-700"><span className="font-semibold">Tổng tiền:</span> {formatPrice(amount)}</p>
         </div>
 

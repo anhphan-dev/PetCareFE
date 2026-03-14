@@ -25,7 +25,7 @@ export default function CheckoutPage() {
     shippingCity: user?.city || '',
     shippingDistrict: user?.district || '',
     note: '',
-    paymentMethod: 'cod',
+    paymentMethod: 'payos',
   });
 
   useEffect(() => {
@@ -68,12 +68,19 @@ export default function CheckoutPage() {
         shippingCity: form.shippingCity.trim() || undefined,
         shippingDistrict: form.shippingDistrict.trim() || undefined,
         note: form.note.trim() || undefined,
-        paymentMethod: 'cod',
+        paymentMethod: form.paymentMethod,
+        returnBaseUrl: window.location.origin,
       });
 
       await refreshCart();
+
+      if (form.paymentMethod === 'payos' && result.paymentUrl) {
+        window.location.href = result.paymentUrl;
+        return;
+      }
+
       navigate(
-        `/thanh-toan/thanh-cong?orderNumber=${encodeURIComponent(result.orderNumber)}&amount=${result.finalAmount}`,
+        `/thanh-toan/thanh-cong?orderNumber=${encodeURIComponent(result.orderNumber)}&amount=${result.finalAmount}&method=${encodeURIComponent(form.paymentMethod)}`,
         { replace: true }
       );
     } catch (err) {
@@ -163,8 +170,32 @@ export default function CheckoutPage() {
               />
             </div>
 
-            <div className="rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm text-teal-800">
-              Phương thức thanh toán hiện tại: Thanh toán khi nhận hàng (COD)
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Phương thức thanh toán</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, paymentMethod: 'payos' }))}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    form.paymentMethod === 'payos'
+                      ? 'border-teal-500 bg-teal-50 text-teal-700'
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  PayOS (Online)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, paymentMethod: 'cod' }))}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    form.paymentMethod === 'cod'
+                      ? 'border-teal-500 bg-teal-50 text-teal-700'
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  COD (Nhận hàng)
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-3 pt-2">
@@ -176,7 +207,7 @@ export default function CheckoutPage() {
                 disabled={!canSubmit || submitting}
                 className="ml-auto px-6 py-2 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 disabled:bg-gray-400"
               >
-                {submitting ? 'Đang xử lý...' : 'Đặt hàng'}
+                {submitting ? 'Đang xử lý...' : form.paymentMethod === 'payos' ? 'Thanh toán với PayOS' : 'Đặt hàng'}
               </button>
             </div>
           </form>

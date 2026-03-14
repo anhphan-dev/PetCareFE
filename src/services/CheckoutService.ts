@@ -24,6 +24,7 @@ export type PlaceOrderPayload = {
   shippingDistrict?: string;
   note?: string;
   paymentMethod?: string;
+  returnBaseUrl?: string;
 };
 
 export type PlaceOrderResult = {
@@ -34,6 +35,8 @@ export type PlaceOrderResult = {
   paymentStatus: string;
   orderStatus: string;
   orderedAt: string;
+  paymentUrl?: string | null;
+  orderCode?: number | null;
 };
 
 type ApiResponse<T> = {

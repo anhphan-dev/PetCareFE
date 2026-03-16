@@ -15,8 +15,11 @@ export default function CheckoutPage() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<CheckoutSummary | null>(null);
+  const [voucherCode, setVoucherCode] = useState('');
+  const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     shippingName: user?.fullName || '',
@@ -33,8 +36,9 @@ export default function CheckoutPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await CheckoutService.getSummary();
+        const data = await CheckoutService.getSummary(voucherCode);
         setSummary(data);
+        setVoucherMessage(data.voucherMessage || null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Không thể tải thông tin thanh toán.');
       } finally {
@@ -42,6 +46,20 @@ export default function CheckoutPage() {
       }
     })();
   }, []);
+
+  const applyVoucher = async () => {
+    try {
+      setApplyingVoucher(true);
+      setError(null);
+      const data = await CheckoutService.getSummary(voucherCode);
+      setSummary(data);
+      setVoucherMessage(data.voucherMessage || null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể áp dụng voucher.');
+    } finally {
+      setApplyingVoucher(false);
+    }
+  };
 
   const canSubmit = useMemo(() => {
     return (
@@ -69,6 +87,7 @@ export default function CheckoutPage() {
         shippingDistrict: form.shippingDistrict.trim() || undefined,
         note: form.note.trim() || undefined,
         paymentMethod: form.paymentMethod,
+        voucherCode: voucherCode.trim() || undefined,
         returnBaseUrl: window.location.origin,
       });
 
@@ -171,6 +190,31 @@ export default function CheckoutPage() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mã voucher</label>
+              <div className="flex gap-2">
+                <input
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value)}
+                  placeholder="Nhập mã giảm giá"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={applyVoucher}
+                  disabled={applyingVoucher}
+                  className="px-4 py-2 rounded-lg border border-teal-600 text-teal-700 font-medium hover:bg-teal-50 disabled:opacity-50"
+                >
+                  {applyingVoucher ? 'Đang áp dụng...' : 'Áp dụng'}
+                </button>
+              </div>
+              {voucherMessage && (
+                <p className={`mt-1 text-xs ${summary?.hasVoucherDiscount ? 'text-emerald-700' : 'text-gray-500'}`}>
+                  {voucherMessage}
+                </p>
+              )}
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Phương thức thanh toán</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button
@@ -230,6 +274,21 @@ export default function CheckoutPage() {
               </div>
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex justify-between"><span>Tạm tính</span><span>{formatPrice(summary.totalAmount)}</span></div>
+                {(summary.membershipDiscountAmount ?? 0) > 0 && (
+                  <div className="flex justify-between text-emerald-700">
+                    <span>
+                      Giảm giá thành viên
+                      {summary.membershipDiscountRate ? ` (${Math.round(summary.membershipDiscountRate * 100)}%)` : ''}
+                    </span>
+                    <span>-{formatPrice(summary.membershipDiscountAmount ?? 0)}</span>
+                  </div>
+                )}
+                {(summary.voucherDiscountAmount ?? 0) > 0 && (
+                  <div className="flex justify-between text-emerald-700">
+                    <span>Voucher {summary.voucherCode ? `(${summary.voucherCode})` : ''}</span>
+                    <span>-{formatPrice(summary.voucherDiscountAmount ?? 0)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between"><span>Phí giao hàng</span><span>{formatPrice(summary.shippingFee)}</span></div>
                 <div className="flex justify-between font-semibold text-base border-t pt-2">
                   <span>Tổng cộng</span><span>{formatPrice(summary.finalAmount)}</span>

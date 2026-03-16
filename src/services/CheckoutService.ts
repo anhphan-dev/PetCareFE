@@ -12,6 +12,14 @@ export type CheckoutSummaryItem = {
 export type CheckoutSummary = {
   items: CheckoutSummaryItem[];
   totalAmount: number;
+  hasMembershipDiscount?: boolean;
+  membershipDiscountRate?: number;
+  membershipDiscountAmount?: number;
+  hasVoucherDiscount?: boolean;
+  voucherCode?: string | null;
+  voucherDiscountAmount?: number;
+  voucherMessage?: string;
+  discountAmount: number;
   shippingFee: number;
   finalAmount: number;
 };
@@ -24,12 +32,18 @@ export type PlaceOrderPayload = {
   shippingDistrict?: string;
   note?: string;
   paymentMethod?: string;
+  voucherCode?: string;
   returnBaseUrl?: string;
 };
 
 export type PlaceOrderResult = {
   id: string;
   orderNumber: string;
+  totalAmount?: number;
+  membershipDiscountAmount?: number;
+  voucherDiscountAmount?: number;
+  voucherCode?: string | null;
+  discountAmount?: number;
   finalAmount: number;
   paymentMethod: string;
   paymentStatus: string;
@@ -47,8 +61,9 @@ type ApiResponse<T> = {
 };
 
 export const CheckoutService = {
-  async getSummary(): Promise<CheckoutSummary> {
-    const response = await httpClient.get<ApiResponse<CheckoutSummary>>('/Checkout/summary');
+  async getSummary(voucherCode?: string): Promise<CheckoutSummary> {
+    const query = voucherCode?.trim() ? `?voucherCode=${encodeURIComponent(voucherCode.trim())}` : '';
+    const response = await httpClient.get<ApiResponse<CheckoutSummary>>(`/Checkout/summary${query}`);
     return response.data;
   },
 

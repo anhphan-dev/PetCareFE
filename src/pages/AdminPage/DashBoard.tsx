@@ -17,6 +17,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  TicketPercent,
   TrendingUp,
   Users,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ import AdminDashboardService, {
   AdminDashboardData,
   AdminProductSummary,
   AdminUserSummary,
+  AdminVoucherSummary,
 } from '../../services/AdminDashboardService';
 
 const menuItems = [
@@ -34,6 +36,7 @@ const menuItems = [
   { icon: Box, label: 'Sản phẩm', path: '/admin/san-pham' },
   { icon: Calendar, label: 'Lịch hẹn', path: '/admin/lich-hen' },
   { icon: FileText, label: 'Tin tức', path: '/admin/tin-tuc' },
+  { icon: TicketPercent, label: 'Voucher', path: '/admin/vouchers' },
   { icon: Settings, label: 'Cài đặt', path: '/admin/cai-dat' },
 ];
 
@@ -165,6 +168,28 @@ function PostRow({ post }: { post: AdminBlogSummary }) {
           {post.viewCount}
         </span>
         <span>{formatCompactDate(post.createdAt)}</span>
+      </div>
+    </div>
+  );
+}
+
+function VoucherRow({ voucher }: { voucher: AdminVoucherSummary }) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-900">{voucher.code}</p>
+          <p className="mt-1 line-clamp-1 text-xs text-slate-500">{voucher.name}</p>
+        </div>
+        <div className={`rounded-full px-2.5 py-1 text-xs font-semibold ${voucher.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+          {voucher.isActive ? 'Active' : 'Inactive'}
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+        <span>
+          {voucher.discountType === 'percentage' ? `${voucher.discountValue}%` : formatCurrencyVnd(voucher.discountValue)}
+        </span>
+        <span>{voucher.usedCount}{voucher.usageLimit ? `/${voucher.usageLimit}` : ''} lượt</span>
       </div>
     </div>
   );
@@ -332,7 +357,7 @@ export default function DashBoard() {
                   Live overview
                 </div>
                 <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 xl:text-4xl">
-                  Dashboard quản trị hiện đại cho PetCare
+                  Admin Dashboard
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500 xl:text-base">
                   {heroSummary}
@@ -413,6 +438,13 @@ export default function DashBoard() {
                     detail={`Tháng này ${formatCurrencyVnd(totals?.revenueThisMonth ?? 0)} từ ${totals?.paidOrders ?? 0}/${totals?.totalOrders ?? 0} đơn`}
                     icon={TrendingUp}
                     accent="bg-emerald-500"
+                  />
+                  <StatCard
+                    label="Voucher"
+                    value={String(totals?.activeVouchers ?? 0)}
+                    detail={`${totals?.expiringVouchers ?? 0} voucher sắp hết hạn trong 7 ngày`}
+                    icon={TicketPercent}
+                    accent="bg-indigo-500"
                   />
                 </section>
 
@@ -551,6 +583,31 @@ export default function DashBoard() {
                       {(dashboardData?.latestPosts ?? []).map((post) => (
                         <PostRow key={post.id} post={post} />
                       ))}
+                    </div>
+                  </SectionShell>
+
+                  <SectionShell
+                    title="Voucher hiệu quả"
+                    subtitle="Top voucher theo số lượt sử dụng"
+                    action={
+                      <Link
+                        to="/admin/vouchers"
+                        className="text-sm font-semibold text-teal-700 transition-colors hover:text-teal-800"
+                      >
+                        Quản lý voucher
+                      </Link>
+                    }
+                  >
+                    <div className="space-y-3">
+                      {(dashboardData?.topVouchers ?? []).length > 0 ? (
+                        (dashboardData?.topVouchers ?? []).map((voucher) => (
+                          <VoucherRow key={voucher.id} voucher={voucher} />
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                          Chưa có voucher nào trong hệ thống.
+                        </div>
+                      )}
                     </div>
                   </SectionShell>
                 </section>

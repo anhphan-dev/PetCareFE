@@ -1,5 +1,25 @@
 import httpClient from './httpClient';
 import { User } from './AuthAPI';
+import { isTokenRevoked, revokeToken } from '../utils/tokenRevocation';
+
+function getValidTokenOrThrow(): string {
+  const token = localStorage.getItem('authToken');
+
+  if (!token) {
+    throw new Error('Phien dang nhap het han hoac chua dang nhap. Vui long dang nhap lai.');
+  }
+
+  if (isTokenRevoked(token)) {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenExpiresAt');
+    localStorage.removeItem('user');
+    window.dispatchEvent(new Event('auth:logout'));
+    throw new Error('Token da bi thu hoi. Vui long dang nhap lai.');
+  }
+
+  // If token is valid at this point, it can be safely used by non-httpClient calls.
+  return token;
+}
 
 // Profile Response Types
 export interface ProfileResponse {
@@ -75,19 +95,28 @@ export const ProfileService = {
   async uploadAvatar(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
+    const token = getValidTokenOrThrow();
 
     const response = await fetch(
       `${import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api'}/Profile/avatar`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       }
     );
 
     if (!response.ok) {
+      if (response.status === 401) {
+        const expiresAt = localStorage.getItem('tokenExpiresAt');
+        revokeToken(token, expiresAt);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenExpiresAt');
+        localStorage.removeItem('user');
+        window.dispatchEvent(new Event('auth:logout'));
+      }
       throw new Error('Failed to upload avatar');
     }
 
@@ -104,19 +133,28 @@ export const ProfileService = {
   async uploadImage(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
+    const token = getValidTokenOrThrow();
 
     const response = await fetch(
       `${import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api'}/Profile/upload-image`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       }
     );
 
     if (!response.ok) {
+      if (response.status === 401) {
+        const expiresAt = localStorage.getItem('tokenExpiresAt');
+        revokeToken(token, expiresAt);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenExpiresAt');
+        localStorage.removeItem('user');
+        window.dispatchEvent(new Event('auth:logout'));
+      }
       throw new Error('Failed to upload image');
     }
 

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthService } from '../../services/AuthAPI';
+import { clearTokenRevocation } from '../../utils/tokenRevocation';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +20,7 @@ export default function LoginPage() {
     setError('');
     try {
       const response = await AuthService.googleLogin(idToken);
+      clearTokenRevocation(response.token);
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('tokenExpiresAt', response.expiresAt);
       localStorage.setItem('user', JSON.stringify(response.user));
@@ -41,6 +43,7 @@ export default function LoginPage() {
 
     try {
       const response = await AuthService.login({ email, password });
+      clearTokenRevocation(response.token);
 
       // Lưu thông tin
       localStorage.setItem('authToken', response.token);

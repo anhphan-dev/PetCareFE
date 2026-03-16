@@ -12,6 +12,8 @@ import AboutPage from './pages/AboutPage';
 import DashBoard from './pages/AdminPage/DashBoard';
 import UsersPage from './pages/AdminPage/UsersPage';
 import VouchersPage from './pages/AdminPage/VouchersPage';
+import AdminPlaceholderPage from './pages/AdminPage/AdminPlaceholderPage';
+import AdminProductsPage from './pages/AdminPage/ProductsPage';
 import BookingPage from './pages/BookingPage';
 import CartPage from './pages/CartPage/CartPage';
 import ContactPage from './pages/ContactPage';
@@ -75,6 +77,19 @@ createRoot(document.getElementById('root')!).render(
           </Route>
           <Route path="/admin" element={<DashBoard />} />
           <Route path="/admin/khach-hang" element={<UsersPage />} />
+          <Route path="/admin/san-pham" element={<AdminProductsPage />} />
+          <Route
+            path="/admin/lich-hen"
+            element={<AdminPlaceholderPage title="Quản lý lịch hẹn" description="Module lịch hẹn admin chưa được build chi tiết. Route đã hoạt động để không còn trang trắng khi truy cập." />}
+          />
+          <Route
+            path="/admin/tin-tuc"
+            element={<AdminPlaceholderPage title="Quản lý tin tức" description="Module quản lý bài viết admin đang chờ tích hợp danh sách bài viết và thao tác xuất bản." />}
+          />
+          <Route
+            path="/admin/cai-dat"
+            element={<AdminPlaceholderPage title="Cài đặt hệ thống" description="Trang cài đặt admin đã có route. Bạn có thể yêu cầu thêm cấu hình cụ thể để mình triển khai tiếp." />}
+          />
           <Route path="/admin/vouchers" element={<VouchersPage />} />
 
           <Route path="/staff" element={<StaffDashBoard />} />

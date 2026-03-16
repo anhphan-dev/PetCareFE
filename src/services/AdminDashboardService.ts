@@ -32,6 +32,49 @@ export interface AdminProductSummary {
   salePrice?: number | null;
 }
 
+export interface AdminProductCategory {
+  id: string;
+  categoryName: string;
+  isActive?: boolean;
+}
+
+export interface AdminProductsPagedResult {
+  items: AdminProductSummary[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages?: number;
+}
+
+export type CreateProductPayload = {
+  productName: string;
+  description?: string;
+  categoryId?: string;
+  price: number;
+  salePrice?: number;
+  stockQuantity?: number;
+  sku?: string;
+  weight?: number;
+  dimensions?: string;
+  isActive?: boolean;
+  providerId?: string;
+  imageUrls?: string[];
+};
+
+export type UpdateProductPayload = {
+  productName?: string;
+  description?: string;
+  categoryId?: string;
+  price?: number;
+  salePrice?: number;
+  stockQuantity?: number;
+  sku?: string;
+  weight?: number;
+  dimensions?: string;
+  isActive?: boolean;
+  providerId?: string;
+};
+
 export interface AdminBlogSummary {
   id: string;
   title: string;
@@ -222,6 +265,42 @@ const AdminDashboardService = {
       page: Number(raw?.page ?? 1),
       pageSize: Number(raw?.pageSize ?? pageSize),
     };
+  },
+
+  async getProducts(page = 1, pageSize = 20): Promise<AdminProductsPagedResult> {
+    const response = await httpClient.get<ApiEnvelope<AdminProductsPagedResult>>('/Products', {
+      params: { page, pageSize },
+    });
+
+    const raw = unwrap(response) as AdminProductsPagedResult;
+    return {
+      items: raw?.items ?? [],
+      totalCount: Number(raw?.totalCount ?? 0),
+      page: Number(raw?.page ?? page),
+      pageSize: Number(raw?.pageSize ?? pageSize),
+      totalPages: Number(raw?.totalPages ?? 0),
+    };
+  },
+
+  async getProductCategories(): Promise<AdminProductCategory[]> {
+    const response = await httpClient.get<ApiEnvelope<AdminProductCategory[]>>('/ProductCategories');
+    const raw = unwrap(response);
+    return Array.isArray(raw) ? raw : [];
+  },
+
+  async createProduct(payload: CreateProductPayload): Promise<void> {
+    await httpClient.post<ApiEnvelope<AdminProductSummary>>('/Products', {
+      ...payload,
+      imageUrls: payload.imageUrls ?? [],
+    });
+  },
+
+  async updateProduct(productId: string, payload: UpdateProductPayload): Promise<void> {
+    await httpClient.put<ApiEnvelope<AdminProductSummary>>(`/Products/${productId}`, payload);
+  },
+
+  async deleteProduct(productId: string): Promise<void> {
+    await httpClient.delete<ApiEnvelope<boolean>>(`/Products/${productId}`);
   },
 
   async getUsers(page = 1, pageSize = 20): Promise<AdminUsersPagedResult> {

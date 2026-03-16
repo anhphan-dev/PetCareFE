@@ -27,6 +27,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshCart = async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setCartItems([]);
+      setCartCount(0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       let items = await cartService.getCart();
@@ -45,6 +53,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshCart();
+  }, []);
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setCartItems([]);
+        setCartCount(0);
+        setLoading(false);
+        return;
+      }
+
+      refreshCart();
+    };
+
+    window.addEventListener('storage', handleAuthChange);
+    window.addEventListener('auth:logout', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleAuthChange);
+      window.removeEventListener('auth:logout', handleAuthChange);
+    };
   }, []);
 
   const addToCart = async (productId: string, quantity: number = 1) => {

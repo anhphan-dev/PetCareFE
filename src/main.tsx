@@ -10,6 +10,8 @@ import { CartProvider } from './contexts/CartContext';
 import './index.css';
 import AboutPage from './pages/AboutPage';
 import DashBoard from './pages/AdminPage/DashBoard';
+import UsersPage from './pages/AdminPage/UsersPage';
+import VouchersPage from './pages/AdminPage/VouchersPage';
 import BookingPage from './pages/BookingPage';
 import CartPage from './pages/CartPage/CartPage';
 import ContactPage from './pages/ContactPage';
@@ -72,6 +74,8 @@ createRoot(document.getElementById('root')!).render(
 
           </Route>
           <Route path="/admin" element={<DashBoard />} />
+          <Route path="/admin/khach-hang" element={<UsersPage />} />
+          <Route path="/admin/vouchers" element={<VouchersPage />} />
 
           <Route path="/staff" element={<StaffDashBoard />} />
           <Route path="/staff/them-san-pham" element={<AddProductPage />} />

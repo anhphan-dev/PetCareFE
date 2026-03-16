@@ -10,10 +10,17 @@ export interface AdminUserSummary {
   id: string;
   fullName: string;
   email: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  address?: string | null;
+  city?: string | null;
+  district?: string | null;
   roleName?: string | null;
   isActive: boolean;
   createdAt: string;
 }
+
+export interface AdminUserDetail extends AdminUserSummary {}
 
 export interface AdminProductSummary {
   id: string;
@@ -69,6 +76,32 @@ export interface AdminUsersPagedResult {
   pageSize: number;
   totalPages?: number;
 }
+
+export type CreateUserPayload = {
+  email: string;
+  fullName: string;
+  phone?: string;
+  avatarUrl?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  password: string;
+  roleName?: string;
+};
+
+export type UpdateUserPayload = {
+  phone?: string;
+  fullName?: string;
+  avatarUrl?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  newPassword?: string;
+};
+
+export type SetUserRolePayload = {
+  roleName: string;
+};
 
 export interface AdminVoucherSummary {
   id: string;
@@ -140,6 +173,11 @@ const unwrap = <T>(response: T | ApiEnvelope<T>): T => {
   return response as T;
 };
 
+const isNotFoundOrForbidden = (message: string) => {
+  const lower = message.toLowerCase();
+  return lower.includes('not found') || lower.includes('forbidden');
+};
+
 const AdminDashboardService = {
   async getOverview(): Promise<AdminDashboardData> {
     const response = await httpClient.get<ApiEnvelope<AdminDashboardData>>('/AdminDashboard/overview');
@@ -187,18 +225,77 @@ const AdminDashboardService = {
   },
 
   async getUsers(page = 1, pageSize = 20): Promise<AdminUsersPagedResult> {
-    const response = await httpClient.get<ApiEnvelope<AdminUsersPagedResult>>('/AdminDashboard/users', {
-      params: { page, pageSize },
-    });
+    try {
+      const response = await httpClient.get<ApiEnvelope<AdminUsersPagedResult>>('/AdminDashboard/users', {
+        params: { page, pageSize },
+      });
 
-    const raw = unwrap(response) as AdminUsersPagedResult;
-    return {
-      items: raw?.items ?? [],
-      totalCount: Number(raw?.totalCount ?? 0),
-      page: Number(raw?.page ?? page),
-      pageSize: Number(raw?.pageSize ?? pageSize),
-      totalPages: Number(raw?.totalPages ?? 0),
-    };
+      const raw = unwrap(response) as AdminUsersPagedResult;
+      return {
+        items: raw?.items ?? [],
+        totalCount: Number(raw?.totalCount ?? 0),
+        page: Number(raw?.page ?? page),
+        pageSize: Number(raw?.pageSize ?? pageSize),
+        totalPages: Number(raw?.totalPages ?? 0),
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (isNotFoundOrForbidden(message)) {
+        try {
+          const fallbackResponse = await httpClient.get<ApiEnvelope<AdminUsersPagedResult>>('/Users', {
+            params: { page, pageSize },
+          });
+
+          const raw = unwrap(fallbackResponse) as AdminUsersPagedResult;
+          return {
+            items: raw?.items ?? [],
+            totalCount: Number(raw?.totalCount ?? 0),
+            page: Number(raw?.page ?? page),
+            pageSize: Number(raw?.pageSize ?? pageSize),
+            totalPages: Number(raw?.totalPages ?? 0),
+          };
+        } catch {
+          // Continue to final fallback below.
+        }
+      }
+
+      const overviewResponse = await httpClient.get<ApiEnvelope<AdminDashboardData>>('/AdminDashboard/overview');
+      const overview = unwrap(overviewResponse) as AdminDashboardData;
+      return {
+        items: Array.isArray(overview?.recentUsers) ? overview.recentUsers : [],
+        totalCount: Number(overview?.totals?.users ?? 0),
+        page: 1,
+        pageSize,
+        totalPages: 1,
+      };
+    }
+  },
+
+  async getUserById(userId: string): Promise<AdminUserDetail> {
+    const response = await httpClient.get<ApiEnvelope<AdminUserDetail>>(`/Users/${userId}`);
+    return unwrap(response) as AdminUserDetail;
+  },
+
+  async createUser(payload: CreateUserPayload): Promise<void> {
+    const { roleName, ...createPayload } = payload;
+    const response = await httpClient.post<ApiEnvelope<AdminUserDetail>>('/Users', createPayload);
+    const created = unwrap(response) as AdminUserDetail;
+
+    if (roleName && created?.id) {
+      await this.setUserRole(created.id, { roleName });
+    }
+  },
+
+  async updateUser(userId: string, payload: UpdateUserPayload): Promise<void> {
+    await httpClient.put<ApiEnvelope<AdminUserDetail>>(`/Users/${userId}`, payload);
+  },
+
+  async setUserRole(userId: string, payload: SetUserRolePayload): Promise<void> {
+    await httpClient.put<ApiEnvelope<AdminUserDetail>>(`/Users/${userId}/role`, payload);
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    await httpClient.delete<ApiEnvelope<boolean>>(`/Users/${userId}`);
   },
 
   async createVoucher(payload: CreateVoucherPayload): Promise<void> {

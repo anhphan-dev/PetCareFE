@@ -357,7 +357,7 @@ export default function DashBoard() {
                   Live overview
                 </div>
                 <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 xl:text-4xl">
-                  Dashboard quản trị hiện đại cho PetCare
+                  Admin Dashboard
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500 xl:text-base">
                   {heroSummary}

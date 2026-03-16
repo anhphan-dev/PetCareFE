@@ -187,7 +187,7 @@ const AdminDashboardService = {
   },
 
   async getUsers(page = 1, pageSize = 20): Promise<AdminUsersPagedResult> {
-    const response = await httpClient.get<ApiEnvelope<AdminUsersPagedResult>>('/Users', {
+    const response = await httpClient.get<ApiEnvelope<AdminUsersPagedResult>>('/AdminDashboard/users', {
       params: { page, pageSize },
     });
 

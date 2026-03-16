@@ -113,7 +113,7 @@ export default function ProductsPage() {
       description: '',
       categoryId: '',
       price: String(item.price ?? 0),
-      salePrice: item.salePrice != null ? String(item.salePrice) : '',
+      salePrice: item.salePrice != null && item.salePrice > 0 ? String(item.salePrice) : '',
       stockQuantity: String(item.stockQuantity ?? 0),
       sku: '',
       isActive: !!item.isActive,
@@ -367,7 +367,7 @@ export default function ProductsPage() {
                         <td className="px-2 py-3 font-medium text-slate-900">{item.productName}</td>
                         <td className="px-2 py-3 text-slate-700">{item.categoryName || '-'}</td>
                         <td className="px-2 py-3 text-slate-700">
-                          {item.salePrice != null ? (
+                          {item.salePrice != null && item.salePrice > 0 && item.salePrice < item.price ? (
                             <div>
                               <span className="text-slate-400 line-through mr-2">{formatCurrency(item.price)}</span>
                               <span className="font-semibold text-emerald-700">{formatCurrency(item.salePrice)}</span>

@@ -1,14 +1,12 @@
 export interface CartItem {
-  id: string;                // cartItemId
+  id: string;
   productId: string;
+  productName: string;
+  price: number;
+  salePrice?: number | null;
   quantity: number;
-  product?: {                // optional, nếu API trả về chi tiết product
-    productName: string;
-    price: number;
-    salePrice?: number;
-    images?: string[];
-    stockQuantity: number;
-  };
+  stockQuantity: number;
+  imageUrl?: string | null;
 }
 
 export interface CartResponse {

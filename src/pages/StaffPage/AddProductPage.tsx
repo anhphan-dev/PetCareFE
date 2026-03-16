@@ -11,6 +11,7 @@ import {
   PlusCircle,
   Scissors,
   Star,
+  Upload,
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -57,6 +58,7 @@ export default function AddProductPage() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   // Fetch danh mục
@@ -108,6 +110,70 @@ export default function AddProductPage() {
 
   const addImageField = () => {
     setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ''] }));
+  };
+
+  const handleImageFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) {
+      return;
+    }
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      toast.error('Vui lòng đăng nhập để tải ảnh lên.');
+      e.target.value = '';
+      return;
+    }
+
+    const form = new FormData();
+    files.forEach((file) => form.append('files', file));
+    form.append('folder', 'products');
+
+    try {
+      setUploadingImages(true);
+
+      const apiBase =
+        import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
+
+      const response = await fetch(`${apiBase}/Images/upload-multiple`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: form,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(errorBody || 'Upload ảnh thất bại.');
+      }
+
+      const result = (await response.json()) as {
+        imageUrls?: string[];
+        message?: string;
+      };
+
+      const uploadedUrls = result.imageUrls ?? [];
+      if (uploadedUrls.length === 0) {
+        throw new Error('Không nhận được URL ảnh sau khi upload.');
+      }
+
+      setFormData((prev) => {
+        const existing = prev.imageUrls.filter((url) => url.trim() !== '');
+        return {
+          ...prev,
+          imageUrls: [...existing, ...uploadedUrls],
+        };
+      });
+
+      toast.success(`Đã tải lên ${uploadedUrls.length} ảnh.`);
+    } catch (err: any) {
+      const message = err?.message || 'Tải ảnh thất bại.';
+      toast.error(message);
+    } finally {
+      setUploadingImages(false);
+      e.target.value = '';
+    }
   };
 
   const validateForm = () => {
@@ -405,6 +471,28 @@ export default function AddProductPage() {
               {/* Ảnh */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">URL ảnh sản phẩm (không bắt buộc)</label>
+                <label className="mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-4 py-3 text-sm font-medium text-teal-700 hover:bg-teal-100">
+                  {uploadingImages ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Đang tải ảnh lên...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      Tải nhiều ảnh cùng lúc
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    disabled={uploadingImages}
+                    onChange={handleImageFilesUpload}
+                  />
+                </label>
+
                 {formData.imageUrls.map((url, index) => (
                   <input
                     key={index}

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   Mail,
@@ -17,13 +17,19 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useState } from 'react';
 import { ProfileService } from '../../services/AuthService/ProfileAPI';
+import { useEffect} from 'react';
+
+import PetAPI, { type Pet } from '../../services/PetService/PetAPI';
 import { getImageUrl } from '../../utils/imageUtils';
 
 
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [loadingPets, setLoadingPets] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -45,6 +51,34 @@ export default function ProfilePage() {
     city: user?.city || '',
     district: user?.district || '',
   });
+
+  const extractArray = <T,>(response: any): T[] => {
+    if (Array.isArray(response)) return response;
+    if (response?.data && Array.isArray(response.data)) return response.data;
+    if (response?.items && Array.isArray(response.items)) return response.items;
+    return [];
+  };
+
+  useEffect(() => {
+    if (!user?.id) {
+      setPets([]);
+      return;
+    }
+
+    (async () => {
+      try {
+        setLoadingPets(true);
+        const response = await PetAPI.getMyPets();
+        const apiPets = extractArray<Pet>(response);
+        setPets(apiPets ?? []);
+      } catch (err) {
+        console.error('Failed to load pets in profile page:', err);
+        setPets([]);
+      } finally {
+        setLoadingPets(false);
+      }
+    })();
+  }, [user?.id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -469,16 +503,46 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <button className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors">
+                <button onClick={() => navigate('/thu-cung')} className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors">
                   <Plus className="w-3 h-3" />
                   Thêm thú cưng
                 </button>
               </div>
 
-              <div className="rounded-xl border border-dashed border-gray-200 py-6 px-4 text-center text-sm text-gray-500">
-                <p className="mb-1">Bạn chưa thêm thú cưng nào.</p>
-                <p>Nhấn vào nút “Thêm thú cưng” để bắt đầu tạo hồ sơ.</p>
-              </div>
+              {loadingPets ? (
+                <div className="rounded-xl border border-dashed border-gray-200 py-6 px-4 text-center text-sm text-gray-500">
+                  Đang tải danh sách thú cưng...
+                </div>
+              ) : pets.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-200 py-6 px-4 text-center text-sm text-gray-500">
+                  <p className="mb-1">Bạn chưa thêm thú cưng nào.</p>
+                  <p>Nhấn vào nút “Thêm thú cưng” để bắt đầu tạo hồ sơ.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {pets.slice(0, 3).map((pet) => (
+                    <button
+                      key={pet.id}
+                      onClick={() => navigate('/thu-cung')}
+                      className="w-full text-left rounded-xl border border-gray-200 bg-gray-50 p-3 hover:border-teal-300 hover:bg-teal-50 transition-colors"
+                    >
+                      <div className="font-medium text-gray-800">{pet.petName || 'Chưa đặt tên'}</div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {pet.speciesName || 'Chưa có loài'}
+                        {pet.breedName ? ` • ${pet.breedName}` : ''}
+                      </div>
+                    </button>
+                  ))}
+                  {pets.length > 3 && (
+                    <button
+                      onClick={() => navigate('/thu-cung')}
+                      className="text-xs font-medium text-teal-700 hover:text-teal-800"
+                    >
+                      Xem thêm {pets.length - 3} thú cưng...
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Dịch vụ */}

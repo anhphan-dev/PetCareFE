@@ -1,6 +1,7 @@
 import {
   Briefcase,
   ChevronDown,
+  Crown,
   Dog,
   Heart,
   Home,
@@ -47,11 +48,12 @@ const shopDropdownItems = [
 
 const userMenuItems = [
   { icon: UserCircle, label: 'Hồ sơ của tôi', path: '/tai-khoan' },
+  { icon: Crown, label: 'Gói thành viên', path: '/membership' },
+  { icon: Sparkles, label: 'AI Sức khỏe', path: '/ai-suc-khoe' },
   { icon: List, label: 'Xem dịch vụ', path: '/dich-vu' },
   { icon: Briefcase, label: 'Dịch vụ đã đặt', path: '/tai-khoan/dich-vu' },
   { icon: Dog, label: 'Thú cưng của tôi', path: '/thu-cung' },
   { icon: ShoppingBag, label: 'Giỏ hàng của bạn', path: '/gio-hang' },
-
 ];
 
 export default function Header() {
@@ -243,6 +245,15 @@ export default function Header() {
                 </div>
               )}
             </div>
+
+            {/* THÀNH VIÊN */}
+            <Link
+              to="/membership"
+              className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors inline-flex items-center gap-1"
+            >
+              <Crown className="w-4 h-4" />
+              THÀNH VIÊN
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
@@ -411,6 +422,16 @@ export default function Header() {
                 ))}
               </div>
             )}
+
+            {/* THÀNH VIÊN */}
+            <Link
+              to="/membership"
+              className="flex items-center gap-2 py-2 text-sm font-medium text-gray-700 hover:text-teal-600"
+              onClick={closeAllMobile}
+            >
+              <Crown className="w-4 h-4" />
+              THÀNH VIÊN
+            </Link>
 
             <button
               onClick={() => {

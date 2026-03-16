@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Layout from './components/Layout';
 import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider } from './contexts/AuthContext';
@@ -23,11 +24,20 @@ import LoginPage from './pages/UserPage/LoginPage';
 import NewsPage from './pages/UserPage/NewsPage';
 import RegisterPage from './pages/UserPage/RegisterPage';
 import ServicePage from './pages/UserPage/ServicePage';
+import AIHealthPage from './pages/UserPage/AIHealthPage';
+import SubscriptionPage from './pages/SubscriptionPage/SubscriptionPage';
+import SubscriptionSuccessPage from './pages/SubscriptionPage/SubscriptionSuccessPage';
+import SubscriptionCancelPage from './pages/SubscriptionPage/SubscriptionCancelPage';
+import ProfilePage from './pages/UserPage/ProfilePage';
+import PetsPage from './pages/UserPage/PetsPage';
+import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 
 // import DashBoard from './pages/AdminPage/DashBoard';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
     <BrowserRouter>
     <ScrollToTop/>
       <AuthProvider>
@@ -48,7 +58,18 @@ createRoot(document.getElementById('root')!).render(
             <Route path="cua-hang" element={<ProductsPage/>} />
             <Route path="/san-pham/:id" element={<ProductDetailPage />} />
             <Route path="/gio-hang" element={<CartPage />} />
-        {/* <Route path="/thanh-toan" element={<YourCheckoutSandboxPage />} /> */}
+            <Route path="thanh-toan" element={<CheckoutPage />} />
+            <Route path="thanh-toan/thanh-cong" element={<CheckoutSuccessPage />} />
+
+            {/*USER ROUTES*/}
+            <Route path="tai-khoan" element={<ProfilePage />} />
+            <Route path="thu-cung" element={<PetsPage />} />
+            <Route path="ai-suc-khoe" element={<AIHealthPage />} />
+
+            {/*SUBSCRIPTION ROUTES*/}
+            <Route path="membership" element={<SubscriptionPage />} />
+            <Route path="subscription/success" element={<SubscriptionSuccessPage />} />
+            <Route path="subscription/cancel" element={<SubscriptionCancelPage />} />
 
           </Route>
           <Route path="/admin" element={<DashBoard />} />
@@ -65,6 +86,7 @@ createRoot(document.getElementById('root')!).render(
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
+    </GoogleOAuthProvider>
     <ToastContainer />
   </StrictMode>
 );

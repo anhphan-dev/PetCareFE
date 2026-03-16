@@ -153,12 +153,14 @@ export default function PetsPage() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      alert('Vui lòng nhập tên thú cưng trước khi lưu.');
+      return;
+    }
 
     // translate form values into the new backend payload shape
 
     const payload: PetPayload = {
-      userId: user.id,
       petName: form.name.trim(),
       speciesId: form.speciesId || undefined,
       breedId: form.breedId || undefined,
@@ -190,56 +192,13 @@ export default function PetsPage() {
         weight: '',
         color: '',
         microchipId: '',
-        age: '',
         note: '',
         image: null,
       });
       setImagePreview('');
     } catch (err) {
-      // fallback object uses the UI-friendly Pet shape
-      const speciesName = petSpecies.find(s => s.id === form.speciesId)?.speciesName || '';
-      const breedName = petSpecies
-        .find(s => s.id === form.speciesId)
-        ?.breeds?.find(b => b.id === form.breedId)
-        ?.breedName || '';
-
-      const next: Pet[] = [
-        {
-          id: crypto.randomUUID(),
-          userId: user.id,
-          petName: form.name.trim(),
-          speciesName,
-          breedName: breedName || undefined,
-          dateOfBirth: form.dateOfBirth || undefined,
-          gender: form.gender || undefined,
-          weight: form.weight ? Number(form.weight) : undefined,
-          age: form.age.trim() || undefined,
-          color: form.color.trim() || undefined,
-          microchipId: form.microchipId.trim() || undefined,
-          specialNotes: form.note.trim() || undefined,
-          avatarUrl: form.image || undefined,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        },
-        ...pets,
-      ];
-      persist(next);
-      setForm({
-        name: '',
-        speciesId: '',
-        speciesName: '',
-        breedId: '',
-        breedName: '',
-        dateOfBirth: '',
-        gender: '',
-        weight: '',
-        color: '',
-        microchipId: '',
-        age: '',
-        note: '',
-        image: null,
-      });
-      setImagePreview('');
+      console.error('Failed to create pet via API', err);
+      alert(err instanceof Error ? err.message : 'Không thể lưu thú cưng vào hệ thống.');
     }
   };
 

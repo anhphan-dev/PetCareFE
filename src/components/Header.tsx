@@ -9,9 +9,7 @@ import {
   LogOut,
   Menu,
   PawPrint,
-  Scissors,
   ShoppingBag,
-  Smile,
   Sparkles,
   SprayCan,
   ToyBrick,
@@ -33,11 +31,7 @@ const homeDropdownItems = [
 ];
 
 const servicesDropdownItems = [
-  { label: 'Spa / Thẩm mỹ', path: '/dich-vu?type=spa', icon: Sparkles },
-  { label: 'Khám bệnh tại nhà', path: '/dich-vu?type=kham-tai-nha', icon: Home },
-  { label: 'Khám sức khỏe định kỳ', path: '/dich-vu?type=dinh-ky', icon: Heart },
-  { label: 'Chăm sóc răng miệng', path: '/dich-vu?type=rang-mieng', icon: Smile },
-  { label: 'Cắt tỉa lông', path: '/dich-vu?type=cat-tia', icon: Scissors },
+  { label: 'Đặt lịch khám', path: '/dat-lich', icon: Sparkles },
 ];
 
 const shopDropdownItems = [
@@ -50,7 +44,6 @@ const userMenuItems = [
   { icon: UserCircle, label: 'Hồ sơ của tôi', path: '/tai-khoan' },
   { icon: Crown, label: 'Gói thành viên', path: '/membership' },
   { icon: Sparkles, label: 'AI Sức khỏe', path: '/ai-suc-khoe' },
-  { icon: List, label: 'Xem dịch vụ', path: '/dich-vu' },
   { icon: Briefcase, label: 'Dịch vụ đã đặt', path: '/tai-khoan/dich-vu' },
   { icon: Dog, label: 'Thú cưng của tôi', path: '/thu-cung' },
   { icon: ShoppingBag, label: 'Giỏ hàng của bạn', path: '/gio-hang' },

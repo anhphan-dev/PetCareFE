@@ -64,13 +64,13 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <div className="p-5 space-y-3">
         <Link to={`/san-pham/${product.id}`}>
-          <h3 className="font-semibold text-gray-800 line-clamp-2 min-h-[2.8rem] group-hover:text-[#2C2C2C] transition-colors duration-200">
+          <h3 className="font-semibold text-gray-800 line-clamp-2 min-h-[2.8rem] group-hover:text-teal-600 transition-colors duration-200">
             {product.productName}
           </h3>
         </Link>
 
         <div className="flex items-end gap-2.5">
-          <p className="text-xl font-bold text-[#2C2C2C]">
+          <p className="text-xl font-bold text-gray-900">
             {displayPrice > 0 ? formatPrice(displayPrice) : "Liên hệ"}
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className="flex items-center justify-between pt-3">
           <button
-            className="text-gray-500 hover:text-[#2C2C2C] transition p-1"
+            className="text-gray-500 hover:text-red-500 transition p-1"
             title="Thêm vào yêu thích"
           >
             <Heart className="w-5 h-5" />
@@ -92,7 +92,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             onClick={handleAdd}
             disabled={product.stockQuantity === 0}
-            className="bg-[#5DD3B6] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#3EBFA0] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+            className="bg-teal-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-teal-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
           >
             <ShoppingCart className="w-4 h-4" />
             Thêm

@@ -11,11 +11,8 @@ import {
   PawPrint,
   ShoppingBag,
   Sparkles,
-  SprayCan,
-  ToyBrick,
   User,
   UserCircle,
-  Utensils,
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -30,34 +27,20 @@ const homeDropdownItems = [
   { label: 'Liên hệ', path: '/lien-he', icon: Heart },
 ];
 
-const servicesDropdownItems = [
-  { label: 'Đặt lịch khám', path: '/dat-lich', icon: Sparkles },
-];
-
-const shopDropdownItems = [
-  { label: 'Thức ăn', path: '/cua-hang/thuc-an', icon: Utensils },
-  { label: 'Đồ chơi', path: '/cua-hang/do-choi', icon: ToyBrick },
-  { label: 'Vệ sinh', path: '/cua-hang/ve-sinh', icon: SprayCan },
-];
-
 const userMenuItems = [
   { icon: UserCircle, label: 'Hồ sơ của tôi', path: '/tai-khoan' },
   { icon: Crown, label: 'Gói thành viên', path: '/membership' },
   { icon: Sparkles, label: 'AI Sức khỏe', path: '/ai-suc-khoe' },
   { icon: Briefcase, label: 'Dịch vụ đã đặt', path: '/tai-khoan/dich-vu' },
-  { icon: Dog, label: 'Thú cưng của tôi', path: '/thu-cung' },
+  { icon: Dog, label: 'Thú cưng của tôi', path: '/my-pet' },
   { icon: ShoppingBag, label: 'Giỏ hàng của bạn', path: '/gio-hang' },
 ];
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const homeDropdown = useDropdown();
-  const servicesDropdown = useDropdown();
-  const shopDropdown = useDropdown();
   const userDropdown = useDropdown();
   const [isHomeDropdownOpenMobile, setIsHomeDropdownOpenMobile] = useState(false);
-  const [isServicesDropdownOpenMobile, setIsServicesDropdownOpenMobile] = useState(false);
-  const [isShopDropdownOpenMobile, setIsShopDropdownOpenMobile] = useState(false);
   const [isUserDropdownOpenMobile, setIsUserDropdownOpenMobile] = useState(false);
   const navDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -67,13 +50,11 @@ export default function Header() {
     function handleClickOutside(event: MouseEvent) {
       if (navDropdownRef.current && !navDropdownRef.current.contains(event.target as Node)) {
         homeDropdown.close();
-        servicesDropdown.close();
-        shopDropdown.close();
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [homeDropdown, servicesDropdown, shopDropdown]);
+  }, [homeDropdown]);
 
   const handleLogout = () => {
     logout();
@@ -86,8 +67,6 @@ export default function Header() {
   const closeAllMobile = () => {
     setIsMenuOpen(false);
     setIsHomeDropdownOpenMobile(false);
-    setIsServicesDropdownOpenMobile(false);
-    setIsShopDropdownOpenMobile(false);
     setIsUserDropdownOpenMobile(false);
   };
 
@@ -102,26 +81,22 @@ export default function Header() {
 
           <nav className="hidden md:flex items-center gap-8" ref={navDropdownRef}>
             {/* TRANG CHỦ (dropdown) */}
-            <div 
+            <div
               className="relative"
               onMouseEnter={() => {
                 homeDropdown.open();
-                servicesDropdown.close();
-                shopDropdown.close();
               }}
             >
               <button
                 onClick={() => {
                   homeDropdown.toggle();
-                  servicesDropdown.close();
-                  shopDropdown.close();
                 }}
                 className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors inline-flex items-center gap-1"
               >
                 TRANG CHỦ <ChevronDown className="w-4 h-4" />
               </button>
               {homeDropdown.isOpen && (
-                <div 
+                <div
                   className="absolute left-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
                   onMouseEnter={() => homeDropdown.open()}
                   onMouseLeave={() => homeDropdown.closeWithDelay()}
@@ -152,92 +127,21 @@ export default function Header() {
               THÚ CƯNG
             </Link>
 
-            {/* DỊCH VỤ (dropdown) */}
-            <div 
-              className="relative"
-              onMouseEnter={() => {
-                servicesDropdown.open();
-                homeDropdown.close();
-                shopDropdown.close();
-              }}
+            {/* DỊCH VỤ */}
+            <Link
+              to="/dich-vu"
+              className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors"
             >
-              <button
-                onClick={() => {
-                  servicesDropdown.toggle();
-                  homeDropdown.close();
-                  shopDropdown.close();
-                }}
-                className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors inline-flex items-center gap-1"
-              >
-                DỊCH VỤ <ChevronDown className="w-4 h-4" />
-              </button>
-              {servicesDropdown.isOpen && (
-                <div 
-                  className="absolute left-0 mt-0 w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
-                  onMouseEnter={() => servicesDropdown.open()}
-                  onMouseLeave={() => servicesDropdown.closeWithDelay()}
-                >
-                  {servicesDropdownItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => servicesDropdown.close()}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
-                      >
-                        <Icon className="w-4 h-4 text-gray-400" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+              DỊCH VỤ
+            </Link>
 
-            {/* CỬA HÀNG (dropdown) */}
-            <div 
-              className="relative"
-              onMouseEnter={() => {
-                shopDropdown.open();
-                homeDropdown.close();
-                servicesDropdown.close();
-              }}
+            {/* CỬA HÀNG */}
+            <Link
+              to="/cua-hang"
+              className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors"
             >
-              <button
-                onClick={() => {
-                  shopDropdown.toggle();
-                  homeDropdown.close();
-                  servicesDropdown.close();
-                  navigate("cua-hang")
-                }}
-                className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors inline-flex items-center gap-1"
-              >
-                CỬA HÀNG <ChevronDown className="w-4 h-4" />
-              </button>
-              {shopDropdown.isOpen && (
-                <div 
-                  className="absolute left-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
-                  onMouseEnter={() => shopDropdown.open()}
-                  onMouseLeave={() => shopDropdown.closeWithDelay()}
-                >
-                  {shopDropdownItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => shopDropdown.close()}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
-                      >
-                        <Icon className="w-4 h-4 text-gray-400" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+              CỬA HÀNG
+            </Link>
 
             {/* THÀNH VIÊN */}
             <Link
@@ -258,7 +162,7 @@ export default function Header() {
             </button>
 
             {isLoggedIn && user ? (
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={() => userDropdown.open()}
                 onMouseLeave={() => userDropdown.closeWithDelay()}
@@ -283,7 +187,7 @@ export default function Header() {
                 </button>
 
                 {userDropdown.isOpen && (
-                  <div 
+                  <div
                     className="absolute right-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
                     onMouseEnter={() => userDropdown.open()}
                     onMouseLeave={() => userDropdown.closeWithDelay()}
@@ -368,53 +272,23 @@ export default function Header() {
               THÚ CƯNG
             </Link>
 
-            {/* DỊCH VỤ (dropdown) */}
-            <button
-              onClick={() => 
-                setIsServicesDropdownOpenMobile((o) => !o)
-              }
-              className="w-full flex items-center justify-between py-2 text-sm font-medium text-gray-700"
+            {/* DỊCH VỤ */}
+            <Link
+              to="/dich-vu"
+              className="block py-2 text-sm font-medium text-gray-700 hover:text-teal-600"
+              onClick={closeAllMobile}
             >
-              <span>DỊCH VỤ</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${isServicesDropdownOpenMobile ? 'rotate-180' : ''}`} />
-            </button>
-            {isServicesDropdownOpenMobile && (
-              <div className="pl-4">
-                {servicesDropdownItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="block py-2 text-sm text-gray-600 hover:text-teal-600"
-                    onClick={closeAllMobile}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
+              DỊCH VỤ
+            </Link>
 
-            {/* CỬA HÀNG (dropdown) */}
-            <button
-              onClick={() => setIsShopDropdownOpenMobile((o) => !o)}
-              className="w-full flex items-center justify-between py-2 text-sm font-medium text-gray-700"
+            {/* CỬA HÀNG */}
+            <Link
+              to="/cua-hang"
+              className="block py-2 text-sm font-medium text-gray-700 hover:text-teal-600"
+              onClick={closeAllMobile}
             >
-              <span>CỬA HÀNG</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${isShopDropdownOpenMobile ? 'rotate-180' : ''}`} />
-            </button>
-            {isShopDropdownOpenMobile && (
-              <div className="pl-4">
-                {shopDropdownItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="block py-2 text-sm text-gray-600 hover:text-teal-600"
-                    onClick={closeAllMobile}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
+              CỬA HÀNG
+            </Link>
 
             {/* THÀNH VIÊN */}
             <Link

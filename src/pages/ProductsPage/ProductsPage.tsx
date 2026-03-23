@@ -158,14 +158,8 @@ export default function ProductsPage() {
   );
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
-      style={{
-        backgroundImage: `url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')`,
-      }}
-    >
-      <div className="min-h-screen bg-gradient-to-b from-white/85 via-white/80 to-white/75 backdrop-blur-[1px]">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 lg:py-16">
+    <div className="min-h-[60vh] bg-gray-50 px-4 py-10">
+      <div className="max-w-7xl mx-auto space-y-6">
 
           {/* Hero Swiper */}
           <div className="mb-12 md:mb-16 rounded-3xl overflow-hidden shadow-2xl border border-white/30">
@@ -242,22 +236,22 @@ export default function ProductsPage() {
           </div>
 
           {/* Search & Filter */}
-          <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200/40 p-6 md:p-8 mb-10 md:mb-12">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mb-10 md:mb-12">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
               <div className="relative">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-[#5DD3B6]" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-teal-600" />
                 <input
                   type="text"
                   placeholder="Tìm kiếm sản phẩm cho cún/mèo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full pl-14 pr-14 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#5DD3B6]/50 focus:border-[#5DD3B6] transition-all shadow-inner bg-white/80"
+                  className="w-full pl-14 pr-14 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/50 focus:border-teal-500 transition-all bg-white"
                 />
                 {searchTerm && (
                   <button
                     onClick={clearSearch}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#5DD3B6] transition-colors"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-teal-600 transition-colors"
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -267,7 +261,7 @@ export default function ProductsPage() {
               <select
                 value={selectedCategoryId}
                 onChange={(e) => setSelectedCategoryId(e.target.value)}
-                className="px-5 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 shadow-inner bg-white/80"
+                className="px-5 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/50 focus:border-teal-500 bg-white"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -279,7 +273,7 @@ export default function ProductsPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-5 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 shadow-inner bg-white/80"
+                className="px-5 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/50 focus:border-teal-500 bg-white"
               >
                 <option value="newest">Mới nhất</option>
                 <option value="price-asc">Giá tăng dần</option>
@@ -290,16 +284,15 @@ export default function ProductsPage() {
 
           {/* Error message */}
           {error && (
-            <div className="text-center py-8 text-red-600 bg-red-50/80 rounded-xl backdrop-blur-sm">
+            <div className="text-center py-8 text-red-600 bg-red-50 rounded-xl border border-red-200">
               {error}
             </div>
           )}
 
-          {/* Product Grid */}
           {isLoading && products.length === 0 ? (
             renderSkeleton()
           ) : products.length === 0 ? (
-            <div className="text-center py-16 text-gray-600 text-xl bg-white/70 rounded-2xl backdrop-blur-sm">
+            <div className="text-center py-16 text-gray-600 text-xl bg-white rounded-2xl shadow-sm border border-gray-200">
               Không tìm thấy sản phẩm nào phù hợp
             </div>
           ) : (
@@ -331,10 +324,10 @@ export default function ProductsPage() {
                       key={page}
                       onClick={() => handlePageChange(page)}
                       disabled={isLoading}
-                      className={`px-5 py-3 rounded-xl font-medium min-w-[44px] transition ${
+                      className={`px-5 py-3 rounded-xl font-medium min-w-[44px] transition flex items-center justify-center ${
                         currentPage === page
-                          ? "bg-[#5DD3B6] text-white shadow-md"
-                          : "bg-white border border-gray-300 hover:bg-gray-50"
+                          ? "bg-teal-600 text-white shadow-md border-teal-600"
+                          : "bg-white border border-gray-300 hover:bg-gray-50 text-gray-700"
                       }`}
                     >
                       {page}
@@ -353,7 +346,6 @@ export default function ProductsPage() {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }

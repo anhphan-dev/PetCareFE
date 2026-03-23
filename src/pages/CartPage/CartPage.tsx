@@ -2,6 +2,7 @@ import { ArrowLeft, Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-rea
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
+import { toast } from "react-toastify";
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -36,25 +37,28 @@ export default function CartPage() {
   const handleClearCart = () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?")) {
       clearCart();
+      toast.success("Đã xóa toàn bộ giỏ hàng");
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-12 h-12 animate-spin text-[#5DD3B6]" />
+      <div className="min-h-[60vh] flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-12 h-12 animate-spin text-teal-600" />
       </div>
     );
   }
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-16 flex flex-col items-center justify-center">
-        <ShoppingBag className="w-24 h-24 text-gray-300 mb-6" />
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">Giỏ hàng của bạn đang trống</h2>
+      <div className="min-h-[60vh] bg-gray-50 py-16 flex flex-col items-center justify-center">
+        <div className="w-24 h-24 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 mb-6">
+          <ShoppingBag className="w-12 h-12" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Giỏ hàng của bạn đang trống</h2>
         <Link
           to="/cua-hang"
-          className="inline-flex items-center gap-2 px-8 py-4 bg-[#5DD3B6] text-white rounded-xl hover:bg-[#3EBFA0] transition shadow-md"
+          className="inline-flex items-center gap-2 px-8 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition shadow-md"
         >
           <ArrowLeft className="w-5 h-5" />
           Tiếp tục mua sắm
@@ -64,8 +68,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[60vh] bg-gray-50 px-4 py-10">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
             Giỏ hàng ({cartCount} sản phẩm)
@@ -101,12 +105,12 @@ export default function CartPage() {
                   <div className="flex-1 flex flex-col">
                     <Link
                       to={`/san-pham/${item.productId}`}
-                      className="font-semibold text-lg text-gray-900 hover:text-[#5DD3B6] mb-1"
+                      className="font-semibold text-lg text-gray-900 hover:text-teal-600 mb-1"
                     >
                       {item.productName}
                     </Link>
 
-                    <p className="text-[#2C2C2C] font-bold text-xl mb-2">
+                    <p className="text-gray-900 font-bold text-xl mb-2">
                       {formatPrice(price)}
                       {item.salePrice && item.price && item.salePrice < item.price && (
                         <span className="text-sm text-gray-400 line-through ml-3">
@@ -166,20 +170,20 @@ export default function CartPage() {
                 </div>
                 <div className="border-t pt-4 flex justify-between text-xl font-bold">
                   <span>Tổng cộng</span>
-                  <span className="text-[#2C2C2C]">{formatPrice(totalPrice)}</span>
+                  <span className="text-gray-900">{formatPrice(totalPrice)}</span>
                 </div>
               </div>
 
               <button
                 onClick={handleCheckout}
-                className="w-full bg-[#5DD3B6] text-white py-4 rounded-xl hover:bg-[#3EBFA0] transition font-semibold shadow-md text-lg"
+                className="w-full bg-teal-600 text-white py-4 rounded-xl hover:bg-teal-700 transition font-semibold shadow-md text-lg"
               >
                 Tiến hành thanh toán
               </button>
 
               <Link
                 to="/cua-hang"
-                className="block text-center mt-6 text-[#5DD3B6] hover:underline"
+                className="block text-center mt-6 text-teal-600 hover:text-teal-700 font-medium"
               >
                 Tiếp tục mua sắm →
               </Link>

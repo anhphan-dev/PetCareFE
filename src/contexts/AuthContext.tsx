@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { AuthService } from '../services/AuthAPI';
 import type { User } from '../services/AuthAPI';
+import { revokeToken } from '../utils/tokenRevocation';
 
 const USER_STORAGE_KEY = 'user';
 
@@ -32,19 +34,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    const currentToken = localStorage.getItem('authToken') ?? '';
+    const tokenExpiresAt = localStorage.getItem('tokenExpiresAt');
+
+    if (currentToken) {
+      revokeToken(currentToken, tokenExpiresAt);
+    }
+
+    // Best-effort server logout; always continue local cleanup.
+    AuthService.logout().catch(() => {});
+
     localStorage.removeItem(USER_STORAGE_KEY);
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenExpiresAt');
     setUserState(null);
-    // Optional: gọi API logout
-    // AuthService.logout().catch(() => {});
+    window.dispatchEvent(new Event('auth:logout'));
   }, []);
 
   // Đồng bộ khi tab khác login/logout (storage event)
   useEffect(() => {
     const handler = () => setUserState(readUserFromStorage());
     window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    window.addEventListener('auth:logout', handler);
+    return () => {
+      window.removeEventListener('storage', handler);
+      window.removeEventListener('auth:logout', handler);
+    };
   }, []);
 
   return (

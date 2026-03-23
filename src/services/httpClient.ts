@@ -1,6 +1,9 @@
 
+import { isTokenRevoked, revokeToken } from '../utils/tokenRevocation';
+
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
+const USER_STORAGE_KEY = 'user';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -28,6 +31,7 @@ const httpClient = {
 
     // Headers + Auth
     const token = localStorage.getItem('authToken');
+    const tokenExpiresAt = localStorage.getItem('tokenExpiresAt');
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -35,6 +39,14 @@ const httpClient = {
     };
 
     if (token) {
+      if (isTokenRevoked(token)) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenExpiresAt');
+        localStorage.removeItem(USER_STORAGE_KEY);
+        window.dispatchEvent(new Event('auth:logout'));
+        throw new Error('Token da bi thu hoi. Vui long dang nhap lai.');
+      }
+
       headers.Authorization = `Bearer ${token}`;
     }
 
@@ -51,7 +63,14 @@ const httpClient = {
     // Xử lý lỗi chi tiết hơn
     if (!response.ok) {
       if (response.status === 401) {
+        if (token) {
+          revokeToken(token, tokenExpiresAt);
+        }
+
         localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenExpiresAt');
+        localStorage.removeItem(USER_STORAGE_KEY);
+        window.dispatchEvent(new Event('auth:logout'));
         throw new Error('Phien dang nhap het han hoac chua dang nhap. Vui long dang nhap lai.');
       }
 
@@ -67,7 +86,7 @@ const httpClient = {
 
     // Nếu response rỗng (204 No Content), trả về null
     const text = await response.text();
-    return text ? JSON.parse(text) : null;
+    return text ? JSON.parse(text) : (null as T);
   },
 
   get<T>(url: string, options?: RequestOptions) {
@@ -86,6 +105,14 @@ const httpClient = {
     return this.request<T>(url, {
       ...options,
       method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  },
+
+  patch<T>(url: string, data?: any, options?: RequestOptions) {
+    return this.request<T>(url, {
+      ...options,
+      method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
     });
   },

@@ -6,22 +6,21 @@ type ApiEnvelope<T> = {
   data?: T;
 };
 
-type PagedResult<T> = {
-  items: T[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages?: number;
-};
-
 export interface AdminUserSummary {
   id: string;
   fullName: string;
   email: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  address?: string | null;
+  city?: string | null;
+  district?: string | null;
   roleName?: string | null;
   isActive: boolean;
   createdAt: string;
 }
+
+export interface AdminUserDetail extends AdminUserSummary {}
 
 export interface AdminProductSummary {
   id: string;
@@ -32,6 +31,49 @@ export interface AdminProductSummary {
   price: number;
   salePrice?: number | null;
 }
+
+export interface AdminProductCategory {
+  id: string;
+  categoryName: string;
+  isActive?: boolean;
+}
+
+export interface AdminProductsPagedResult {
+  items: AdminProductSummary[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages?: number;
+}
+
+export type CreateProductPayload = {
+  productName: string;
+  description?: string;
+  categoryId?: string;
+  price: number;
+  salePrice?: number;
+  stockQuantity?: number;
+  sku?: string;
+  weight?: number;
+  dimensions?: string;
+  isActive?: boolean;
+  providerId?: string;
+  imageUrls?: string[];
+};
+
+export type UpdateProductPayload = {
+  productName?: string;
+  description?: string;
+  categoryId?: string;
+  price?: number;
+  salePrice?: number;
+  stockQuantity?: number;
+  sku?: string;
+  weight?: number;
+  dimensions?: string;
+  isActive?: boolean;
+  providerId?: string;
+};
 
 export interface AdminBlogSummary {
   id: string;
@@ -59,19 +101,111 @@ export interface AdminDashboardData {
     revenueThisMonth: number;
     totalOrders: number;
     paidOrders: number;
+    totalVouchers: number;
+    activeVouchers: number;
+    expiringVouchers: number;
   };
   recentUsers: AdminUserSummary[];
   lowStockProducts: AdminProductSummary[];
   topPosts: AdminBlogSummary[];
   latestPosts: AdminBlogSummary[];
+  topVouchers: AdminVoucherSummary[];
 }
 
-type AdminRevenueSummary = {
-  totalRevenue: number;
-  paidRevenueThisMonth: number;
-  totalOrders: number;
-  paidOrders: number;
-  generatedAt?: string;
+export interface AdminUsersPagedResult {
+  items: AdminUserSummary[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages?: number;
+}
+
+export type CreateUserPayload = {
+  email: string;
+  fullName: string;
+  phone?: string;
+  avatarUrl?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  password: string;
+  roleName?: string;
+};
+
+export type UpdateUserPayload = {
+  phone?: string;
+  fullName?: string;
+  avatarUrl?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  newPassword?: string;
+};
+
+export type SetUserRolePayload = {
+  roleName: string;
+};
+
+export interface AdminVoucherSummary {
+  id: string;
+  code: string;
+  name: string;
+  discountType: 'percentage' | 'fixed' | string;
+  discountValue: number;
+  isActive: boolean;
+  validTo: string;
+  usedCount: number;
+  usageLimit?: number | null;
+  remainingUsage?: number | null;
+}
+
+export interface AdminVoucher {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  discountType: 'percentage' | 'fixed' | string;
+  discountValue: number;
+  minimumOrderAmount?: number | null;
+  maximumDiscountAmount?: number | null;
+  usageLimit?: number | null;
+  usedCount: number;
+  validFrom: string;
+  validTo: string;
+  isActive: boolean;
+}
+
+export interface VoucherPagedResult {
+  items: AdminVoucher[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export type CreateVoucherPayload = {
+  code: string;
+  name: string;
+  description?: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minimumOrderAmount?: number;
+  maximumDiscountAmount?: number;
+  usageLimit?: number;
+  validFrom: string;
+  validTo: string;
+};
+
+export type UpdateVoucherPayload = {
+  name?: string;
+  description?: string;
+  discountType?: 'percentage' | 'fixed';
+  discountValue?: number;
+  minimumOrderAmount?: number;
+  maximumDiscountAmount?: number;
+  usageLimit?: number;
+  validFrom?: string;
+  validTo?: string;
+  isActive?: boolean;
 };
 
 const unwrap = <T>(response: T | ApiEnvelope<T>): T => {
@@ -82,94 +216,177 @@ const unwrap = <T>(response: T | ApiEnvelope<T>): T => {
   return response as T;
 };
 
-const unwrapPaged = <T>(response: PagedResult<T> | ApiEnvelope<PagedResult<T>>): PagedResult<T> => {
-  const raw = unwrap(response) as PagedResult<T>;
-
-  return {
-    items: raw?.items ?? [],
-    totalCount: raw?.totalCount ?? 0,
-    page: raw?.page ?? 1,
-    pageSize: raw?.pageSize ?? 0,
-    totalPages: raw?.totalPages ?? 0,
-  };
+const isNotFoundOrForbidden = (message: string) => {
+  const lower = message.toLowerCase();
+  return lower.includes('not found') || lower.includes('forbidden');
 };
-
-const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 const AdminDashboardService = {
   async getOverview(): Promise<AdminDashboardData> {
-    const [usersResponse, productsResponse, activeProductsResponse, blogsResponse, revenueResponse] = await Promise.all([
-      httpClient.get<ApiEnvelope<PagedResult<AdminUserSummary>> | PagedResult<AdminUserSummary>>(
-        '/Users',
-        { params: { page: 1, pageSize: 200 } }
-      ),
-      httpClient.get<ApiEnvelope<PagedResult<AdminProductSummary>> | PagedResult<AdminProductSummary>>(
-        '/Products',
-        { params: { page: 1, pageSize: 1 } }
-      ),
-      httpClient.get<ApiEnvelope<AdminProductSummary[]> | AdminProductSummary[]>('/Products/active'),
-      httpClient.get<ApiEnvelope<AdminBlogSummary[]> | AdminBlogSummary[]>('/Blogs/all'),
-      httpClient.get<ApiEnvelope<AdminRevenueSummary> | AdminRevenueSummary>('/AdminDashboard/revenue'),
-    ]);
-
-    const users = unwrapPaged(usersResponse);
-    const products = unwrapPaged(productsResponse);
-    const activeProducts = unwrap(activeProductsResponse) ?? [];
-    const blogs = unwrap(blogsResponse) ?? [];
-    const revenue = unwrap(revenueResponse) ?? {
-      totalRevenue: 0,
-      paidRevenueThisMonth: 0,
-      totalOrders: 0,
-      paidOrders: 0,
-    };
-
-    const activeUsers = users.items.filter((user) => user.isActive).length;
-    const newUsersThisMonth = users.items.filter(
-      (user) => new Date(user.createdAt) >= startOfMonth
-    ).length;
-    const lowStockProducts = activeProducts
-      .filter((product) => product.stockQuantity <= 10)
-      .sort((left, right) => left.stockQuantity - right.stockQuantity)
-      .slice(0, 5);
-    const publishedBlogs = blogs.filter(
-      (post) => post.status.trim().toLowerCase() === 'published'
-    ).length;
-    const totalBlogViews = blogs.reduce((sum, post) => sum + (post.viewCount ?? 0), 0);
-    const recentUsers = [...users.items]
-      .sort((left, right) => +new Date(right.createdAt) - +new Date(left.createdAt))
-      .slice(0, 5);
-    const topPosts = [...blogs]
-      .sort((left, right) => {
-        const scoreLeft = (left.viewCount ?? 0) + (left.likeCount ?? 0) * 3;
-        const scoreRight = (right.viewCount ?? 0) + (right.likeCount ?? 0) * 3;
-        return scoreRight - scoreLeft;
-      })
-      .slice(0, 4);
-    const latestPosts = [...blogs]
-      .sort((left, right) => +new Date(right.createdAt) - +new Date(left.createdAt))
-      .slice(0, 4);
+    const response = await httpClient.get<ApiEnvelope<AdminDashboardData>>('/AdminDashboard/overview');
+    const raw = unwrap(response);
 
     return {
       totals: {
-        users: users.totalCount,
-        activeUsers,
-        newUsersThisMonth,
-        products: products.totalCount,
-        activeProducts: activeProducts.length,
-        lowStockProducts: activeProducts.filter((product) => product.stockQuantity <= 10).length,
-        blogs: blogs.length,
-        publishedBlogs,
-        totalBlogViews,
-        totalRevenue: Number(revenue.totalRevenue ?? 0),
-        revenueThisMonth: Number(revenue.paidRevenueThisMonth ?? 0),
-        totalOrders: Number(revenue.totalOrders ?? 0),
-        paidOrders: Number(revenue.paidOrders ?? 0),
+        users: Number(raw?.totals?.users ?? 0),
+        activeUsers: Number(raw?.totals?.activeUsers ?? 0),
+        newUsersThisMonth: Number(raw?.totals?.newUsersThisMonth ?? 0),
+        products: Number(raw?.totals?.products ?? 0),
+        activeProducts: Number(raw?.totals?.activeProducts ?? 0),
+        lowStockProducts: Number(raw?.totals?.lowStockProducts ?? 0),
+        blogs: Number(raw?.totals?.blogs ?? 0),
+        publishedBlogs: Number(raw?.totals?.publishedBlogs ?? 0),
+        totalBlogViews: Number(raw?.totals?.totalBlogViews ?? 0),
+        totalRevenue: Number(raw?.totals?.totalRevenue ?? 0),
+        revenueThisMonth: Number(raw?.totals?.revenueThisMonth ?? 0),
+        totalOrders: Number(raw?.totals?.totalOrders ?? 0),
+        paidOrders: Number(raw?.totals?.paidOrders ?? 0),
+        totalVouchers: Number(raw?.totals?.totalVouchers ?? 0),
+        activeVouchers: Number(raw?.totals?.activeVouchers ?? 0),
+        expiringVouchers: Number(raw?.totals?.expiringVouchers ?? 0),
       },
-      recentUsers,
-      lowStockProducts,
-      topPosts,
-      latestPosts,
+      recentUsers: raw?.recentUsers ?? [],
+      lowStockProducts: raw?.lowStockProducts ?? [],
+      topPosts: raw?.topPosts ?? [],
+      latestPosts: raw?.latestPosts ?? [],
+      topVouchers: raw?.topVouchers ?? [],
     };
+  },
+
+  async getVouchers(page = 1, pageSize = 20, search = ''): Promise<VoucherPagedResult> {
+    const response = await httpClient.get<ApiEnvelope<VoucherPagedResult>>('/AdminDashboard/vouchers', {
+      params: { page, pageSize, search: search || undefined },
+    });
+
+    const raw = unwrap(response) as VoucherPagedResult;
+    return {
+      items: raw?.items ?? [],
+      totalCount: Number(raw?.totalCount ?? 0),
+      page: Number(raw?.page ?? 1),
+      pageSize: Number(raw?.pageSize ?? pageSize),
+    };
+  },
+
+  async getProducts(page = 1, pageSize = 20): Promise<AdminProductsPagedResult> {
+    const response = await httpClient.get<ApiEnvelope<AdminProductsPagedResult>>('/Products', {
+      params: { page, pageSize },
+    });
+
+    const raw = unwrap(response) as AdminProductsPagedResult;
+    return {
+      items: raw?.items ?? [],
+      totalCount: Number(raw?.totalCount ?? 0),
+      page: Number(raw?.page ?? page),
+      pageSize: Number(raw?.pageSize ?? pageSize),
+      totalPages: Number(raw?.totalPages ?? 0),
+    };
+  },
+
+  async getProductCategories(): Promise<AdminProductCategory[]> {
+    const response = await httpClient.get<ApiEnvelope<AdminProductCategory[]>>('/ProductCategories');
+    const raw = unwrap(response);
+    return Array.isArray(raw) ? raw : [];
+  },
+
+  async createProduct(payload: CreateProductPayload): Promise<void> {
+    await httpClient.post<ApiEnvelope<AdminProductSummary>>('/Products', {
+      ...payload,
+      imageUrls: payload.imageUrls ?? [],
+    });
+  },
+
+  async updateProduct(productId: string, payload: UpdateProductPayload): Promise<void> {
+    await httpClient.put<ApiEnvelope<AdminProductSummary>>(`/Products/${productId}`, payload);
+  },
+
+  async deleteProduct(productId: string): Promise<void> {
+    await httpClient.delete<ApiEnvelope<boolean>>(`/Products/${productId}`);
+  },
+
+  async getUsers(page = 1, pageSize = 20): Promise<AdminUsersPagedResult> {
+    try {
+      const response = await httpClient.get<ApiEnvelope<AdminUsersPagedResult>>('/AdminDashboard/users', {
+        params: { page, pageSize },
+      });
+
+      const raw = unwrap(response) as AdminUsersPagedResult;
+      return {
+        items: raw?.items ?? [],
+        totalCount: Number(raw?.totalCount ?? 0),
+        page: Number(raw?.page ?? page),
+        pageSize: Number(raw?.pageSize ?? pageSize),
+        totalPages: Number(raw?.totalPages ?? 0),
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (isNotFoundOrForbidden(message)) {
+        try {
+          const fallbackResponse = await httpClient.get<ApiEnvelope<AdminUsersPagedResult>>('/Users', {
+            params: { page, pageSize },
+          });
+
+          const raw = unwrap(fallbackResponse) as AdminUsersPagedResult;
+          return {
+            items: raw?.items ?? [],
+            totalCount: Number(raw?.totalCount ?? 0),
+            page: Number(raw?.page ?? page),
+            pageSize: Number(raw?.pageSize ?? pageSize),
+            totalPages: Number(raw?.totalPages ?? 0),
+          };
+        } catch {
+          // Continue to final fallback below.
+        }
+      }
+
+      const overviewResponse = await httpClient.get<ApiEnvelope<AdminDashboardData>>('/AdminDashboard/overview');
+      const overview = unwrap(overviewResponse) as AdminDashboardData;
+      return {
+        items: Array.isArray(overview?.recentUsers) ? overview.recentUsers : [],
+        totalCount: Number(overview?.totals?.users ?? 0),
+        page: 1,
+        pageSize,
+        totalPages: 1,
+      };
+    }
+  },
+
+  async getUserById(userId: string): Promise<AdminUserDetail> {
+    const response = await httpClient.get<ApiEnvelope<AdminUserDetail>>(`/Users/${userId}`);
+    return unwrap(response) as AdminUserDetail;
+  },
+
+  async createUser(payload: CreateUserPayload): Promise<void> {
+    const { roleName, ...createPayload } = payload;
+    const response = await httpClient.post<ApiEnvelope<AdminUserDetail>>('/Users', createPayload);
+    const created = unwrap(response) as AdminUserDetail;
+
+    if (roleName && created?.id) {
+      await this.setUserRole(created.id, { roleName });
+    }
+  },
+
+  async updateUser(userId: string, payload: UpdateUserPayload): Promise<void> {
+    await httpClient.put<ApiEnvelope<AdminUserDetail>>(`/Users/${userId}`, payload);
+  },
+
+  async setUserRole(userId: string, payload: SetUserRolePayload): Promise<void> {
+    await httpClient.put<ApiEnvelope<AdminUserDetail>>(`/Users/${userId}/role`, payload);
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    await httpClient.delete<ApiEnvelope<boolean>>(`/Users/${userId}`);
+  },
+
+  async createVoucher(payload: CreateVoucherPayload): Promise<void> {
+    await httpClient.post<ApiEnvelope<string>>('/AdminDashboard/vouchers', payload);
+  },
+
+  async updateVoucher(voucherId: string, payload: UpdateVoucherPayload): Promise<void> {
+    await httpClient.put<ApiEnvelope<string>>(`/AdminDashboard/vouchers/${voucherId}`, payload);
+  },
+
+  async toggleVoucher(voucherId: string): Promise<void> {
+    await httpClient.patch<ApiEnvelope<string>>(`/AdminDashboard/vouchers/${voucherId}/toggle`);
   },
 };
 

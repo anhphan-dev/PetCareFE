@@ -30,6 +30,15 @@ export interface PaymentLinkData {
   pendingSubscriptionId: string;
 }
 
+export interface MembershipStatus {
+  hasMembership: boolean;
+  subscriptionId?: string;
+  packageName?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+}
+
 const SubscriptionService = {
   async getPackages(): Promise<SubscriptionPackage[]> {
     const res = await httpClient.get<{ success: boolean; data: SubscriptionPackage[] }>('/subscriptions/packages');
@@ -50,6 +59,15 @@ const SubscriptionService = {
       return res.data ?? null;
     } catch {
       return null;
+    }
+  },
+
+  async getMembershipStatus(): Promise<MembershipStatus> {
+    try {
+      const res = await httpClient.get<{ success: boolean; data: MembershipStatus }>('/subscriptions/membership-status');
+      return res.data ?? { hasMembership: false };
+    } catch {
+      return { hasMembership: false };
     }
   },
 

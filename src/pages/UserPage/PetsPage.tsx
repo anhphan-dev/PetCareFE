@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import PetAPI, { type Pet as PetType, type PetPayload } from '../../services/PetAPI';
 import PetSpeciesAPI, { type PetSpecies } from '../../services/PetSpeciesAPI';
 import { convertImageToBase64, isValidImageFile } from '../../utils/imageUtils';
+import { toast } from 'react-toastify';
 
 // alias for the imported type so we can use `Pet` throughout this file
 export type Pet = PetType;
@@ -67,6 +68,7 @@ export default function PetsPage() {
   const canUse = useMemo(() => !!user?.id, [user?.id]);
 
   const [addOpen, setAddOpen] = useState(true);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   // Helper to extract array from API response (handles both array and paginated response)
   const extractArray = <T,>(response: any): T[] => {
@@ -154,7 +156,7 @@ export default function PetsPage() {
     e.preventDefault();
     if (!user?.id) return;
     if (!form.name.trim()) {
-      alert('Vui lòng nhập tên thú cưng trước khi lưu.');
+      toast.warning('Vui lòng nhập tên thú cưng trước khi lưu.');
       return;
     }
 
@@ -196,9 +198,10 @@ export default function PetsPage() {
         image: null,
       });
       setImagePreview('');
+      toast.success('Thêm thú cưng thành công!');
     } catch (err) {
       console.error('Failed to create pet via API', err);
-      alert(err instanceof Error ? err.message : 'Không thể lưu thú cưng vào hệ thống.');
+      toast.error(err instanceof Error ? err.message : 'Không thể lưu thú cưng vào hệ thống.');
     }
   };
 
@@ -207,7 +210,7 @@ export default function PetsPage() {
     if (!file) return;
 
     if (!isValidImageFile(file)) {
-      alert('Vui lòng chọn ảnh hợp lệ (JPG, PNG, GIF, WebP) dưới 5MB');
+      toast.warning('Vui lòng chọn ảnh hợp lệ (JPG, PNG, GIF, WebP) dưới 5MB');
       return;
     }
 
@@ -215,8 +218,9 @@ export default function PetsPage() {
       const base64 = await convertImageToBase64(file);
       setForm((p) => ({ ...p, image: base64 }));
       setImagePreview(base64);
+      toast.success('Tải ảnh lên thành công!');
     } catch (err) {
-      alert('Không thể tải ảnh');
+      toast.error('Không thể tải ảnh');
       console.error(err);
     }
   };
@@ -253,9 +257,11 @@ export default function PetsPage() {
 
     try {
       await PetAPI.deletePet(id);
+      toast.success('Đã xóa thú cưng!');
     } catch (err) {
       // If API delete failed, we already removed locally. Log error.
       console.error('Failed to delete pet from API', err);
+      toast.error('Có lỗi xảy ra khi xóa thú cưng từ hệ thống.');
     }
   };
 
@@ -264,8 +270,10 @@ export default function PetsPage() {
     persist(next);
     try {
       await PetAPI.updatePet(id, { isActive: active });
+      toast.success(active ? 'Đã bật trạng thái hoạt động' : 'Đã tắt trạng thái hoạt động');
     } catch (err) {
       console.error('Failed to toggle pet active state', err);
+      toast.error('Có lỗi xảy ra khi cập nhật trạng thái hoạt động.');
     }
   };
 
@@ -635,11 +643,11 @@ export default function PetsPage() {
                       </div>
                       <div className="flex items-start justify-between gap-3">
                         {p.avatarUrl && (
-                          <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 cursor-pointer" onClick={(e) => { e.stopPropagation(); setZoomedImage(p.avatarUrl!); }}>
                             <img
                               src={p.avatarUrl}
                               alt={p.petName}
-                              className="w-12 h-12 object-cover rounded-lg"
+                              className="w-12 h-12 object-cover rounded-lg hover:opacity-80 transition-opacity"
                             />
                           </div>
                         )}
@@ -843,6 +851,28 @@ export default function PetsPage() {
           </div>
         </div>
       </div>
+
+      {/* Image Zoom Modal */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-75"
+          onClick={() => setZoomedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] mx-4" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="absolute -top-10 right-0 text-white hover:text-gray-300"
+              onClick={() => setZoomedImage(null)}
+            >
+              <X className="w-8 h-8" />
+            </button>
+            <img 
+              src={zoomedImage} 
+              alt="Zoomed Pet" 
+              className="rounded-lg max-w-full max-h-[85vh] object-contain shadow-2xl" 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

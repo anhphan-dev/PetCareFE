@@ -2,6 +2,12 @@
 import type { ContactInfo, NewsArticle, Service, TeamMember } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
+
+interface ServiceResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
   
 export const apiService = {
   async login(email: string, password: string) {
@@ -17,9 +23,13 @@ export const apiService = {
   },
 
   async getServices(): Promise<Service[]> {
-    const response = await fetch(`${API_BASE_URL}/services`);
+    const response = await fetch(`${API_BASE_URL}/Appointments/services`);
     if (!response.ok) throw new Error('Failed to fetch services');
-    return response.json();
+
+    const payload = (await response.json()) as ServiceResponse<Service[]> | Service[];
+    if (Array.isArray(payload)) return payload;
+    if (!payload.success) throw new Error(payload.message || 'Failed to fetch services');
+    return payload.data ?? [];
   },
 
   async getTeamMembers(): Promise<TeamMember[]> {

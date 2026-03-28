@@ -19,6 +19,7 @@ import CartPage from './pages/CartPage/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import ContactPage from './pages/ContactPage';
+import DoctorDashBoard from './pages/DoctorPage/DashBoard';
 import HomePage from './pages/homePage';
 import ProductDetailPage from './pages/ProductsPage/ProductDetailPage';
 import ProductsPage from './pages/ProductsPage/ProductsPage';
@@ -83,6 +84,7 @@ createRoot(document.getElementById('root')!).render(
 
               {/*PROVIDER ROUTE*/}
               <Route path="/provider" element={<ProviderDashBoard />} />
+              <Route path="/doctor" element={<DoctorDashBoard />} />
             </Routes>
           </CartProvider>
         </AuthProvider>

@@ -2,12 +2,52 @@ import { AppointmentRequest, AppointmentResponse, UpdateAppointmentStatusRequest
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
 
+interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('authToken');
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+};
+
+const parseErrorMessage = async (response: Response, fallback: string) => {
+  try {
+    const body = await response.json();
+    return body?.message || body?.title || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const unwrapApiResponse = <T>(payload: ApiResponse<T> | T): T => {
+  if (payload && typeof payload === 'object' && 'success' in payload) {
+    const wrapped = payload as ApiResponse<T>;
+    if (!wrapped.success) {
+      throw new Error(wrapped.message || 'Request failed');
+    }
+    return wrapped.data as T;
+  }
+  return payload as T;
+};
+
+const normalizeAppointment = (appointment: AppointmentResponse): AppointmentResponse => ({
+  ...appointment,
+  appointmentStatus: appointment.appointmentStatus || appointment.status,
+  status: appointment.status || appointment.appointmentStatus,
+});
+
+const buildAppointmentsUrl = (status?: string, date?: string) => {
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+  if (date) params.append('date', date);
+  const query = params.toString();
+  return `${API_BASE_URL}/Appointments${query ? `?${query}` : ''}`;
 };
 
 export const appointmentService = {
@@ -18,22 +58,31 @@ export const appointmentService = {
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to create appointment');
-    return response.json();
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to create appointment'));
+    }
+
+    const payload = await response.json();
+    return normalizeAppointment(unwrapApiResponse<AppointmentResponse>(payload));
   },
 
   // GET ALL (Có thể kèm status / date query)
   async getAppointments(status?: string, date?: string): Promise<AppointmentResponse[]> {
-    let url = `${API_BASE_URL}/Appointments?`;
-    if (status) url += `status=${status}&`;
-    if (date) url += `date=${date}`;
-    
-    const response = await fetch(url, {
+    const response = await fetch(buildAppointmentsUrl(status, date), {
       method: 'GET',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch appointments');
-    return response.json();
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to fetch appointments'));
+    }
+
+    const payload = await response.json();
+    return unwrapApiResponse<AppointmentResponse[]>(payload).map(normalizeAppointment);
+  },
+
+  // Backward-compatible alias used by Doctor dashboard
+  async getAllAppointments(status?: string, date?: string): Promise<AppointmentResponse[]> {
+    return this.getAppointments(status, date);
   },
 
   // GET MY APPOINTMENTS
@@ -42,8 +91,12 @@ export const appointmentService = {
       method: 'GET',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch my appointments');
-    return response.json();
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to fetch my appointments'));
+    }
+
+    const payload = await response.json();
+    return unwrapApiResponse<AppointmentResponse[]>(payload).map(normalizeAppointment);
   },
 
   // GET BY ID
@@ -52,18 +105,27 @@ export const appointmentService = {
       method: 'GET',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch appointment by id');
-    return response.json();
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to fetch appointment by id'));
+    }
+
+    const payload = await response.json();
+    return normalizeAppointment(unwrapApiResponse<AppointmentResponse>(payload));
   },
 
   // UPDATE STATUS (Duyệt lịch / Hoàn thành)
-  async updateStatus(id: string, data: UpdateAppointmentStatusRequest): Promise<void> {
+  async updateStatus(id: string, data: UpdateAppointmentStatusRequest): Promise<AppointmentResponse> {
     const response = await fetch(`${API_BASE_URL}/Appointments/${id}/status`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to update status');
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to update status'));
+    }
+
+    const payload = await response.json();
+    return normalizeAppointment(unwrapApiResponse<AppointmentResponse>(payload));
   },
 
   // CANCEL APPOINTMENT
@@ -73,6 +135,11 @@ export const appointmentService = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ cancellationReason }),
     });
-    if (!response.ok) throw new Error('Failed to cancel appointment');
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to cancel appointment'));
+    }
   }
 };
+
+export const AppointmentService = appointmentService;
+export type { AppointmentResponse };

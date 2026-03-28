@@ -16,18 +16,29 @@ export interface AppointmentRequest {
 
 export interface AppointmentResponse {
   id: string;
+  userId?: string;
+  userName?: string;
   petId: string;
+  petName?: string;
   serviceId: string;
+  serviceName?: string;
+  servicePrice?: number;
   appointmentType: string;
-  branchId: string;
+  branchId?: string;
+  branchName?: string;
+  assignedStaffId?: string;
+  assignedStaffName?: string;
   appointmentDate: string;
   startTime: TimeSpan | string;
   endTime: TimeSpan | string;
-  serviceAddress: string;
-  notes: string;
-  status: string; // Pending, Accepted, Completed, Cancelled
+  serviceAddress?: string;
+  notes?: string;
+  appointmentStatus?: string;
+  status?: string;
   medicalNotes?: string;
   cancellationReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Cấu trúc DTO cho PATCH trạng thái

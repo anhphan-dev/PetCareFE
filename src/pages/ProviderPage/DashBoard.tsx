@@ -40,7 +40,7 @@ export default function ProviderDashBoard() {
 
   const approveAppointment = async (id: string) => {
     try {
-      await appointmentService.updateStatus(id, { status: 'Accepted' });
+      await appointmentService.updateStatus(id, { status: 'confirmed' });
       toast.success('Đã duyệt lịch hẹn!');
       fetchAppointments();
       // TODO: Notify user 
@@ -53,7 +53,10 @@ export default function ProviderDashBoard() {
     const reason = window.prompt('Nhập lý do hủy:');
     if (reason === null) return;
     try {
-      await appointmentService.cancelAppointment(id, reason || 'Bác sĩ bận việc đột xuất');
+      await appointmentService.updateStatus(id, {
+        status: 'cancelled',
+        cancellationReason: reason || 'Bác sĩ bận việc đột xuất',
+      });
       toast.success('Đã hủy lịch hẹn!');
       fetchAppointments();
     } catch (err) {
@@ -77,13 +80,15 @@ export default function ProviderDashBoard() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Pending':
+      case 'pending':
         return <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded flex items-center gap-1"><Clock size={14}/> Chờ duyệt</span>;
-      case 'Accepted':
+      case 'confirmed':
         return <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded flex items-center gap-1"><CheckCircle size={14}/> Đã duyệt</span>;
-      case 'Completed':
+      case 'in-progress':
+        return <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Đang khám</span>;
+      case 'completed':
         return <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Hoàn thành</span>;
-      case 'Cancelled':
+      case 'cancelled':
         return <span className="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded flex items-center gap-1"><XCircle size={14}/> Đã hủy</span>;
       default:
         return <span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded">{status || 'N/A'}</span>;
@@ -133,10 +138,10 @@ export default function ProviderDashBoard() {
                       {app.notes || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(app.status)}
+                      {getStatusBadge(app.appointmentStatus || app.status || '')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {(app.status === 'Pending' || !app.status) && (
+                      {(app.appointmentStatus === 'pending' || app.status === 'pending' || (!app.appointmentStatus && !app.status)) && (
                         <div className="flex gap-2">
                           <button 
                             onClick={() => approveAppointment(app.id)}
@@ -148,7 +153,7 @@ export default function ProviderDashBoard() {
                           >Từ chối</button>
                         </div>
                       )}
-                      {app.status === 'Accepted' && (
+                      {(app.appointmentStatus === 'confirmed' || app.status === 'confirmed') && (
                         <div className="flex gap-2">
                            <button 
                             onClick={() => {

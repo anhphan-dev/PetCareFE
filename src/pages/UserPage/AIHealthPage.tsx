@@ -13,7 +13,7 @@ import {
   Stethoscope,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import PetAPI, { Pet } from '../../services/PetAPI';
+import PetAPI, { Pet } from '../../services/PetService/PetAPI';
 import AIHealthService, {
   AIAnalysisType,
   AIHealthAnalysisResponse,

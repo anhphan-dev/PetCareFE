@@ -3,6 +3,7 @@ import {
   DogRoutineSchedule,
   HealthRecordRequest,
   HealthRecordResponse,
+  VaccineCatalogItem,
 } from '../types/healthRecord';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
@@ -109,5 +110,19 @@ export const healthRecordService = {
     if (!response.ok) {
       throw new Error(await parseErrorMessage(response, 'Failed to record vaccination'));
     }
+  },
+
+  async getVaccineCatalog(): Promise<VaccineCatalogItem[]> {
+    const response = await fetch(`${API_BASE_URL}/health-records/vaccine-catalog`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to fetch vaccine catalog'));
+    }
+
+    const payload = await response.json();
+    return unwrapApiResponse<VaccineCatalogItem[]>(payload);
   },
 };

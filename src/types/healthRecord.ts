@@ -42,9 +42,17 @@ export interface DogRoutineSchedule {
 }
 
 export interface CreateVaccinationRequest {
+  vaccineCode?: string;
   vaccineName: string;
   vaccinationDate?: string;
   nextDueDate?: string;
   batchNumber?: string;
   notes?: string;
+}
+
+export interface VaccineCatalogItem {
+  code: string;
+  displayName: string;
+  aliases: string[];
+  defaultIntervalDays?: number;
 }

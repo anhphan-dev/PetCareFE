@@ -260,6 +260,16 @@ export default function AIHealthPage() {
     });
   }, [dogRoutine]);
 
+  const visibleRoutineItems = useMemo(
+    () => routineItems.filter((item) => item.category !== 'Vaccination' || item.source === 'vaccinations'),
+    [routineItems]
+  );
+
+  const hasEstimatedVaccinations = useMemo(
+    () => routineItems.some((item) => item.category === 'Vaccination' && item.source !== 'vaccinations'),
+    [routineItems]
+  );
+
   const handleSelectHistory = async (analysisId: string) => {
     try {
       setError(null);
@@ -509,11 +519,11 @@ export default function AIHealthPage() {
                   <p className="mt-3 text-sm text-slate-600 leading-6">
                     {dogRoutine.note || 'Hiện tại lịch nhắc mới hỗ trợ chó.'}
                   </p>
-                ) : routineItems.length === 0 ? (
+                ) : visibleRoutineItems.length === 0 ? (
                   <p className="mt-3 text-sm text-slate-500 leading-6">Chưa có mốc lịch nhắc nào cho thú cưng này.</p>
                 ) : (
                   <div className="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1">
-                    {routineItems.map((item, idx) => (
+                    {visibleRoutineItems.map((item, idx) => (
                       <div key={`${item.category}-${item.itemName}-${idx}`} className="rounded-xl border border-slate-200 p-3 bg-slate-50">
                         <div className="flex items-start justify-between gap-2">
                           <div>
@@ -533,9 +543,9 @@ export default function AIHealthPage() {
                       </div>
                     ))}
 
-                    {routineItems.some((item) => item.category === 'Vaccination' && item.status !== 'Completed') && (
+                    {hasEstimatedVaccinations && (
                       <div className="rounded-xl border border-teal-200 bg-teal-50 p-3 text-xs text-teal-800">
-                        Cập nhật mũi tiêm thực tế tại{' '}
+                        Đang ẩn các mốc vaccine ước tính. Cập nhật lịch sử tiêm thực tế tại{' '}
                         <button
                           type="button"
                           onClick={() => navigate('/thu-cung')}
@@ -543,7 +553,7 @@ export default function AIHealthPage() {
                         >
                           Quản lý Thú cưng
                         </button>
-                        {' '}để đảm bảo lịch nhắc và AI luôn chính xác.
+                        {' '}để hiển thị đúng dữ liệu đã tiêm.
                       </div>
                     )}
                   </div>

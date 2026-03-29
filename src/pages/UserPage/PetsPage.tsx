@@ -883,8 +883,6 @@ export default function PetsPage() {
                           disabled={!canUse}
                         />
                       )}
-
-                      <p className="mt-1 text-xs text-gray-500">Danh mục chuẩn giúp hệ thống ước tính lịch nhắc chính xác hơn.</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Ngày tiêm *</label>

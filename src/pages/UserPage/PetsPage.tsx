@@ -712,7 +712,7 @@ export default function PetsPage() {
                           {vaccineCatalog.map((item) => (
                             <option key={item.code} value={item.code}>{item.displayName}</option>
                           ))}
-                          <option value={CUSTOM_VACCINE_VALUE}>Khác (nhập tay)</option>
+                          <option value={CUSTOM_VACCINE_VALUE}>Khác</option>
                         </select>
                         <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
@@ -869,7 +869,7 @@ export default function PetsPage() {
                           {vaccineCatalog.map((item) => (
                             <option key={item.code} value={item.code}>{item.displayName}</option>
                           ))}
-                          <option value={CUSTOM_VACCINE_VALUE}>Khác (nhập tay)</option>
+                          <option value={CUSTOM_VACCINE_VALUE}>Khác</option>
                         </select>
                         <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>

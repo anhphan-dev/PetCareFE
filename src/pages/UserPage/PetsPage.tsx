@@ -686,39 +686,42 @@ export default function PetsPage() {
 
                   {form.hasInitialVaccination && (
                     <div className="grid grid-cols-1 gap-2">
-                      <select
-                        value={useCustomInitialVaccine ? CUSTOM_VACCINE_VALUE : (form.initialVaccineCode || '')}
-                        onChange={(e) => {
-                          const next = e.target.value;
-                          if (next === CUSTOM_VACCINE_VALUE) {
-                            setUseCustomInitialVaccine(true);
-                            setForm((p) => ({ ...p, initialVaccineCode: '' }));
-                            return;
-                          }
+                      <div className="relative">
+                        <select
+                          value={useCustomInitialVaccine ? CUSTOM_VACCINE_VALUE : (form.initialVaccineCode || '')}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            if (next === CUSTOM_VACCINE_VALUE) {
+                              setUseCustomInitialVaccine(true);
+                              setForm((p) => ({ ...p, initialVaccineCode: '' }));
+                              return;
+                            }
 
-                          const matched = vaccineCatalog.find((v) => v.code === next);
-                          setUseCustomInitialVaccine(false);
-                          setForm((p) => ({
-                            ...p,
-                            initialVaccineCode: next,
-                            initialVaccineName: matched?.displayName || '',
-                          }));
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        disabled={!canUse}
-                      >
-                        <option value="">Chọn vaccine chuẩn</option>
-                        {vaccineCatalog.map((item) => (
-                          <option key={item.code} value={item.code}>{item.displayName}</option>
-                        ))}
-                        <option value={CUSTOM_VACCINE_VALUE}>Khác (nhập tay)</option>
-                      </select>
+                            const matched = vaccineCatalog.find((v) => v.code === next);
+                            setUseCustomInitialVaccine(false);
+                            setForm((p) => ({
+                              ...p,
+                              initialVaccineCode: next,
+                              initialVaccineName: matched?.displayName || '',
+                            }));
+                          }}
+                          className="w-full h-11 appearance-none px-3 pr-10 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          disabled={!canUse}
+                        >
+                          <option value="">Chọn vaccine chuẩn</option>
+                          {vaccineCatalog.map((item) => (
+                            <option key={item.code} value={item.code}>{item.displayName}</option>
+                          ))}
+                          <option value={CUSTOM_VACCINE_VALUE}>Khác (nhập tay)</option>
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
 
                       {useCustomInitialVaccine && (
                         <input
                           value={form.initialVaccineName}
                           onChange={(e) => setForm((p) => ({ ...p, initialVaccineName: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          className="w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                           placeholder="Nhập tên vaccine"
                           disabled={!canUse}
                         />
@@ -729,7 +732,7 @@ export default function PetsPage() {
                         type="date"
                         value={form.initialVaccinationDate || new Date().toISOString().split('T')[0]}
                         onChange={(e) => setForm((p) => ({ ...p, initialVaccinationDate: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        className="w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         disabled={!canUse}
                       />
                     </div>
@@ -840,39 +843,42 @@ export default function PetsPage() {
                   <form onSubmit={handleAddVaccination} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Tên vaccine *</label>
-                      <select
-                        value={useCustomVaccinationName ? CUSTOM_VACCINE_VALUE : (vaccinationForm.vaccineCode || '')}
-                        onChange={(e) => {
-                          const next = e.target.value;
-                          if (next === CUSTOM_VACCINE_VALUE) {
-                            setUseCustomVaccinationName(true);
-                            setVaccinationForm((p) => ({ ...p, vaccineCode: '' }));
-                            return;
-                          }
+                      <div className="relative">
+                        <select
+                          value={useCustomVaccinationName ? CUSTOM_VACCINE_VALUE : (vaccinationForm.vaccineCode || '')}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            if (next === CUSTOM_VACCINE_VALUE) {
+                              setUseCustomVaccinationName(true);
+                              setVaccinationForm((p) => ({ ...p, vaccineCode: '' }));
+                              return;
+                            }
 
-                          const matched = vaccineCatalog.find((v) => v.code === next);
-                          setUseCustomVaccinationName(false);
-                          setVaccinationForm((p) => ({
-                            ...p,
-                            vaccineCode: next,
-                            vaccineName: matched?.displayName || '',
-                          }));
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        disabled={!canUse}
-                      >
-                        <option value="">Chọn vaccine chuẩn</option>
-                        {vaccineCatalog.map((item) => (
-                          <option key={item.code} value={item.code}>{item.displayName}</option>
-                        ))}
-                        <option value={CUSTOM_VACCINE_VALUE}>Khác (nhập tay)</option>
-                      </select>
+                            const matched = vaccineCatalog.find((v) => v.code === next);
+                            setUseCustomVaccinationName(false);
+                            setVaccinationForm((p) => ({
+                              ...p,
+                              vaccineCode: next,
+                              vaccineName: matched?.displayName || '',
+                            }));
+                          }}
+                          className="w-full h-11 appearance-none px-3 pr-10 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          disabled={!canUse}
+                        >
+                          <option value="">Chọn vaccine chuẩn</option>
+                          {vaccineCatalog.map((item) => (
+                            <option key={item.code} value={item.code}>{item.displayName}</option>
+                          ))}
+                          <option value={CUSTOM_VACCINE_VALUE}>Khác (nhập tay)</option>
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
 
                       {useCustomVaccinationName && (
                         <input
                           value={vaccinationForm.vaccineName}
                           onChange={(e) => setVaccinationForm((p) => ({ ...p, vaccineName: e.target.value }))}
-                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          className="mt-2 w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                           placeholder="Nhập tên vaccine"
                           disabled={!canUse}
                         />
@@ -888,13 +894,13 @@ export default function PetsPage() {
                         onChange={(e) =>
                           setVaccinationForm((p) => ({ ...p, vaccinationDate: e.target.value }))
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        className="w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         disabled={!canUse}
                       />
                     </div>
                     <button
                       type="submit"
-                      className="h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors disabled:bg-gray-400"
+                      className="h-11 inline-flex items-center justify-center gap-2 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors disabled:bg-gray-400"
                       disabled={!canUse}
                     >
                       <Plus className="w-4 h-4" />

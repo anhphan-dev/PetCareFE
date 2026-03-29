@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import PetAPI, { type Pet as PetType, type PetPayload } from '../../services/PetAPI';
 import PetSpeciesAPI, { type PetSpecies } from '../../services/PetSpeciesAPI';
 import { healthRecordService } from '../../services/HealthRecordService';
-import { VaccineCatalogItem } from '../../types/healthRecord';
+import { VaccineCatalogItem, VaccinationResponse } from '../../types/healthRecord';
 import { convertImageToBase64, isValidImageFile } from '../../utils/imageUtils';
 import { toast } from 'react-toastify';
 
@@ -27,10 +27,6 @@ type HealthCheck = {
 
 function storageKey(userId: string) {
   return `pets:${userId}`;
-}
-
-function healthStorageKey(userId: string) {
-  return `health:${userId}`;
 }
 
 const CUSTOM_VACCINE_VALUE = '__custom_vaccine__';
@@ -81,6 +77,7 @@ export default function PetsPage() {
   });
 
   const [vaccineCatalog, setVaccineCatalog] = useState<VaccineCatalogItem[]>([]);
+  const [vaccinationHistory, setVaccinationHistory] = useState<VaccinationResponse[]>([]);
   const [useCustomInitialVaccine, setUseCustomInitialVaccine] = useState(false);
   const [useCustomVaccinationName, setUseCustomVaccinationName] = useState(false);
 
@@ -146,15 +143,53 @@ export default function PetsPage() {
         }
       }
 
-      // Health checks remain local for now
-      try {
-        const rawHealth = localStorage.getItem(healthStorageKey(user.id));
-        setHealthChecks(rawHealth ? (JSON.parse(rawHealth) as HealthCheck[]) : []);
-      } catch {
-        setHealthChecks([]);
-      }
+      setHealthChecks([]);
+      setVaccinationHistory([]);
     })();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !selectedPetId) {
+      setHealthChecks([]);
+      setVaccinationHistory([]);
+      return;
+    }
+
+    (async () => {
+      try {
+        const [healthRecords, vaccinations] = await Promise.all([
+          healthRecordService.getHealthRecordsByPet(selectedPetId),
+          healthRecordService.getVaccinationsByPet(selectedPetId),
+        ]);
+
+        const mappedHealth: HealthCheck[] = healthRecords.map((record) => {
+          const status =
+            record.diagnosis === 'Cần chú ý' || record.diagnosis === 'Cần điều trị'
+              ? (record.diagnosis as HealthCheck['status'])
+              : ('Khỏe mạnh' as HealthCheck['status']);
+
+          return {
+            id: record.id,
+            petId: record.petId,
+            date: record.recordDate,
+            weight: record.weight !== undefined && record.weight !== null ? String(record.weight) : undefined,
+            temperature: record.temperature !== undefined && record.temperature !== null ? String(record.temperature) : undefined,
+            notes: record.notes,
+            status,
+          };
+        });
+
+        setHealthChecks(
+          mappedHealth.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        );
+        setVaccinationHistory(vaccinations);
+      } catch (err) {
+        console.error('Failed to load pet health data', err);
+        setHealthChecks([]);
+        setVaccinationHistory([]);
+      }
+    })();
+  }, [selectedPetId, user?.id]);
 
   // Get breeds for selected species id
   const getSelectedSpeciesBreeds = () => {
@@ -168,12 +203,6 @@ export default function PetsPage() {
     try {
       localStorage.setItem(storageKey(user.id), JSON.stringify(next));
     } catch {}
-  };
-
-  const persistHealth = (next: HealthCheck[]) => {
-    setHealthChecks(next);
-    if (!user?.id) return;
-    localStorage.setItem(healthStorageKey(user.id), JSON.stringify(next));
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -273,24 +302,43 @@ export default function PetsPage() {
     setImagePreview('');
   };
 
-  const handleAddHealth = (e: React.FormEvent) => {
+  const handleAddHealth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPetId) return;
 
-    const next: HealthCheck[] = [
-      {
-        id: crypto.randomUUID(),
+    try {
+      await healthRecordService.createHealthRecord({
         petId: selectedPetId,
-        date: new Date().toISOString().split('T')[0],
-        weight: healthForm.weight.trim() || undefined,
-        temperature: healthForm.temperature.trim() || undefined,
+        recordDate: new Date().toISOString(),
+        weight: healthForm.weight ? Number(healthForm.weight) : undefined,
+        temperature: healthForm.temperature ? Number(healthForm.temperature) : undefined,
+        diagnosis: healthForm.status,
         notes: healthForm.notes.trim() || undefined,
-        status: healthForm.status,
-      },
-      ...healthChecks,
-    ];
-    persistHealth(next);
-    setHealthForm({ weight: '', temperature: '', notes: '', status: 'Khỏe mạnh' });
+      });
+
+      const updated = await healthRecordService.getHealthRecordsByPet(selectedPetId);
+      const mappedUpdated: HealthCheck[] = updated.map((record) => ({
+        id: record.id,
+        petId: record.petId,
+        date: record.recordDate,
+        weight: record.weight !== undefined && record.weight !== null ? String(record.weight) : undefined,
+        temperature: record.temperature !== undefined && record.temperature !== null ? String(record.temperature) : undefined,
+        notes: record.notes,
+        status:
+          record.diagnosis === 'Cần chú ý' || record.diagnosis === 'Cần điều trị'
+            ? (record.diagnosis as HealthCheck['status'])
+            : 'Khỏe mạnh',
+      }));
+
+      setHealthChecks(
+        mappedUpdated.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      );
+      setHealthForm({ weight: '', temperature: '', notes: '', status: 'Khỏe mạnh' });
+      toast.success('Đã lưu kết quả kiểm tra sức khỏe.');
+    } catch (err) {
+      console.error('Failed to add health record', err);
+      toast.error(err instanceof Error ? err.message : 'Không thể lưu kết quả kiểm tra sức khỏe.');
+    }
   };
 
   const handleRemove = async (id: string) => {
@@ -320,9 +368,15 @@ export default function PetsPage() {
     }
   };
 
-  const handleRemoveHealth = (id: string) => {
-    const next = healthChecks.filter((h) => h.id !== id);
-    persistHealth(next);
+  const handleRemoveHealth = async (id: string) => {
+    try {
+      await healthRecordService.deleteHealthRecord(id);
+      setHealthChecks((prev) => prev.filter((h) => h.id !== id));
+      toast.success('Đã xóa kết quả kiểm tra.');
+    } catch (err) {
+      console.error('Failed to delete health record', err);
+      toast.error(err instanceof Error ? err.message : 'Không thể xóa kết quả kiểm tra.');
+    }
   };
 
   const handleAddVaccination = async (e: React.FormEvent) => {
@@ -349,6 +403,8 @@ export default function PetsPage() {
         notes: '',
       });
       setUseCustomVaccinationName(false);
+      const vaccinations = await healthRecordService.getVaccinationsByPet(selectedPetId);
+      setVaccinationHistory(vaccinations);
       toast.success('Đã cập nhật lịch sử vaccine.');
     } catch (err) {
       console.error('Failed to add vaccination', err);
@@ -918,6 +974,51 @@ export default function PetsPage() {
                       />
                     </div>
                   </form>
+                </section>
+
+                <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar className="w-5 h-5 text-emerald-600" />
+                    <h2 className="text-lg font-semibold text-gray-800">Lịch sử vaccine</h2>
+                  </div>
+
+                  {vaccinationHistory.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-gray-300 py-8 px-4 text-center text-sm text-gray-500">
+                      Chưa có dữ liệu lịch sử vaccine cho thú cưng này.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {vaccinationHistory.map((vaccine) => (
+                        <div key={vaccine.id} className="rounded-xl border border-gray-200 p-4 bg-gray-50">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">{vaccine.vaccineName}</p>
+                              {vaccine.vaccineCode && (
+                                <p className="text-xs text-gray-500 mt-0.5">Mã chuẩn: {vaccine.vaccineCode}</p>
+                              )}
+                            </div>
+                            <span className="text-xs font-medium text-gray-600">
+                              Ngày tiêm: {new Date(vaccine.vaccinationDate).toLocaleDateString('vi-VN')}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 text-sm text-gray-700 space-y-1">
+                            {vaccine.nextDueDate && (
+                              <p>
+                                <span className="font-medium">Lịch nhắc kế tiếp:</span>{' '}
+                                {new Date(vaccine.nextDueDate).toLocaleDateString('vi-VN')}
+                              </p>
+                            )}
+                            {vaccine.notes && (
+                              <p>
+                                <span className="font-medium">Ghi chú:</span> {vaccine.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
 
                 {/* Add Health Check */}

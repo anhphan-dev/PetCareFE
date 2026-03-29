@@ -1,25 +1,30 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import {
   AlertCircle,
+  AlertTriangle,
   BadgeCheck,
   Brain,
   ChevronRight,
   HeartPulse,
   History,
   Loader2,
+  Syringe,
   ShieldAlert,
   Sparkles,
   Stethoscope,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import PetAPI, { Pet } from '../../services/PetAPI';
+import { healthRecordService } from '../../services/HealthRecordService';
 import AIHealthService, {
   AIAnalysisType,
   AIHealthAnalysisResponse,
   AIHealthAnalysisSummary,
 } from '../../services/AIHealthService';
 import SubscriptionService from '../../services/SubscriptionService';
+import { DogRoutineItem, DogRoutineSchedule } from '../../types/healthRecord';
 
 const analysisOptions: Array<{ value: AIAnalysisType; label: string; hint: string }> = [
   {
@@ -58,6 +63,31 @@ const analysisTypeLabels: Record<string, string> = {
   Recommendation: 'Khuyến nghị chăm sóc',
   DiseaseRisk: 'Đánh giá nguy cơ bệnh',
   Nutrition: 'Tư vấn dinh dưỡng',
+};
+
+const routineStatusLabel: Record<string, string> = {
+  Completed: 'Đã hoàn thành',
+  Overdue: 'Quá hạn',
+  DueSoon: 'Sắp đến hạn',
+  Upcoming: 'Sắp tới',
+};
+
+const routineStatusClass: Record<string, string> = {
+  Completed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  Overdue: 'bg-rose-100 text-rose-700 border-rose-200',
+  DueSoon: 'bg-amber-100 text-amber-700 border-amber-200',
+  Upcoming: 'bg-slate-100 text-slate-700 border-slate-200',
+};
+
+const formatOptionalDate = (value?: string) => {
+  if (!value) return 'Chưa có';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return 'Chưa có';
+  return d.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 };
 
 type RenderBlock =
@@ -113,6 +143,11 @@ export default function AIHealthPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [membershipActive, setMembershipActive] = useState(false);
+  const [dogRoutine, setDogRoutine] = useState<DogRoutineSchedule | null>(null);
+  const [routineLoading, setRoutineLoading] = useState(false);
+  const [routineError, setRoutineError] = useState<string | null>(null);
+  const [updatingVaccinationKey, setUpdatingVaccinationKey] = useState<string | null>(null);
+  const [vaccinationDates, setVaccinationDates] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const init = async () => {
@@ -173,6 +208,31 @@ export default function AIHealthPage() {
     void loadHistory();
   }, [selectedPetId, membershipActive]);
 
+  const loadDogRoutine = async (petId: string) => {
+    try {
+      setRoutineLoading(true);
+      setRoutineError(null);
+      const data = await healthRecordService.getDogRoutineSchedule(petId);
+      setDogRoutine(data);
+    } catch (e: unknown) {
+      setDogRoutine(null);
+      const msg = e instanceof Error ? e.message : 'Không thể tải lịch nhắc tiêm phòng.';
+      setRoutineError(msg);
+    } finally {
+      setRoutineLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedPetId || !membershipActive) {
+      setDogRoutine(null);
+      setRoutineError(null);
+      return;
+    }
+
+    void loadDogRoutine(selectedPetId);
+  }, [selectedPetId, membershipActive]);
+
   const selectedPet = useMemo(
     () => pets.find((p) => p.id === selectedPetId) ?? null,
     [pets, selectedPetId]
@@ -192,6 +252,50 @@ export default function AIHealthPage() {
     () => (membershipActive ? 'Thành viên AI đang hoạt động' : 'Chưa kích hoạt AI'),
     [membershipActive]
   );
+
+  const routineItems = useMemo(() => {
+    if (!dogRoutine) return [] as DogRoutineItem[];
+    const merged = [...dogRoutine.vaccinations, ...dogRoutine.deworming];
+    return merged.sort((a, b) => {
+      const aTime = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const bTime = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      return aTime - bTime;
+    });
+  }, [dogRoutine]);
+
+  const handleMarkVaccinated = async (item: DogRoutineItem) => {
+    if (!selectedPetId) return;
+
+    const itemKey = `${item.category}-${item.itemName}`;
+    if (!item.itemName?.trim()) {
+      toast.error('Không xác định được tên vaccine để cập nhật.');
+      return;
+    }
+
+    const selectedDate = vaccinationDates[itemKey] || new Date().toISOString().split('T')[0];
+    if (!selectedDate) {
+      toast.error('Vui lòng chọn ngày tiêm vaccine.');
+      return;
+    }
+
+    setUpdatingVaccinationKey(itemKey);
+
+    try {
+      await healthRecordService.addVaccination(selectedPetId, {
+        vaccineName: item.itemName.trim(),
+        vaccinationDate: selectedDate,
+        notes: `Recorded from routine reminder card on ${selectedDate}`,
+      });
+
+      toast.success('Đã cập nhật trạng thái tiêm vaccine');
+      await loadDogRoutine(selectedPetId);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Không thể cập nhật trạng thái vaccine.';
+      toast.error(msg);
+    } finally {
+      setUpdatingVaccinationKey(null);
+    }
+  };
 
   const handleSelectHistory = async (analysisId: string) => {
     try {
@@ -417,6 +521,84 @@ export default function AIHealthPage() {
                   </div>
                 </div>
               )}
+
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center gap-2">
+                  <Syringe className="w-4 h-4 text-teal-700" />
+                  <p className="text-sm font-semibold text-slate-900">Lịch nhắc tiêm phòng và tẩy giun</p>
+                </div>
+
+                {!membershipActive ? (
+                  <p className="mt-3 text-sm text-slate-500 leading-6">
+                    Cần gói thành viên để xem lịch nhắc từ hồ sơ y tế.
+                  </p>
+                ) : routineLoading ? (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Đang tải lịch nhắc...
+                  </div>
+                ) : routineError ? (
+                  <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 mt-0.5" />
+                    <span>{routineError}</span>
+                  </div>
+                ) : dogRoutine && !dogRoutine.isDog ? (
+                  <p className="mt-3 text-sm text-slate-600 leading-6">
+                    {dogRoutine.note || 'Hiện tại lịch nhắc mới hỗ trợ chó.'}
+                  </p>
+                ) : routineItems.length === 0 ? (
+                  <p className="mt-3 text-sm text-slate-500 leading-6">Chưa có mốc lịch nhắc nào cho thú cưng này.</p>
+                ) : (
+                  <div className="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {routineItems.map((item, idx) => (
+                      <div key={`${item.category}-${item.itemName}-${idx}`} className="rounded-xl border border-slate-200 p-3 bg-slate-50">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{item.itemName}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{item.category} • {item.frequency}</p>
+                          </div>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${routineStatusClass[item.status] || routineStatusClass.Upcoming}`}>
+                            {routineStatusLabel[item.status] || item.status}
+                          </span>
+                        </div>
+
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                          <p>Đến hạn: {formatOptionalDate(item.dueDate)}</p>
+                          <p>Đã làm: {formatOptionalDate(item.lastCompletedDate)}</p>
+                        </div>
+
+                        {item.category === 'Vaccination' && item.status !== 'Completed' && (
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <input
+                              type="date"
+                              value={vaccinationDates[`${item.category}-${item.itemName}`] || new Date().toISOString().split('T')[0]}
+                              onChange={(e) => {
+                                const nextValue = e.target.value;
+                                setVaccinationDates((prev) => ({
+                                  ...prev,
+                                  [`${item.category}-${item.itemName}`]: nextValue,
+                                }));
+                              }}
+                              className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => void handleMarkVaccinated(item)}
+                              disabled={updatingVaccinationKey === `${item.category}-${item.itemName}`}
+                              className="inline-flex items-center justify-center rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {updatingVaccinationKey === `${item.category}-${item.itemName}`
+                                ? 'Đang cập nhật...'
+                                : 'Đánh dấu đã tiêm'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </aside>
 

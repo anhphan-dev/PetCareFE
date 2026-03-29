@@ -28,6 +28,10 @@ export default function LoginPage() {
       const role = response.user.roleName?.trim().toLowerCase() || 'customer';
       if (role === 'admin') navigate('/admin', { replace: true });
       else if (role === 'staff') navigate('/staff', { replace: true });
+      else if (role === 'doctor') navigate('/doctor', { replace: true });
+      else if (role === 'provider' || role === 'serviceprovider' || role === 'service_provider') {
+        navigate('/provider', { replace: true });
+      }
       else navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google login failed.');
@@ -58,6 +62,10 @@ export default function LoginPage() {
         navigate('/admin', { replace: true });
       } else if (role === 'staff') {
         navigate('/staff', { replace: true });
+      } else if (role === 'doctor') {
+        navigate('/doctor', { replace: true });
+      } else if (role === 'provider' || role === 'serviceprovider') {
+        navigate('/provider', { replace: true });
       } else if (role === 'service_provider') {
         navigate('/provider', { replace: true });
       } else {

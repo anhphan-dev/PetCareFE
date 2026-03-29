@@ -33,6 +33,8 @@ function healthStorageKey(userId: string) {
   return `health:${userId}`;
 }
 
+const CUSTOM_VACCINE_VALUE = '__custom_vaccine__';
+
 export default function PetsPage() {
   const { user } = useAuth();
 
@@ -79,6 +81,8 @@ export default function PetsPage() {
   });
 
   const [vaccineCatalog, setVaccineCatalog] = useState<VaccineCatalogItem[]>([]);
+  const [useCustomInitialVaccine, setUseCustomInitialVaccine] = useState(false);
+  const [useCustomVaccinationName, setUseCustomVaccinationName] = useState(false);
 
   const canUse = useMemo(() => !!user?.id, [user?.id]);
 
@@ -235,6 +239,7 @@ export default function PetsPage() {
         initialVaccineName: '',
         initialVaccinationDate: '',
       });
+      setUseCustomInitialVaccine(false);
       setImagePreview('');
       toast.success('Thêm thú cưng thành công!');
     } catch (err) {
@@ -343,6 +348,7 @@ export default function PetsPage() {
         vaccinationDate: new Date().toISOString().split('T')[0],
         notes: '',
       });
+      setUseCustomVaccinationName(false);
       toast.success('Đã cập nhật lịch sử vaccine.');
     } catch (err) {
       console.error('Failed to add vaccination', err);
@@ -396,12 +402,6 @@ export default function PetsPage() {
   return (
     <div className="min-h-[60vh] bg-gray-50 px-4 py-10">
       <div className="max-w-7xl mx-auto space-y-6">
-        <datalist id="vaccine-catalog-options">
-          {vaccineCatalog.map((item) => (
-            <option key={item.code} value={item.displayName} />
-          ))}
-        </datalist>
-
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -686,23 +686,45 @@ export default function PetsPage() {
 
                   {form.hasInitialVaccination && (
                     <div className="grid grid-cols-1 gap-2">
-                      <input
-                        list="vaccine-catalog-options"
-                        value={form.initialVaccineName}
+                      <select
+                        value={useCustomInitialVaccine ? CUSTOM_VACCINE_VALUE : (form.initialVaccineCode || '')}
                         onChange={(e) => {
-                          const nextName = e.target.value;
-                          const matched = vaccineCatalog.find((v) => v.displayName === nextName);
+                          const next = e.target.value;
+                          if (next === CUSTOM_VACCINE_VALUE) {
+                            setUseCustomInitialVaccine(true);
+                            setForm((p) => ({ ...p, initialVaccineCode: '' }));
+                            return;
+                          }
+
+                          const matched = vaccineCatalog.find((v) => v.code === next);
+                          setUseCustomInitialVaccine(false);
                           setForm((p) => ({
                             ...p,
-                            initialVaccineName: nextName,
-                            initialVaccineCode: matched?.code || '',
+                            initialVaccineCode: next,
+                            initialVaccineName: matched?.displayName || '',
                           }));
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        placeholder="Chọn hoặc nhập tên vaccine"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         disabled={!canUse}
-                      />
-                      <p className="text-xs text-gray-500">Có thể gõ tên tùy chỉnh nếu không có trong danh mục.</p>
+                      >
+                        <option value="">Chọn vaccine chuẩn</option>
+                        {vaccineCatalog.map((item) => (
+                          <option key={item.code} value={item.code}>{item.displayName}</option>
+                        ))}
+                        <option value={CUSTOM_VACCINE_VALUE}>Khác (nhập tay)</option>
+                      </select>
+
+                      {useCustomInitialVaccine && (
+                        <input
+                          value={form.initialVaccineName}
+                          onChange={(e) => setForm((p) => ({ ...p, initialVaccineName: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          placeholder="Nhập tên vaccine"
+                          disabled={!canUse}
+                        />
+                      )}
+
+                      <p className="text-xs text-gray-500">Ưu tiên chọn vaccine chuẩn để hệ thống nhắc lịch chính xác hơn.</p>
                       <input
                         type="date"
                         value={form.initialVaccinationDate || new Date().toISOString().split('T')[0]}
@@ -818,22 +840,44 @@ export default function PetsPage() {
                   <form onSubmit={handleAddVaccination} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Tên vaccine *</label>
-                      <input
-                        list="vaccine-catalog-options"
-                        value={vaccinationForm.vaccineName}
+                      <select
+                        value={useCustomVaccinationName ? CUSTOM_VACCINE_VALUE : (vaccinationForm.vaccineCode || '')}
                         onChange={(e) => {
-                          const nextName = e.target.value;
-                          const matched = vaccineCatalog.find((v) => v.displayName === nextName);
+                          const next = e.target.value;
+                          if (next === CUSTOM_VACCINE_VALUE) {
+                            setUseCustomVaccinationName(true);
+                            setVaccinationForm((p) => ({ ...p, vaccineCode: '' }));
+                            return;
+                          }
+
+                          const matched = vaccineCatalog.find((v) => v.code === next);
+                          setUseCustomVaccinationName(false);
                           setVaccinationForm((p) => ({
                             ...p,
-                            vaccineName: nextName,
-                            vaccineCode: matched?.code || '',
+                            vaccineCode: next,
+                            vaccineName: matched?.displayName || '',
                           }));
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        placeholder="Chọn hoặc nhập tên vaccine"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         disabled={!canUse}
-                      />
+                      >
+                        <option value="">Chọn vaccine chuẩn</option>
+                        {vaccineCatalog.map((item) => (
+                          <option key={item.code} value={item.code}>{item.displayName}</option>
+                        ))}
+                        <option value={CUSTOM_VACCINE_VALUE}>Khác (nhập tay)</option>
+                      </select>
+
+                      {useCustomVaccinationName && (
+                        <input
+                          value={vaccinationForm.vaccineName}
+                          onChange={(e) => setVaccinationForm((p) => ({ ...p, vaccineName: e.target.value }))}
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          placeholder="Nhập tên vaccine"
+                          disabled={!canUse}
+                        />
+                      )}
+
                       <p className="mt-1 text-xs text-gray-500">Danh mục chuẩn giúp hệ thống ước tính lịch nhắc chính xác hơn.</p>
                     </div>
                     <div>

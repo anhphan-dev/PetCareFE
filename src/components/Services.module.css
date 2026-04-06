@@ -1,0 +1,89 @@
+/* Services.module.css */
+.section {
+  padding: 100px 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #F0FDFA 100%);
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.pawWatermark {
+  position: absolute;
+  top: 40px;
+  right: 60px;
+  font-size: 180px;
+  opacity: 0.04;
+  pointer-events: none;
+  user-select: none;
+  transform: rotate(20deg);
+}
+
+.container { max-width: 1280px; margin: 0 auto; }
+
+.sectionHeader { text-align: center; margin-bottom: 64px; }
+
+.eyebrow {
+  display: inline-block;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: #0D9488; background: rgba(204,251,241,.6);
+  border: 1px solid rgba(13,148,136,.2); padding: 5px 14px; border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 4vw, 44px); font-weight: 700; color: #1C1917; margin: 0 0 14px; line-height: 1.22;
+}
+
+.subtitle { font-size: 16px; color: #57534E; line-height: 1.65; margin: 0; max-width: 520px; margin: 0 auto; }
+
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 960px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+
+/* Card */
+.card {
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(20,184,166,.15);
+  border-radius: 20px;
+  padding: 32px 26px;
+  display: flex; flex-direction: column; gap: 14px;
+  cursor: default;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05);
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.3s;
+  opacity: 0;
+  transform: translateY(24px);
+  animation: fadeUp 0.55s ease calc(var(--index, 0) * 0.08s) forwards;
+}
+
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(13,148,136,.14);
+  border-color: rgba(20,184,166,.35);
+}
+
+.iconWrap {
+  width: 60px; height: 60px; border-radius: 16px;
+  background: linear-gradient(135deg, rgba(204,251,241,.8), rgba(240,253,250,.8));
+  border: 1px solid rgba(13,148,136,.15);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.3s;
+}
+
+.card:hover .iconWrap { transform: scale(1.1) rotate(-4deg); }
+
+.emoji { font-size: 28px; line-height: 1; }
+
+.cardTitle { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: #1C1917; margin: 0; }
+
+.cardDesc { font-size: 14px; color: #57534E; line-height: 1.68; margin: 0; }

@@ -1,24 +1,20 @@
+// Header.tsx
 import {
-  ChevronDown,
-  Crown,
-  Dog,
-  Heart,
-  Home,
-  List,
-  LogOut,
-  Menu,
-  PawPrint,
-  ShoppingBag,
-  Sparkles,
-  User,
-  UserCircle,
-  X
+    ChevronDown, Crown, Dog, Heart, Home, List, LogOut,
+    Menu, PawPrint,
+    Search,
+    ShoppingBag,
+    ShoppingCart,
+    Sparkles, User, UserCircle,
+    X
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
 import { useDropdown } from '../hooks/useDropdown';
 import { getImageUrl } from '../utils/imageUtils';
+import styles from './Header.module.css';
 
 const homeDropdownItems = [
   { label: 'Giới thiệu', path: '/gioi-thieu', icon: Home },
@@ -28,188 +24,383 @@ const homeDropdownItems = [
 
 const userMenuItems = [
   { icon: UserCircle, label: 'Hồ sơ của tôi', path: '/tai-khoan' },
-  { icon: Crown, label: 'Gói thành viên', path: '/membership' },
-  { icon: Sparkles, label: 'AI Sức khỏe', path: '/ai-suc-khoe' },
-  { icon: Dog, label: 'Thú cưng của tôi', path: '/thu-cung' },
-  { icon: ShoppingBag, label: 'Giỏ hàng của bạn', path: '/gio-hang' },
+  { icon: Crown,      label: 'Gói thành viên', path: '/membership' },
+  { icon: Sparkles,   label: 'AI Sức khỏe',   path: '/ai-suc-khoe' },
+  { icon: Dog,        label: 'Thú cưng của tôi', path: '/thu-cung' },
+  { icon: ShoppingBag, label: 'Giỏ hàng',     path: '/gio-hang' },
+];
+
+const navLinks = [
+  { label: 'Trang chủ', path: '/',         hasDropdown: true },
+  { label: 'Cửa hàng',  path: '/cua-hang', hasDropdown: false },
+  { label: 'Dịch vụ',   path: '/dat-lich', hasDropdown: false },
+  { label: 'Thú cưng',  path: '/thu-cung', hasDropdown: false },
+  { label: 'Thành viên', path: '/membership', hasDropdown: false, icon: Crown },
 ];
 
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen]   = useState(false);
+  const [scrolled, setScrolled]       = useState(false);
+  const [searchOpen, setSearchOpen]   = useState(false);
+  const [searchVal, setSearchVal]     = useState('');
+  const [mobileHomeOpen, setMobileHomeOpen] = useState(false);
+  const [mobileUserOpen, setMobileUserOpen] = useState(false);
+
   const homeDropdown = useDropdown();
   const userDropdown = useDropdown();
-  const [isHomeDropdownOpenMobile, setIsHomeDropdownOpenMobile] = useState(false);
-  const [isUserDropdownOpenMobile, setIsUserDropdownOpenMobile] = useState(false);
-  const navDropdownRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const { user, isLoggedIn, logout } = useAuth();
+  const navRef       = useRef<HTMLDivElement>(null);
+  const searchRef    = useRef<HTMLInputElement>(null);
 
+  const navigate    = useNavigate();
+  const location    = useLocation();
+  const { user, isLoggedIn, logout } = useAuth();
+  const { cartCount } = useCart();
+
+  /* scroll → glass effect */
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (navDropdownRef.current && !navDropdownRef.current.contains(event.target as Node)) {
+    const handler = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  /* close dropdown on outside click */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
         homeDropdown.close();
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [homeDropdown]);
+
+  /* focus search input when opened */
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
 
   const handleLogout = () => {
     logout();
     userDropdown.close();
-    setIsUserDropdownOpenMobile(false);
+    setMobileUserOpen(false);
     setIsMenuOpen(false);
     navigate('/');
   };
 
   const closeAllMobile = () => {
     setIsMenuOpen(false);
-    setIsHomeDropdownOpenMobile(false);
-    setIsUserDropdownOpenMobile(false);
+    setMobileHomeOpen(false);
+    setMobileUserOpen(false);
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchVal.trim()) {
+      navigate(`/cua-hang?search=${encodeURIComponent(searchVal.trim())}`);
+      setSearchOpen(false);
+      setSearchVal('');
+    }
+  };
+
+  const isActive = (path: string) =>
+    path === '/'
+      ? location.pathname === '/'
+      : location.pathname.startsWith(path);
+
   return (
-    <header className="bg-white shadow-sm fixed w-full top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <PawPrint className="w-8 h-8 text-teal-600" />
-            <span className="text-xl font-bold text-teal-700">PetCare</span>
-          </Link>
+    <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
+      <div className={styles.inner}>
+        {/* ── Logo ── */}
+        <Link to="/" className={styles.logo}>
+          <PawPrint className={styles.logoIcon} />
+          <span className={styles.logoText}>PetCare</span>
+        </Link>
 
-          <nav className="hidden md:flex items-center gap-8" ref={navDropdownRef}>
-            {/* TRANG CHỦ */}
-            <div 
-              className="relative"
-              onMouseEnter={() => homeDropdown.open()}
-            >
-              <button
-                onClick={() => homeDropdown.toggle()}
-                className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors inline-flex items-center gap-1"
-              >
-                TRANG CHỦ <ChevronDown className="w-4 h-4" />
-              </button>
-              {homeDropdown.isOpen && (
-                <div
-                  className="absolute left-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
-                  onMouseEnter={() => homeDropdown.open()}
-                  onMouseLeave={() => homeDropdown.closeWithDelay()}
-                >
-                  {homeDropdownItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => homeDropdown.close()}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
-                      >
-                        <Icon className="w-4 h-4 text-gray-400" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <Link to="/thu-cung" className="text-sm font-medium text-gray-700 hover:text-teal-600">
-              THÚ CƯNG
-            </Link>
-
-            <Link to="/dat-lich" className="text-sm font-medium text-gray-700 hover:text-teal-600">
-              DỊCH VỤ
-            </Link>
-
-            <Link to="/cua-hang" className="text-sm font-medium text-gray-700 hover:text-teal-600">
-              CỬA HÀNG
-            </Link>
-
-            <Link to="/membership" className="text-sm font-medium text-gray-700 hover:text-teal-600 inline-flex items-center gap-1">
-              <Crown className="w-4 h-4" />
-              THÀNH VIÊN
-            </Link>
-          </nav>
-
-          <div className="hidden md:flex items-center gap-4">
-            <button
-              onClick={() => navigate('/dat-lich')}
-              className="bg-orange-500 text-white px-6 py-2 rounded-md font-medium hover:bg-orange-600 transition-colors"
-            >
-              ĐẶT LỊCH
-            </button>
-
-            {isLoggedIn && user ? (
+        {/* ── Desktop nav ── */}
+        <nav className={styles.desktopNav} ref={navRef} aria-label="Điều hướng chính">
+          {navLinks.map((link) => (
+            link.hasDropdown ? (
               <div
-                className="relative"
-                onMouseEnter={() => userDropdown.open()}
-                onMouseLeave={() => userDropdown.closeWithDelay()}
+                key={link.path}
+                className={styles.navItemWrapper}
+                onMouseEnter={() => homeDropdown.open()}
+                onMouseLeave={() => homeDropdown.closeWithDelay()}
               >
                 <button
-                  onClick={() => userDropdown.toggle()}
-                  className="flex items-center gap-2 rounded-full"
+                  className={`${styles.navLink} ${isActive(link.path) ? styles.navLinkActive : ''}`}
+                  onClick={() => homeDropdown.toggle()}
                 >
-                  {user.avatarUrl ? (
-                    <img
-                      src={getImageUrl(user.avatarUrl)}
-                      alt={user.fullName}
-                      className="w-9 h-9 rounded-full object-cover border-2 border-teal-100"
-                    />
-                  ) : (
-                    <span className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-600">
-                      <User className="w-5 h-5" />
-                    </span>
-                  )}
+                  {link.label}
+                  <ChevronDown
+                    size={14}
+                    className={`${styles.chevron} ${homeDropdown.isOpen ? styles.chevronOpen : ''}`}
+                  />
                 </button>
 
-                {userDropdown.isOpen && (
+                {homeDropdown.isOpen && (
                   <div
-                    className="absolute right-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
-                    onMouseEnter={() => userDropdown.open()}
-                    onMouseLeave={() => userDropdown.closeWithDelay()}
+                    className={styles.dropdown}
+                    onMouseEnter={() => homeDropdown.open()}
+                    onMouseLeave={() => homeDropdown.closeWithDelay()}
                   >
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-800 truncate">{user.fullName}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                    </div>
-
-                    {userMenuItems.map((item) => {
+                    {homeDropdownItems.map((item) => {
                       const Icon = item.icon;
                       return (
                         <Link
                           key={item.path}
                           to={item.path}
-                          onClick={() => userDropdown.close()}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700"
+                          className={styles.dropdownItem}
+                          onClick={() => homeDropdown.close()}
                         >
-                          <Icon className="w-4 h-4 text-gray-400" />
+                          <Icon size={15} className={styles.dropdownIcon} />
                           {item.label}
                         </Link>
                       );
                     })}
-
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Đăng xuất
-                    </button>
                   </div>
                 )}
               </div>
             ) : (
-              <Link to="/dang-nhap" className="text-sm font-medium text-teal-600">
-                ĐĂNG NHẬP
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`${styles.navLink} ${isActive(link.path) ? styles.navLinkActive : ''}`}
+              >
+                {link.icon && <link.icon size={14} className={styles.navIcon} />}
+                {link.label}
               </Link>
+            )
+          ))}
+        </nav>
+
+        {/* ── Desktop actions ── */}
+        <div className={styles.desktopActions}>
+          {/* Search */}
+          <div className={`${styles.searchWrapper} ${searchOpen ? styles.searchOpen : ''}`}>
+            {searchOpen && (
+              <form onSubmit={handleSearch} className={styles.searchForm}>
+                <input
+                  ref={searchRef}
+                  type="text"
+                  value={searchVal}
+                  onChange={(e) => setSearchVal(e.target.value)}
+                  placeholder="Tìm sản phẩm..."
+                  className={styles.searchInput}
+                  aria-label="Tìm kiếm sản phẩm"
+                />
+              </form>
+            )}
+            <button
+              className={styles.iconBtn}
+              onClick={() => setSearchOpen((v) => !v)}
+              aria-label="Tìm kiếm"
+            >
+              {searchOpen ? <X size={18} /> : <Search size={18} />}
+            </button>
+          </div>
+
+          {/* Cart */}
+          <Link to="/gio-hang" className={styles.cartBtn} aria-label="Giỏ hàng">
+            <ShoppingCart size={19} />
+            {cartCount > 0 && (
+              <span className={styles.cartBadge}>{cartCount > 99 ? '99+' : cartCount}</span>
+            )}
+          </Link>
+
+          {/* Book CTA */}
+          <button
+            className={styles.ctaBtn}
+            onClick={() => navigate('/dat-lich')}
+          >
+            Đặt lịch
+          </button>
+
+          {/* User */}
+          {isLoggedIn && user ? (
+            <div
+              className={styles.userWrapper}
+              onMouseEnter={() => userDropdown.open()}
+              onMouseLeave={() => userDropdown.closeWithDelay()}
+            >
+              <button
+                className={styles.avatarBtn}
+                onClick={() => userDropdown.toggle()}
+                aria-expanded={userDropdown.isOpen}
+                aria-haspopup="true"
+                aria-label="Tài khoản"
+              >
+                {user.avatarUrl ? (
+                  <img
+                    src={getImageUrl(user.avatarUrl)}
+                    alt={user.fullName}
+                    className={styles.avatarImg}
+                  />
+                ) : (
+                  <span className={styles.avatarFallback}>
+                    <User size={17} />
+                  </span>
+                )}
+                <span className={styles.avatarOnline} />
+              </button>
+
+              {userDropdown.isOpen && (
+                <div
+                  className={styles.userDropdown}
+                  onMouseEnter={() => userDropdown.open()}
+                  onMouseLeave={() => userDropdown.closeWithDelay()}
+                >
+                  <div className={styles.userDropdownHeader}>
+                    <p className={styles.userDropdownName}>{user.fullName}</p>
+                    <p className={styles.userDropdownEmail}>{user.email}</p>
+                  </div>
+                  {userMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={styles.dropdownItem}
+                        onClick={() => userDropdown.close()}
+                      >
+                        <Icon size={15} className={styles.dropdownIcon} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                  <div className={styles.dropdownDivider} />
+                  <button className={styles.logoutBtn} onClick={handleLogout}>
+                    <LogOut size={15} />
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link to="/dang-nhap" className={styles.loginLink}>Đăng nhập</Link>
+          )}
+        </div>
+
+        {/* ── Mobile hamburger ── */}
+        <button
+          className={styles.hamburger}
+          onClick={() => setIsMenuOpen((v) => !v)}
+          aria-label={isMenuOpen ? 'Đóng menu' : 'Mở menu'}
+          aria-expanded={isMenuOpen}
+        >
+          {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </div>
+
+      {/* ════ Mobile drawer ════ */}
+      <div className={`${styles.mobileDrawer} ${isMenuOpen ? styles.mobileDrawerOpen : ''}`}>
+        <div className={styles.mobileDrawerInner}>
+          {/* Trang chủ + dropdown */}
+          <div className={styles.mobileGroup}>
+            <button
+              className={styles.mobileLinkToggle}
+              onClick={() => setMobileHomeOpen((v) => !v)}
+            >
+              Trang chủ
+              <ChevronDown
+                size={14}
+                className={`${styles.chevron} ${mobileHomeOpen ? styles.chevronOpen : ''}`}
+              />
+            </button>
+            {mobileHomeOpen && (
+              <div className={styles.mobileSubMenu}>
+                {homeDropdownItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={styles.mobileSubLink}
+                    onClick={closeAllMobile}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
 
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X /> : <Menu />}
+          {[
+            { label: 'Cửa hàng', path: '/cua-hang' },
+            { label: 'Dịch vụ',  path: '/dat-lich' },
+            { label: 'Thú cưng', path: '/thu-cung' },
+            { label: 'Thành viên', path: '/membership' },
+          ].map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`${styles.mobileLink} ${isActive(link.path) ? styles.mobileLinkActive : ''}`}
+              onClick={closeAllMobile}
+            >
+              {link.label}
+            </Link>
+          ))}
+
+          <div className={styles.mobileDivider} />
+
+          <button
+            className={styles.mobileCta}
+            onClick={() => { closeAllMobile(); navigate('/dat-lich'); }}
+          >
+            Đặt lịch ngay
           </button>
+
+          {/* Mobile user */}
+          {isLoggedIn && user ? (
+            <div className={styles.mobileUserSection}>
+              <button
+                className={styles.mobileUserToggle}
+                onClick={() => setMobileUserOpen((v) => !v)}
+              >
+                {user.avatarUrl ? (
+                  <img src={getImageUrl(user.avatarUrl)} alt={user.fullName} className={styles.mobileAvatar} />
+                ) : (
+                  <span className={styles.mobileAvatarFallback}><User size={16} /></span>
+                )}
+                <span className={styles.mobileUserName}>{user.fullName}</span>
+                <ChevronDown
+                  size={14}
+                  className={`${styles.chevron} ${mobileUserOpen ? styles.chevronOpen : ''}`}
+                />
+              </button>
+
+              {mobileUserOpen && (
+                <div className={styles.mobileSubMenu}>
+                  {userMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={styles.mobileSubLink}
+                        onClick={closeAllMobile}
+                      >
+                        <Icon size={14} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                  <button className={styles.mobileLogout} onClick={handleLogout}>
+                    <LogOut size={14} />
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link to="/dang-nhap" className={styles.mobileLoginLink} onClick={closeAllMobile}>
+              Đăng nhập
+            </Link>
+          )}
         </div>
       </div>
+
+      {/* Backdrop */}
+      {isMenuOpen && (
+        <div className={styles.mobileBackdrop} onClick={closeAllMobile} aria-hidden="true" />
+      )}
     </header>
   );
 }

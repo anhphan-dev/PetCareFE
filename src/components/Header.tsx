@@ -82,6 +82,9 @@ export default function Header() {
             {/* TRANG CHỦ (vẫn giữ dropdown) */}
             <div 
               className="relative"
+              onMouseEnter={() => {
+                homeDropdown.open();
+              }}
               onMouseEnter={() => homeDropdown.open()}
             >
               <button
@@ -91,7 +94,7 @@ export default function Header() {
                 TRANG CHỦ <ChevronDown className="w-4 h-4" />
               </button>
               {homeDropdown.isOpen && (
-                <div 
+                <div
                   className="absolute left-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
                   onMouseEnter={() => homeDropdown.open()}
                   onMouseLeave={() => homeDropdown.closeWithDelay()}
@@ -157,7 +160,7 @@ export default function Header() {
             </button>
 
             {isLoggedIn && user ? (
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={() => userDropdown.open()}
                 onMouseLeave={() => userDropdown.closeWithDelay()}
@@ -182,7 +185,7 @@ export default function Header() {
                 </button>
 
                 {userDropdown.isOpen && (
-                  <div 
+                  <div
                     className="absolute right-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
                     onMouseEnter={() => userDropdown.open()}
                     onMouseLeave={() => userDropdown.closeWithDelay()}

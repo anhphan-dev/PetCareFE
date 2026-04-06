@@ -45,7 +45,7 @@ export default function CartPage() {
   /* ── Update quantity with debounce ── */
   const updateQuantity = useCallback(async (cartItemId: string, newQuantity: number) => {
     if (newQuantity < 1) {
-      await handleConfirmRemoveItem();
+      await removeItem(cartItemId);
       return;
     }
 
@@ -142,18 +142,6 @@ export default function CartPage() {
   /* ── Empty state ── */
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-[60vh] bg-gray-50 py-16 flex flex-col items-center justify-center">
-        <div className="w-24 h-24 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 mb-6">
-          <ShoppingBag className="w-12 h-12" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Giỏ hàng của bạn đang trống</h2>
-        <Link
-          to="/cua-hang"
-          className="inline-flex items-center gap-2 px-8 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition shadow-md"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Tiếp tục mua sắm
-        </Link>
       <div className={styles.page}>
         {/* Background blobs */}
         <div className={styles.blobContainer} aria-hidden="true">
@@ -344,12 +332,6 @@ export default function CartPage() {
               <span className={styles.summaryTotalValue}>{formatPrice(total)}</span>
             </div>
 
-              <button
-                onClick={handleCheckout}
-                className="w-full bg-teal-600 text-white py-4 rounded-xl hover:bg-teal-700 transition font-semibold shadow-md text-lg"
-              >
-                Tiến hành thanh toán
-              </button>
             <button
               className={styles.checkoutBtn}
               onClick={handleCheckout}

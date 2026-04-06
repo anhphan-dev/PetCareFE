@@ -12,7 +12,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import { productService } from '../../services/ProductService/productService';
 import { Product } from '../../types';
-import styles from './ProductsPage.module.css';
+import styles from './Productspage.module.css';
 
 interface PaginatedResponse<T> {
   items: T[];

@@ -24,7 +24,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { useCart } from '../../contexts/CartContext';
 import { productService } from '../../services/ProductService/productService';
 import { Product } from '../../types/product';
-import styles from './ProductDetailPage.module.css';
+import styles from './Productdetailpage.module.css';
 
 const CATEGORY_MAP: Record<string, { emoji: string; label: string }> = {
   food:        { emoji: '🍖', label: 'Thức ăn' },

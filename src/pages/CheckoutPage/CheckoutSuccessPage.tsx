@@ -3,7 +3,7 @@ import { CheckCircle, CreditCard, Home, Loader2, Package, ShoppingBag, Truck } f
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckoutService } from '../../services/CheckoutService';
-import styles from './CheckoutSuccessPage.module.css';
+import styles from './Checkoutsuccesspage.module.css';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);

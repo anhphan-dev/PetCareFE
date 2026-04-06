@@ -17,7 +17,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { CheckoutService, CheckoutSummary } from '../../services/CheckoutService';
-import styles from './CheckoutPage.module.css';
+import styles from './Checkoutpage.module.css';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);

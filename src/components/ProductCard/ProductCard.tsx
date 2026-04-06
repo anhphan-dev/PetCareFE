@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useCart } from '../../contexts/CartContext';
 import { Product } from '../../types/product';
-import styles from './ProductCard.module.css';
+import styles from './Productcard.module.css';
 
 const CATEGORY_MAP: Record<string, { emoji: string; label: string }> = {
   food:        { emoji: '🍖', label: 'Thức ăn' },

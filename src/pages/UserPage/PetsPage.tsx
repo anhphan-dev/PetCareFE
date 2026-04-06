@@ -3,6 +3,7 @@ import { Dog, Plus, Trash2, Heart, Calendar, ClipboardList, Upload, X, ChevronDo
 import { useAuth } from '../../contexts/AuthContext';
 import PetAPI, { type Pet as PetType, type PetPayload } from '../../services/PetAPI';
 import PetSpeciesAPI, { type PetSpecies } from '../../services/PetSpeciesAPI';
+import { healthRecordService } from '../../services/HealthRecordService';
 import { convertImageToBase64, isValidImageFile } from '../../utils/imageUtils';
 import { toast } from 'react-toastify';
 
@@ -54,6 +55,9 @@ export default function PetsPage() {
     age: '',
     note: '',
     image: '' as string | null,
+    hasInitialVaccination: false,
+    initialVaccineName: '',
+    initialVaccinationDate: '',
   });
 
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -63,6 +67,12 @@ export default function PetsPage() {
     temperature: '',
     notes: '',
     status: 'Khỏe mạnh' as HealthCheck['status'],
+  });
+
+  const [vaccinationForm, setVaccinationForm] = useState({
+    vaccineName: '',
+    vaccinationDate: new Date().toISOString().split('T')[0],
+    notes: '',
   });
 
   const canUse = useMemo(() => !!user?.id, [user?.id]);
@@ -181,6 +191,19 @@ export default function PetsPage() {
     try {
       const created = await PetAPI.createPet(payload);
 
+      if (form.hasInitialVaccination && form.initialVaccineName.trim()) {
+        try {
+          await healthRecordService.addVaccination(created.id, {
+            vaccineName: form.initialVaccineName.trim(),
+            vaccinationDate: form.initialVaccinationDate || new Date().toISOString().split('T')[0],
+            notes: 'Initial vaccination record during pet onboarding',
+          });
+        } catch (vaccinationErr) {
+          console.error('Failed to save initial vaccination', vaccinationErr);
+          toast.warning('Đã tạo thú cưng, nhưng lưu mũi vaccine ban đầu chưa thành công.');
+        }
+      }
+
       const next: Pet[] = [created, ...pets];
       persist(next);
       setForm({
@@ -196,6 +219,9 @@ export default function PetsPage() {
         microchipId: '',
         note: '',
         image: null,
+        hasInitialVaccination: false,
+        initialVaccineName: '',
+        initialVaccinationDate: '',
       });
       setImagePreview('');
       toast.success('Thêm thú cưng thành công!');
@@ -280,6 +306,34 @@ export default function PetsPage() {
   const handleRemoveHealth = (id: string) => {
     const next = healthChecks.filter((h) => h.id !== id);
     persistHealth(next);
+  };
+
+  const handleAddVaccination = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPetId) return;
+
+    if (!vaccinationForm.vaccineName.trim()) {
+      toast.warning('Vui lòng nhập tên vaccine.');
+      return;
+    }
+
+    try {
+      await healthRecordService.addVaccination(selectedPetId, {
+        vaccineName: vaccinationForm.vaccineName.trim(),
+        vaccinationDate: vaccinationForm.vaccinationDate,
+        notes: vaccinationForm.notes.trim() || undefined,
+      });
+
+      setVaccinationForm({
+        vaccineName: '',
+        vaccinationDate: new Date().toISOString().split('T')[0],
+        notes: '',
+      });
+      toast.success('Đã cập nhật lịch sử vaccine.');
+    } catch (err) {
+      console.error('Failed to add vaccination', err);
+      toast.error(err instanceof Error ? err.message : 'Không thể cập nhật vaccine.');
+    }
   };
 
   const getPetHealthChecks = (petId: string) => {
@@ -593,6 +647,43 @@ export default function PetsPage() {
                   />
                 </div>
 
+                <div className="rounded-lg border border-teal-100 bg-teal-50/50 p-3 space-y-3">
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={form.hasInitialVaccination}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          hasInitialVaccination: e.target.checked,
+                          initialVaccinationDate: p.initialVaccinationDate || new Date().toISOString().split('T')[0],
+                        }))
+                      }
+                      className="form-checkbox h-4 w-4 text-teal-600"
+                    />
+                    Thêm mũi vaccine ban đầu cho thú cưng
+                  </label>
+
+                  {form.hasInitialVaccination && (
+                    <div className="grid grid-cols-1 gap-2">
+                      <input
+                        value={form.initialVaccineName}
+                        onChange={(e) => setForm((p) => ({ ...p, initialVaccineName: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="Tên vaccine (ví dụ: Rabies)"
+                        disabled={!canUse}
+                      />
+                      <input
+                        type="date"
+                        value={form.initialVaccinationDate || new Date().toISOString().split('T')[0]}
+                        onChange={(e) => setForm((p) => ({ ...p, initialVaccinationDate: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        disabled={!canUse}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <button
                   type="submit"
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors disabled:bg-gray-400"
@@ -686,6 +777,63 @@ export default function PetsPage() {
           <div className="lg:col-span-2 space-y-6">
             {selectedPetId ? (
               <>
+                <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <ClipboardList className="w-5 h-5 text-teal-600" />
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Cập nhật lịch sử vaccine - {pets.find((p) => p.id === selectedPetId)?.petName}
+                    </h2>
+                  </div>
+
+                  <form onSubmit={handleAddVaccination} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tên vaccine *</label>
+                      <input
+                        value={vaccinationForm.vaccineName}
+                        onChange={(e) =>
+                          setVaccinationForm((p) => ({ ...p, vaccineName: e.target.value }))
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="Ví dụ: DHPP Booster 1"
+                        disabled={!canUse}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ngày tiêm *</label>
+                      <input
+                        type="date"
+                        value={vaccinationForm.vaccinationDate}
+                        onChange={(e) =>
+                          setVaccinationForm((p) => ({ ...p, vaccinationDate: e.target.value }))
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        disabled={!canUse}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors disabled:bg-gray-400"
+                      disabled={!canUse}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Lưu vaccine
+                    </button>
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+                      <textarea
+                        value={vaccinationForm.notes}
+                        onChange={(e) =>
+                          setVaccinationForm((p) => ({ ...p, notes: e.target.value }))
+                        }
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                        placeholder="Ví dụ: Tiêm tại phòng khám ABC"
+                        disabled={!canUse}
+                      />
+                    </div>
+                  </form>
+                </section>
+
                 {/* Add Health Check */}
                 <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                   <div className="flex items-center gap-2 mb-4">

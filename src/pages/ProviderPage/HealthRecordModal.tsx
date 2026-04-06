@@ -44,7 +44,7 @@ export default function HealthRecordModal({ isOpen, onClose, appointmentId, petI
       });
 
       // 2. Chuyển trạng thái appointment sang Completed
-      await appointmentService.updateStatus(appointmentId, { status: 'Completed', medicalNotes: form.notes });
+      await appointmentService.updateStatus(appointmentId, { status: 'completed', medicalNotes: form.notes });
       
       toast.success('Lưu sổ theo dõi và hoàn thành khám bệnh!');
       onSuccess();

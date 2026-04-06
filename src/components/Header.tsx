@@ -1,5 +1,4 @@
 import {
-  Briefcase,
   ChevronDown,
   Crown,
   Dog,
@@ -13,7 +12,7 @@ import {
   Sparkles,
   User,
   UserCircle,
-  X,
+  X
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -31,8 +30,8 @@ const userMenuItems = [
   { icon: UserCircle, label: 'Hồ sơ của tôi', path: '/tai-khoan' },
   { icon: Crown, label: 'Gói thành viên', path: '/membership' },
   { icon: Sparkles, label: 'AI Sức khỏe', path: '/ai-suc-khoe' },
-  { icon: Briefcase, label: 'Dịch vụ đã đặt', path: '/tai-khoan/dich-vu' },
-  { icon: Dog, label: 'Thú cưng của tôi', path: '/my-pet' },
+  // { icon: Briefcase, label: 'Dịch vụ đã đặt', path: '/tai-khoan/dich-vu' },
+  { icon: Dog, label: 'Thú cưng của tôi', path: '/thu-cung' },
   { icon: ShoppingBag, label: 'Giỏ hàng của bạn', path: '/gio-hang' },
 ];
 
@@ -80,17 +79,16 @@ export default function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-8" ref={navDropdownRef}>
-            {/* TRANG CHỦ (dropdown) */}
-            <div
+            {/* TRANG CHỦ (vẫn giữ dropdown) */}
+            <div 
               className="relative"
               onMouseEnter={() => {
                 homeDropdown.open();
               }}
+              onMouseEnter={() => homeDropdown.open()}
             >
               <button
-                onClick={() => {
-                  homeDropdown.toggle();
-                }}
+                onClick={() => homeDropdown.toggle()}
                 className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors inline-flex items-center gap-1"
               >
                 TRANG CHỦ <ChevronDown className="w-4 h-4" />
@@ -119,7 +117,7 @@ export default function Header() {
               )}
             </div>
 
-            {/* THÚ CƯNG (link) */}
+            {/* THÚ CƯNG */}
             <Link
               to="/thu-cung"
               className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors"
@@ -127,15 +125,15 @@ export default function Header() {
               THÚ CƯNG
             </Link>
 
-            {/* DỊCH VỤ */}
+            {/* DỊCH VỤ - bỏ dropdown, chuyển thành link trực tiếp */}
             <Link
-              to="/dich-vu"
+              to="/dat-lich"
               className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors"
             >
               DỊCH VỤ
             </Link>
 
-            {/* CỬA HÀNG */}
+            {/* CỬA HÀNG - bỏ dropdown, chuyển thành link trực tiếp */}
             <Link
               to="/cua-hang"
               className="text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors"
@@ -240,7 +238,7 @@ export default function Header() {
 
         {isMenuOpen && (
           <nav className="md:hidden pb-4 space-y-2">
-            {/* TRANG CHỦ (dropdown) */}
+            {/* TRANG CHỦ (giữ dropdown) */}
             <button
               onClick={() => setIsHomeDropdownOpenMobile((o) => !o)}
               className="w-full flex items-center justify-between py-2 text-sm font-medium text-gray-700"
@@ -272,16 +270,16 @@ export default function Header() {
               THÚ CƯNG
             </Link>
 
-            {/* DỊCH VỤ */}
+            {/* DỊCH VỤ - không dropdown */}
             <Link
-              to="/dich-vu"
+              to="/dat-lich"
               className="block py-2 text-sm font-medium text-gray-700 hover:text-teal-600"
               onClick={closeAllMobile}
             >
               DỊCH VỤ
             </Link>
 
-            {/* CỬA HÀNG */}
+            {/* CỬA HÀNG - không dropdown */}
             <Link
               to="/cua-hang"
               className="block py-2 text-sm font-medium text-gray-700 hover:text-teal-600"
@@ -337,9 +335,7 @@ export default function Header() {
                         <Link
                           key={item.path}
                           to={item.path}
-                          onClick={() => {
-                            closeAllMobile();
-                          }}
+                          onClick={closeAllMobile}
                           className="flex items-center gap-3 py-2 text-sm text-gray-600 hover:text-teal-600"
                         >
                           <Icon className="w-4 h-4" />

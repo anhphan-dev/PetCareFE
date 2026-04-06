@@ -1,0 +1,45 @@
+/* News.module.css */
+.section { padding: 100px 24px; background: #fff; font-family: 'DM Sans', sans-serif; }
+.container { max-width: 1280px; margin: 0 auto; }
+
+.header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 48px; flex-wrap: wrap; gap: 16px; }
+.eyebrow { display: block; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #0D9488; margin-bottom: 8px; }
+.title { font-family: 'Playfair Display', serif; font-size: clamp(26px,3.5vw,36px); font-weight: 700; color: #1C1917; margin: 0; }
+.viewAll { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #0D9488; text-decoration: none; padding: 8px 16px; border: 1.5px solid rgba(13,148,136,.3); border-radius: 999px; transition: all .2s; white-space: nowrap; }
+.viewAll:hover { background: #F0FDFA; border-color: #0D9488; }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(20,184,166,.14);
+  border-radius: 20px;
+  overflow: hidden;
+  text-decoration: none;
+  display: flex; flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0,0,0,.05);
+  transition: transform .35s ease, box-shadow .35s ease, border-color .3s;
+  opacity: 0; transform: translateY(24px);
+  animation: fadeUp .55s ease calc(var(--index,0) * 0.1s) forwards;
+}
+
+@keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+
+.card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(13,148,136,.14); border-color: rgba(20,184,166,.35); }
+
+.imageWrap { position: relative; aspect-ratio: 16/10; overflow: hidden; flex-shrink: 0; }
+.image { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s ease; }
+.card:hover .image { transform: scale(1.07); }
+.imageOverlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(13,148,136,.2) 0%, transparent 50%); opacity: 0; transition: opacity .3s; }
+.card:hover .imageOverlay { opacity: 1; }
+
+.content { padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.meta { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #a8a29e; font-weight: 500; }
+.cardTitle { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: #1C1917; line-height: 1.42; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: color .2s; }
+.card:hover .cardTitle { color: #0D9488; }
+.summary { font-size: 13px; color: #57534E; line-height: 1.65; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+.readMore { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #0D9488; margin-top: auto; padding-top: 4px; transition: gap .2s; }
+.card:hover .readMore { gap: 8px; }

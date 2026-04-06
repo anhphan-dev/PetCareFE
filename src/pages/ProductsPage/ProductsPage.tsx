@@ -1,358 +1,366 @@
-import {
-  Search,
-  X
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import ProductCard from "../../components/ProductCard";
-import { productService } from "../../services/ProductService/productService";
-import { Product } from "../../types";
+// ProductsPage.tsx
+import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import 'swiper/css';
+import 'swiper/css/effect-coverflow';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import { Autoplay, EffectCoverflow, Navigation, Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
 
-// Swiper imports
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import { Autoplay, Navigation, Pagination as SwiperPagination } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/react";
+import ProductCard from '../../components/ProductCard/ProductCard';
+import { productService } from '../../services/ProductService/productService';
+import { Product } from '../../types';
+import styles from './Productspage.module.css';
 
-const categories = [
-  { id: "all", label: "Tất cả sản phẩm" },
-  { id: "75805fdd-c08c-4648-a343-0ac435979448", label: "Thức ăn" },
-  { id: "fec1fb2e-fbeb-45d6-852a-212ba8da4279", label: "Đồ chơi" },
-  { id: "80647ffa-cc53-4216-8176-940f3ec460e3", label: "Vệ sinh" },
-  { id: "54c43f9d-dd67-4006-bfb5-aa2573f95c55", label: "Phụ kiện" },
-  { id: "a05a54c0-44c4-4476-841f-961273c6775f", label: "Quần áo" },
-  { id: "a845248b-9299-4a5d-8c86-fed3afcb2a3b", label: "Thuốc & Vitamin" },
+interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+const CATEGORIES = [
+  { id: '',           emoji: '🐾', label: 'Tất cả' },
+  { id: '75805fdd-c08c-4648-a343-0ac435979448', emoji: '🍖', label: 'Thức ăn' },
+  { id: 'fec1fb2e-fbeb-45d6-852a-212ba8da4279', emoji: '🎾', label: 'Đồ chơi' },
+  { id: '54c43f9d-dd67-4006-bfb5-aa2573f95c55', emoji: '🧣', label: 'Phụ kiện' },
+  { id: 'a05a54c0-44c4-4476-841f-961273c6775f', emoji: '👕', label: 'Quần áo' },
+  { id: 'a845248b-9299-4a5d-8c86-fed3afcb2a3b', emoji: '💊', label: 'Thuốc & Vitamin' },
+  { id: '80647ffa-cc53-4216-8176-940f3ec460e3', emoji: '🧼', label: 'Vệ sinh' },
 ];
 
 const PAGE_SIZE = 8;
+const FEATURED_COUNT = 6;
 
-export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc">("newest");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    loadProducts(1, true);
-  }, [selectedCategoryId, debouncedSearch, sortBy]);
-
-  useEffect(() => {
-    let sorted = [...products];
-
-    if (sortBy === "price-asc") {
-      sorted.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
-    } else if (sortBy === "price-desc") {
-      sorted.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
-    } else {
-      sorted.sort(
-        (a, b) =>
-          new Date(b.created_at ?? 0).getTime() -
-          new Date(a.created_at ?? 0).getTime()
-      );
-    }
-
-    if (JSON.stringify(sorted) !== JSON.stringify(products)) {
-      setProducts(sorted);
-    }
-  }, [products, sortBy]);
-
-  const loadProducts = async (page: number = 1, reset = false) => {
-    if (reset) {
-      setProducts([]);
-      setCurrentPage(page);
-      setTotalCount(0);
-      setTotalPages(1);
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      let result;
-
-      if (debouncedSearch.trim()) {
-        result = await productService.searchProducts(debouncedSearch, page, PAGE_SIZE);
-      } else if (selectedCategoryId === "all") {
-        result = await productService.getAllProducts(page, PAGE_SIZE);
-      } else {
-        result = await productService.getProductsByCategory(
-          selectedCategoryId,
-          page,
-          PAGE_SIZE
-        );
-      }
-
-      if (result && result.items) {
-        setProducts(reset ? result.items : [...products, ...result.items]);
-        setTotalCount(result.totalCount || result.items.length);
-        setCurrentPage(result.page || page);
-        setTotalPages(
-          result.totalPages ||
-            Math.ceil((result.totalCount || result.items.length) / PAGE_SIZE)
-        );
-      } else {
-        setProducts([]);
-        if (selectedCategoryId !== "all") {
-          setError("Danh mục này hiện chưa có sản phẩm nào.");
-        }
-      }
-    } catch (err: any) {
-      console.error("Load products error:", err);
-      setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
-      toast.error("Lỗi tải dữ liệu");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
-    loadProducts(newPage, true);
-    window.scrollTo({ top: 300, behavior: "smooth" }); // scroll mượt lên đầu danh sách
-  };
-
-  const handleSearch = () => {
-    loadProducts(1, true);
-  };
-
-  const clearSearch = () => {
-    setSearchTerm("");
-    setDebouncedSearch("");
-    setSelectedCategoryId("all");
-    setSortBy("newest");
-    loadProducts(1, true);
-  };
-
-  const renderSkeleton = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-        <div
-          key={i}
-          className="bg-white/90 rounded-2xl shadow-lg overflow-hidden border border-gray-100 animate-pulse backdrop-blur-sm"
-        >
-          <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200" />
-          <div className="p-5 space-y-4">
-            <div className="h-6 bg-gray-200 rounded w-4/5" />
-            <div className="h-5 bg-gray-200 rounded w-full" />
-            <div className="h-5 bg-gray-200 rounded w-3/4" />
-            <div className="flex justify-between items-center">
-              <div className="h-6 bg-gray-200 rounded w-1/3" />
-              <div className="h-10 w-24 bg-gray-200 rounded-xl" />
-            </div>
-          </div>
-        </div>
-      ))}
+function SkeletonCard() {
+  return (
+    <div className={styles.skeleton}>
+      <div className={styles.skeletonImage} />
+      <div className={styles.skeletonBody}>
+        <div className={styles.skeletonLine} style={{ width: '40%', height: 12 }} />
+        <div className={styles.skeletonLine} style={{ width: '90%', height: 16 }} />
+        <div className={styles.skeletonLine} style={{ width: '60%', height: 16 }} />
+        <div className={styles.skeletonLine} style={{ width: '100%', height: 36, borderRadius: 999 }} />
+      </div>
     </div>
   );
+}
+
+export default function ProductsPage() {
+  const navigate = useNavigate();
+
+  const [activeCategory, setActiveCategory] = useState<string>('');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [result, setResult] = useState<PaginatedResponse<Product> | null>(null);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  /* ── Featured products (first load) ── */
+  useEffect(() => {
+    (async () => {
+      setFeaturedLoading(true);
+      const res = await productService.getAllProducts(1, FEATURED_COUNT);
+      if (res?.items) setFeaturedProducts(res.items);
+      setFeaturedLoading(false);
+    })();
+  }, []);
+
+  /* ── Debounce search ── */
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearchTerm(searchInput);
+      setCurrentPage(1);
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchInput]);
+
+  /* ── Fetch products ── */
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    let res: PaginatedResponse<Product> | null = null;
+
+    if (searchTerm.trim()) {
+      res = await productService.searchProducts(searchTerm.trim(), currentPage, PAGE_SIZE);
+    } else if (activeCategory) {
+      res = await productService.getProductsByCategory(activeCategory, currentPage, PAGE_SIZE);
+    } else {
+      res = await productService.getAllProducts(currentPage, PAGE_SIZE);
+    }
+
+    setResult(res);
+    setLoading(false);
+  }, [activeCategory, searchTerm, currentPage]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  /* ── Scroll to grid on page change ── */
+  useEffect(() => {
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [currentPage]);
+
+  const handleCategoryChange = (id: string) => {
+    setActiveCategory(id);
+    setCurrentPage(1);
+    setSearchInput('');
+  };
+
+  const handleCardClick = (id: string) => navigate(`/san-pham/${id}`);
+
+  const clearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
+  const totalPages = result?.totalPages ?? 1;
+
+  /* ── Pagination range ── */
+  const getPaginationItems = () => {
+    const items: (number | '...')[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) items.push(i);
+    } else {
+      items.push(1);
+      if (currentPage > 3) items.push('...');
+      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        items.push(i);
+      }
+      if (currentPage < totalPages - 2) items.push('...');
+      items.push(totalPages);
+    }
+    return items;
+  };
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
-      style={{
-        backgroundImage: `url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')`,
-      }}
-    >
-      <div className="min-h-screen bg-gradient-to-b from-white/85 via-white/80 to-white/75 backdrop-blur-[1px]">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 lg:py-16">
+    <div className={styles.page}>
+      {/* ── Bokeh background blobs ── */}
+      <div className={styles.blobContainer} aria-hidden="true">
+        <div className={`${styles.blob} ${styles.blob1}`} />
+        <div className={`${styles.blob} ${styles.blob2}`} />
+        <div className={`${styles.blob} ${styles.blob3}`} />
+      </div>
 
-          {/* Hero Swiper */}
-          <div className="mb-12 md:mb-16 rounded-3xl overflow-hidden shadow-2xl border border-white/30">
-            <Swiper
-              modules={[Navigation, SwiperPagination, Autoplay]}
-              spaceBetween={0}
-              slidesPerView={1}
-              navigation
-              pagination={{ clickable: true }}
-              autoplay={{ delay: 5000, disableOnInteraction: false }}
-              loop
-              className="h-[380px] sm:h-[480px] lg:h-[560px]"
-            >
-              <SwiperSlide>
-                <div className="relative h-full">
-                  <img
-                    src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=1600"
-                    alt="Thú cưng vui vẻ"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent flex items-end pb-16">
-                    <div className="container mx-auto px-8 text-white">
-                      <h2 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
-                        Sản phẩm handmade 100% cotton
-                      </h2>
-                      <p className="text-xl md:text-2xl max-w-2xl drop-shadow-md">
-                        Dành riêng cho những chú cún/mèo yêu quý của bạn
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </SwiperSlide>
+      {/* ════════════════════════════════════
+          HERO
+      ════════════════════════════════════ */}
+      <section className={styles.hero}>
+        {/* Animated paw prints */}
+        <div className={styles.pawsContainer} aria-hidden="true">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <span key={i} className={styles.floatingPaw} style={{
+              left: `${10 + i * 13}%`,
+              animationDelay: `${i * 0.9}s`,
+              animationDuration: `${5 + (i % 3)}s`,
+              fontSize: `${14 + (i % 3) * 6}px`,
+            }}>🐾</span>
+          ))}
+        </div>
 
-              <SwiperSlide>
-                <div className="relative h-full">
-                  <img
-                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1600"
-                    alt="Quần áo thú cưng"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent flex items-center justify-center text-center">
-                    <div className="text-white px-6">
-                      <h2 className="text-5xl md:text-7xl font-extrabold mb-6 drop-shadow-2xl">
-                        Bộ sưu tập mới nhất
-                      </h2>
-                      <p className="text-2xl md:text-3xl drop-shadow-lg">
-                        Đang chờ bạn khám phá!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </SwiperSlide>
+        <div className={styles.heroContent}>
+          <p className={styles.heroEyebrow}>Cửa hàng thú cưng</p>
+          <h1 className={styles.heroTitle}>
+            Yêu thương từng<br />
+            <span className={styles.heroTitleAccent}>sản phẩm</span> 🐾
+          </h1>
+          <p className={styles.heroSubtitle}>
+            Tất cả những gì bạn cần cho người bạn bốn chân — thức ăn, đồ chơi, phụ kiện và hơn thế nữa.
+          </p>
 
-              <SwiperSlide>
-                <div className="relative h-full">
-                  <img
-                    src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1600"
-                    alt="Đồ chơi cho thú cưng"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent flex items-end pb-16">
-                    <div className="container mx-auto px-8 text-white">
-                      <h2 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
-                        Đồ chơi an toàn & thú vị
-                      </h2>
-                      <p className="text-xl md:text-2xl max-w-2xl drop-shadow-md">
-                        Giúp bé yêu vận động và vui chơi cả ngày
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </SwiperSlide>
-            </Swiper>
+          {/* Search bar */}
+          <div className={styles.searchBar}>
+            <Search size={18} className={styles.searchIcon} />
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Tìm kiếm sản phẩm..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              aria-label="Tìm kiếm sản phẩm"
+            />
+            {searchInput && (
+              <button className={styles.searchClear} onClick={clearSearch} aria-label="Xoá tìm kiếm">
+                <X size={15} />
+              </button>
+            )}
           </div>
+        </div>
+      </section>
 
-          {/* Search & Filter */}
-          <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200/40 p-6 md:p-8 mb-10 md:mb-12">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
-              <div className="relative">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-[#5DD3B6]" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm sản phẩm cho cún/mèo..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full pl-14 pr-14 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#5DD3B6]/50 focus:border-[#5DD3B6] transition-all shadow-inner bg-white/80"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#5DD3B6] transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                )}
+
+      <div className={styles.container}>
+        {/* ════════════════════════════════════
+            FEATURED SWIPER
+        ════════════════════════════════════ */}
+        {!searchTerm && (
+          <section className={styles.featuredSection}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>Sản phẩm nổi bật</h2>
+              <p className={styles.sectionSubtitle}>Được yêu thích nhất bởi các chủ nuôi thú cưng</p>
+            </div>
+
+            {featuredLoading ? (
+              <div className={styles.featuredGrid}>
+                {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
               </div>
-
-              <select
-                value={selectedCategoryId}
-                onChange={(e) => setSelectedCategoryId(e.target.value)}
-                className="px-5 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 shadow-inner bg-white/80"
+            ) : (
+              <Swiper
+                modules={[Autoplay, Pagination, Navigation, EffectCoverflow]}
+                effect="coverflow"
+                grabCursor
+                centeredSlides
+                slidesPerView="auto"
+                coverflowEffect={{
+                  rotate: 28,
+                  stretch: 0,
+                  depth: 120,
+                  modifier: 1,
+                  slideShadows: false,
+                }}
+                autoplay={{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+                pagination={{ clickable: true, dynamicBullets: true }}
+                navigation={{
+                  prevEl: `.${styles.swiperPrev}`,
+                  nextEl: `.${styles.swiperNext}`,
+                }}
+                className={styles.featuredSwiper}
               >
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.label}
-                  </option>
+                {featuredProducts.map((p, i) => (
+                  <SwiperSlide key={p.id} className={styles.featuredSlide}>
+                    <ProductCard product={p} onClick={handleCardClick} index={i} />
+                  </SwiperSlide>
                 ))}
-              </select>
 
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-5 py-4 text-base md:text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 shadow-inner bg-white/80"
+                {/* Custom nav */}
+                <button className={`${styles.swiperNav} ${styles.swiperPrev}`} aria-label="Trước">
+                  <ChevronLeft size={20} />
+                </button>
+                <button className={`${styles.swiperNav} ${styles.swiperNext}`} aria-label="Sau">
+                  <ChevronRight size={20} />
+                </button>
+              </Swiper>
+            )}
+          </section>
+        )}
+
+        
+      {/* ════════════════════════════════════
+          CATEGORY FILTER BAR
+      ════════════════════════════════════ */}
+      <div className={styles.filterBarWrapper}>
+        <nav className={styles.filterBar} aria-label="Danh mục sản phẩm">
+          <SlidersHorizontal size={16} className={styles.filterIcon} aria-hidden="true" />
+          <div className={styles.filterPills}>
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                className={`${styles.pill} ${activeCategory === cat.id ? styles.pillActive : ''}`}
+                onClick={() => handleCategoryChange(cat.id)}
+                aria-pressed={activeCategory === cat.id}
               >
-                <option value="newest">Mới nhất</option>
-                <option value="price-asc">Giá tăng dần</option>
-                <option value="price-desc">Giá giảm dần</option>
-              </select>
+                <span>{cat.emoji}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
+      </div>
+
+        {/* ════════════════════════════════════
+            PRODUCT GRID
+        ════════════════════════════════════ */}
+        <section ref={gridRef} className={styles.gridSection}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>
+                {searchTerm
+                  ? `Kết quả cho "${searchTerm}"`
+                  : CATEGORIES.find((c) => c.id === activeCategory)?.label === 'Tất cả'
+                    ? 'Tất cả sản phẩm'
+                    : CATEGORIES.find((c) => c.id === activeCategory)?.label}
+              </h2>
+              {result && (
+                <p className={styles.sectionSubtitle}>
+                  {result.totalCount} sản phẩm
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Error message */}
-          {error && (
-            <div className="text-center py-8 text-red-600 bg-red-50/80 rounded-xl backdrop-blur-sm">
-              {error}
+          {loading ? (
+            <div className={styles.productGrid}>
+              {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
-          )}
-
-          {/* Product Grid */}
-          {isLoading && products.length === 0 ? (
-            renderSkeleton()
-          ) : products.length === 0 ? (
-            <div className="text-center py-16 text-gray-600 text-xl bg-white/70 rounded-2xl backdrop-blur-sm">
-              Không tìm thấy sản phẩm nào phù hợp
+          ) : result?.items.length ? (
+            <div className={styles.productGrid}>
+              {result.items.map((p, i) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onClick={handleCardClick}
+                  index={i}
+                />
+              ))}
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                {products.map((product, index) => (
-                  <div
-                    key={product.id || `product-${index}`}
-                    className="transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
-                  >
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-3 mt-12 flex-wrap">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1 || isLoading}
-                    className="px-6 py-3 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition font-medium"
-                  >
-                    Trước
-                  </button>
-
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      disabled={isLoading}
-                      className={`px-5 py-3 rounded-xl font-medium min-w-[44px] transition ${
-                        currentPage === page
-                          ? "bg-[#5DD3B6] text-white shadow-md"
-                          : "bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages || isLoading}
-                    className="px-6 py-3 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition font-medium"
-                  >
-                    Sau
-                  </button>
-                </div>
-              )}
-            </>
+            <div className={styles.emptyState}>
+              <span className={styles.emptyIcon}>🐾</span>
+              <h3 className={styles.emptyTitle}>Không tìm thấy sản phẩm</h3>
+              <p className={styles.emptyText}>Hãy thử tìm kiếm với từ khoá khác hoặc chọn danh mục khác nhé!</p>
+              <button className={styles.emptyBtn} onClick={clearSearch}>Xem tất cả sản phẩm</button>
+            </div>
           )}
-        </div>
+
+          {/* ── Pagination ── */}
+          {totalPages > 1 && (
+            <nav className={styles.pagination} aria-label="Phân trang">
+              <button
+                className={`${styles.pageBtn} ${styles.pageArrow}`}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                aria-label="Trang trước"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              {getPaginationItems().map((item, idx) =>
+                item === '...' ? (
+                  <span key={`dots-${idx}`} className={styles.pageDots}>…</span>
+                ) : (
+                  <button
+                    key={item}
+                    className={`${styles.pageBtn} ${currentPage === item ? styles.pageBtnActive : ''}`}
+                    onClick={() => setCurrentPage(item as number)}
+                    aria-label={`Trang ${item}`}
+                    aria-current={currentPage === item ? 'page' : undefined}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+
+              <button
+                className={`${styles.pageBtn} ${styles.pageArrow}`}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                aria-label="Trang sau"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </nav>
+          )}
+        </section>
       </div>
     </div>
   );

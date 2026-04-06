@@ -1,76 +1,48 @@
-import { Home, Heart, Scissors, Smile } from 'lucide-react';
-import type { Service } from '../types';
+// Services.tsx
+import styles from './Services.module.css';
 
-const services: Service[] = [
-  {
-    id: '1',
-    title: 'KHÁM BỆNH TẠI NHÀ',
-    description:
-      'Dịch vụ khám bệnh tại nhà tiện lợi, giúp thú cưng của bạn được chăm sóc trong môi trường quen thuộc. Bác sĩ thú y sẽ đến tận nơi với đầy đủ trang thiết bị.',
-    icon: 'home',
-  },
-  {
-    id: '2',
-    title: 'KHÁM SỨC KHỎE ĐỊNH KỲ',
-    description:
-      'Chương trình khám sức khỏe định kỳ giúp phát hiện sớm các vấn đề sức khỏe. Bao gồm kiểm tra tổng quát, xét nghiệm, và tư vấn dinh dưỡng chuyên sâu.',
-    icon: 'heart',
-  },
-  {
-    id: '3',
-    title: 'THẨM MỸ',
-    description:
-      'Dịch vụ spa và thẩm mỹ cao cấp cho thú cưng: tắm gội, cắt tỉa lông, vệ sinh tai, cắt móng, và nhiều dịch vụ làm đẹp khác với sản phẩm chất lượng.',
-    icon: 'scissors',
-  },
-  {
-    id: '4',
-    title: 'CHĂM SÓC RĂNG MIỆNG',
-    description:
-      'Chăm sóc răng miệng chuyên nghiệp giúp phòng ngừa các bệnh về nướu và răng. Bao gồm vệ sinh răng miệng, lấy cao răng, và điều trị các vấn đề nha khoa.',
-    icon: 'smile',
-  },
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+}
+
+const SERVICES: Service[] = [
+  { id: '1', emoji: '🏠', title: 'Khám bệnh tại nhà', description: 'Bác sĩ thú y đến tận nơi với đầy đủ trang thiết bị. Thú cưng được chăm sóc trong môi trường quen thuộc, giảm stress tối đa.' },
+  { id: '2', emoji: '💉', title: 'Khám sức khỏe định kỳ', description: 'Chương trình kiểm tra tổng quát, xét nghiệm và tư vấn dinh dưỡng chuyên sâu, giúp phát hiện sớm vấn đề sức khỏe.' },
+  { id: '3', emoji: '✂️', title: 'Spa & Thẩm mỹ', description: 'Tắm gội, cắt tỉa lông, vệ sinh tai, cắt móng và làm đẹp với sản phẩm cao cấp, an toàn cho mọi loại thú cưng.' },
+  { id: '4', emoji: '🦷', title: 'Chăm sóc răng miệng', description: 'Vệ sinh răng miệng chuyên nghiệp, lấy cao răng, phòng ngừa bệnh về nướu. Nụ cười khoẻ, hơi thở thơm tho.' },
+  { id: '5', emoji: '🏥', title: 'Điều trị nội trú', description: 'Cơ sở vật chất hiện đại, đội ngũ chăm sóc 24/7. Thú cưng luôn được theo dõi sát sao trong suốt quá trình điều trị.' },
+  { id: '6', emoji: '🎓', title: 'Huấn luyện hành vi', description: 'Chương trình huấn luyện chuyên biệt giúp thú cưng nghe lời, sống chan hoà và phát triển tốt hơn mỗi ngày.' },
 ];
-
-const iconMap = {
-  home: Home,
-  heart: Heart,
-  scissors: Scissors,
-  smile: Smile,
-};
 
 export default function Services() {
   return (
-    <section className="py-16 bg-gray-50" id="dịch vụ">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-          DỊCH VỤ CHÍNH
-        </h2>
+    <section className={styles.section}>
+      <div className={styles.pawWatermark} aria-hidden="true">🐾</div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {services.map((service) => {
-            const Icon = iconMap[service.icon as keyof typeof iconMap];
-            return (
-              <div
-                key={service.id}
-                className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="bg-teal-100 p-3 rounded-full">
-                    <Icon className="w-6 h-6 text-teal-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold mb-3 text-gray-800">
-                      {service.title}
-                    </h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      {service.description}
-                    </p>
-                  </div>
-                </div>
+      <div className={styles.container}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.eyebrow}>Dịch vụ của chúng tôi</span>
+          <h2 className={styles.title}>Chăm sóc toàn diện<br />cho thú cưng của bạn</h2>
+          <p className={styles.subtitle}>Từ khám bệnh, làm đẹp đến huấn luyện — chúng tôi đồng hành cùng bạn ở mọi bước.</p>
+        </div>
+
+        <div className={styles.grid}>
+          {SERVICES.map((s, i) => (
+            <article
+              key={s.id}
+              className={styles.card}
+              style={{ '--index': i } as React.CSSProperties}
+            >
+              <div className={styles.iconWrap}>
+                <span className={styles.emoji} aria-hidden="true">{s.emoji}</span>
               </div>
-            );
-          })}
+              <h3 className={styles.cardTitle}>{s.title}</h3>
+              <p className={styles.cardDesc}>{s.description}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>

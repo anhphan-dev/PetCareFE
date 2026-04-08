@@ -1,0 +1,79 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #F0FDFA 0%, #FFFFFF 50%, #CCFBF1 100%);
+  position: relative;
+  overflow-x: hidden;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ─── Bokeh blobs ─────────────────────────────────── */
+.blobContainer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+}
+
+.blob1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, #14B8A6, transparent 70%);
+  top: -120px;
+  left: -100px;
+  animation: blobDrift 18s ease-in-out infinite alternate;
+}
+
+.blob2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #0D9488, transparent 70%);
+  bottom: 20%;
+  right: -80px;
+  animation: blobDrift 22s ease-in-out infinite alternate-reverse;
+}
+
+.blob3 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #CCFBF1, transparent 70%);
+  top: 40%;
+  left: 35%;
+  animation: blobDrift 26s ease-in-out infinite alternate;
+}
+
+/* ════════════════════════════════════
+   LOADING STATE
+════════════════════════════════════ */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 120px 24px;
+  text-align: center;
+}
+
+.loadingIcon {
+  font-size: 48px;
+  color: #14B8A6;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  font-size: 16px;
+  color: #57534E;
+  margin: 0;
+}

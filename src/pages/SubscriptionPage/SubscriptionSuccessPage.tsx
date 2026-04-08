@@ -1,8 +1,9 @@
+import { CheckCircle, Crown, Home, Loader } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CheckCircle, Crown, Home, Loader } from 'lucide-react';
-import SubscriptionService, { UserSubscription } from '../../services/SubscriptionService';
 import { useAuth } from '../../contexts/AuthContext';
+import SubscriptionService, { UserSubscription } from '../../services/SubscriptionService';
+import styles from './SubscriptionPage.module.css';
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('vi-VN', {
@@ -39,6 +40,26 @@ export default function SubscriptionSuccessPage() {
     }, 1500);
     return () => clearTimeout(timer);
   }, [isLoggedIn]);
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        {/* Background blobs */}
+        <div className={styles.blobContainer} aria-hidden="true">
+          <div className={`${styles.blob} ${styles.blob1}`} />
+          <div className={`${styles.blob} ${styles.blob2}`} />
+          <div className={`${styles.blob} ${styles.blob3}`} />
+        </div>
+
+        <div className={styles.container}>
+          <section className={styles.loadingState}>
+            <div className={styles.loadingIcon}>🐾</div>
+            <p className={styles.loadingText}>Đang tải giỏ hàng...</p>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">

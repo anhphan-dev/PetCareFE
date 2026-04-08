@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import PetAPI, { type Pet as PetType, type PetPayload } from '../../services/PetAPI';
 import PetSpeciesAPI, { type PetSpecies } from '../../services/PetSpeciesAPI';
 import { healthRecordService } from '../../services/HealthRecordService';
+import { VaccineCatalogItem, VaccinationResponse } from '../../types/healthRecord';
 import { convertImageToBase64, isValidImageFile } from '../../utils/imageUtils';
 import { toast } from 'react-toastify';
 
@@ -28,9 +29,7 @@ function storageKey(userId: string) {
   return `pets:${userId}`;
 }
 
-function healthStorageKey(userId: string) {
-  return `health:${userId}`;
-}
+const CUSTOM_VACCINE_VALUE = '__custom_vaccine__';
 
 export default function PetsPage() {
   const { user } = useAuth();
@@ -56,6 +55,7 @@ export default function PetsPage() {
     note: '',
     image: '' as string | null,
     hasInitialVaccination: false,
+    initialVaccineCode: '',
     initialVaccineName: '',
     initialVaccinationDate: '',
   });
@@ -70,10 +70,16 @@ export default function PetsPage() {
   });
 
   const [vaccinationForm, setVaccinationForm] = useState({
+    vaccineCode: '',
     vaccineName: '',
     vaccinationDate: new Date().toISOString().split('T')[0],
     notes: '',
   });
+
+  const [vaccineCatalog, setVaccineCatalog] = useState<VaccineCatalogItem[]>([]);
+  const [vaccinationHistory, setVaccinationHistory] = useState<VaccinationResponse[]>([]);
+  const [useCustomInitialVaccine, setUseCustomInitialVaccine] = useState(false);
+  const [useCustomVaccinationName, setUseCustomVaccinationName] = useState(false);
 
   const canUse = useMemo(() => !!user?.id, [user?.id]);
 
@@ -99,12 +105,17 @@ export default function PetsPage() {
     (async () => {
       try {
         setLoadingSpecies(true);
-        const data = await PetSpeciesAPI.getWithBreeds();
+        const [data, catalog] = await Promise.all([
+          PetSpeciesAPI.getWithBreeds(),
+          healthRecordService.getVaccineCatalog().catch(() => []),
+        ]);
         const speciesArray = extractArray<PetSpecies>(data);
         setPetSpecies(speciesArray ?? []);
+        setVaccineCatalog(catalog ?? []);
       } catch (err) {
         console.error('Failed to load pet species:', err);
         setPetSpecies([]);
+        setVaccineCatalog([]);
       } finally {
         setLoadingSpecies(false);
       }
@@ -132,15 +143,53 @@ export default function PetsPage() {
         }
       }
 
-      // Health checks remain local for now
-      try {
-        const rawHealth = localStorage.getItem(healthStorageKey(user.id));
-        setHealthChecks(rawHealth ? (JSON.parse(rawHealth) as HealthCheck[]) : []);
-      } catch {
-        setHealthChecks([]);
-      }
+      setHealthChecks([]);
+      setVaccinationHistory([]);
     })();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !selectedPetId) {
+      setHealthChecks([]);
+      setVaccinationHistory([]);
+      return;
+    }
+
+    (async () => {
+      try {
+        const [healthRecords, vaccinations] = await Promise.all([
+          healthRecordService.getHealthRecordsByPet(selectedPetId),
+          healthRecordService.getVaccinationsByPet(selectedPetId),
+        ]);
+
+        const mappedHealth: HealthCheck[] = healthRecords.map((record) => {
+          const status =
+            record.diagnosis === 'Cần chú ý' || record.diagnosis === 'Cần điều trị'
+              ? (record.diagnosis as HealthCheck['status'])
+              : ('Khỏe mạnh' as HealthCheck['status']);
+
+          return {
+            id: record.id,
+            petId: record.petId,
+            date: record.recordDate,
+            weight: record.weight !== undefined && record.weight !== null ? String(record.weight) : undefined,
+            temperature: record.temperature !== undefined && record.temperature !== null ? String(record.temperature) : undefined,
+            notes: record.notes,
+            status,
+          };
+        });
+
+        setHealthChecks(
+          mappedHealth.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        );
+        setVaccinationHistory(vaccinations);
+      } catch (err) {
+        console.error('Failed to load pet health data', err);
+        setHealthChecks([]);
+        setVaccinationHistory([]);
+      }
+    })();
+  }, [selectedPetId, user?.id]);
 
   // Get breeds for selected species id
   const getSelectedSpeciesBreeds = () => {
@@ -154,12 +203,6 @@ export default function PetsPage() {
     try {
       localStorage.setItem(storageKey(user.id), JSON.stringify(next));
     } catch {}
-  };
-
-  const persistHealth = (next: HealthCheck[]) => {
-    setHealthChecks(next);
-    if (!user?.id) return;
-    localStorage.setItem(healthStorageKey(user.id), JSON.stringify(next));
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -194,6 +237,7 @@ export default function PetsPage() {
       if (form.hasInitialVaccination && form.initialVaccineName.trim()) {
         try {
           await healthRecordService.addVaccination(created.id, {
+            vaccineCode: form.initialVaccineCode || undefined,
             vaccineName: form.initialVaccineName.trim(),
             vaccinationDate: form.initialVaccinationDate || new Date().toISOString().split('T')[0],
             notes: 'Initial vaccination record during pet onboarding',
@@ -220,9 +264,11 @@ export default function PetsPage() {
         note: '',
         image: null,
         hasInitialVaccination: false,
+        initialVaccineCode: '',
         initialVaccineName: '',
         initialVaccinationDate: '',
       });
+      setUseCustomInitialVaccine(false);
       setImagePreview('');
       toast.success('Thêm thú cưng thành công!');
     } catch (err) {
@@ -256,24 +302,43 @@ export default function PetsPage() {
     setImagePreview('');
   };
 
-  const handleAddHealth = (e: React.FormEvent) => {
+  const handleAddHealth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPetId) return;
 
-    const next: HealthCheck[] = [
-      {
-        id: crypto.randomUUID(),
+    try {
+      await healthRecordService.createHealthRecord({
         petId: selectedPetId,
-        date: new Date().toISOString().split('T')[0],
-        weight: healthForm.weight.trim() || undefined,
-        temperature: healthForm.temperature.trim() || undefined,
+        recordDate: new Date().toISOString(),
+        weight: healthForm.weight ? Number(healthForm.weight) : undefined,
+        temperature: healthForm.temperature ? Number(healthForm.temperature) : undefined,
+        diagnosis: healthForm.status,
         notes: healthForm.notes.trim() || undefined,
-        status: healthForm.status,
-      },
-      ...healthChecks,
-    ];
-    persistHealth(next);
-    setHealthForm({ weight: '', temperature: '', notes: '', status: 'Khỏe mạnh' });
+      });
+
+      const updated = await healthRecordService.getHealthRecordsByPet(selectedPetId);
+      const mappedUpdated: HealthCheck[] = updated.map((record) => ({
+        id: record.id,
+        petId: record.petId,
+        date: record.recordDate,
+        weight: record.weight !== undefined && record.weight !== null ? String(record.weight) : undefined,
+        temperature: record.temperature !== undefined && record.temperature !== null ? String(record.temperature) : undefined,
+        notes: record.notes,
+        status:
+          record.diagnosis === 'Cần chú ý' || record.diagnosis === 'Cần điều trị'
+            ? (record.diagnosis as HealthCheck['status'])
+            : 'Khỏe mạnh',
+      }));
+
+      setHealthChecks(
+        mappedUpdated.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      );
+      setHealthForm({ weight: '', temperature: '', notes: '', status: 'Khỏe mạnh' });
+      toast.success('Đã lưu kết quả kiểm tra sức khỏe.');
+    } catch (err) {
+      console.error('Failed to add health record', err);
+      toast.error(err instanceof Error ? err.message : 'Không thể lưu kết quả kiểm tra sức khỏe.');
+    }
   };
 
   const handleRemove = async (id: string) => {
@@ -303,9 +368,15 @@ export default function PetsPage() {
     }
   };
 
-  const handleRemoveHealth = (id: string) => {
-    const next = healthChecks.filter((h) => h.id !== id);
-    persistHealth(next);
+  const handleRemoveHealth = async (id: string) => {
+    try {
+      await healthRecordService.deleteHealthRecord(id);
+      setHealthChecks((prev) => prev.filter((h) => h.id !== id));
+      toast.success('Đã xóa kết quả kiểm tra.');
+    } catch (err) {
+      console.error('Failed to delete health record', err);
+      toast.error(err instanceof Error ? err.message : 'Không thể xóa kết quả kiểm tra.');
+    }
   };
 
   const handleAddVaccination = async (e: React.FormEvent) => {
@@ -319,16 +390,21 @@ export default function PetsPage() {
 
     try {
       await healthRecordService.addVaccination(selectedPetId, {
+        vaccineCode: vaccinationForm.vaccineCode || undefined,
         vaccineName: vaccinationForm.vaccineName.trim(),
         vaccinationDate: vaccinationForm.vaccinationDate,
         notes: vaccinationForm.notes.trim() || undefined,
       });
 
       setVaccinationForm({
+        vaccineCode: '',
         vaccineName: '',
         vaccinationDate: new Date().toISOString().split('T')[0],
         notes: '',
       });
+      setUseCustomVaccinationName(false);
+      const vaccinations = await healthRecordService.getVaccinationsByPet(selectedPetId);
+      setVaccinationHistory(vaccinations);
       toast.success('Đã cập nhật lịch sử vaccine.');
     } catch (err) {
       console.error('Failed to add vaccination', err);
@@ -666,18 +742,53 @@ export default function PetsPage() {
 
                   {form.hasInitialVaccination && (
                     <div className="grid grid-cols-1 gap-2">
-                      <input
-                        value={form.initialVaccineName}
-                        onChange={(e) => setForm((p) => ({ ...p, initialVaccineName: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        placeholder="Tên vaccine (ví dụ: Rabies)"
-                        disabled={!canUse}
-                      />
+                      <div className="relative">
+                        <select
+                          value={useCustomInitialVaccine ? CUSTOM_VACCINE_VALUE : (form.initialVaccineCode || '')}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            if (next === CUSTOM_VACCINE_VALUE) {
+                              setUseCustomInitialVaccine(true);
+                              setForm((p) => ({ ...p, initialVaccineCode: '' }));
+                              return;
+                            }
+
+                            const matched = vaccineCatalog.find((v) => v.code === next);
+                            setUseCustomInitialVaccine(false);
+                            setForm((p) => ({
+                              ...p,
+                              initialVaccineCode: next,
+                              initialVaccineName: matched?.displayName || '',
+                            }));
+                          }}
+                          className="w-full h-11 appearance-none px-3 pr-10 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          disabled={!canUse}
+                        >
+                          <option value="">Chọn vaccine chuẩn</option>
+                          {vaccineCatalog.map((item) => (
+                            <option key={item.code} value={item.code}>{item.displayName}</option>
+                          ))}
+                          <option value={CUSTOM_VACCINE_VALUE}>Khác</option>
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
+
+                      {useCustomInitialVaccine && (
+                        <input
+                          value={form.initialVaccineName}
+                          onChange={(e) => setForm((p) => ({ ...p, initialVaccineName: e.target.value }))}
+                          className="w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          placeholder="Nhập tên vaccine"
+                          disabled={!canUse}
+                        />
+                      )}
+
+                      <p className="text-xs text-gray-500">Ưu tiên chọn vaccine chuẩn để hệ thống nhắc lịch chính xác hơn.</p>
                       <input
                         type="date"
                         value={form.initialVaccinationDate || new Date().toISOString().split('T')[0]}
                         onChange={(e) => setForm((p) => ({ ...p, initialVaccinationDate: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        className="w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         disabled={!canUse}
                       />
                     </div>
@@ -788,15 +899,46 @@ export default function PetsPage() {
                   <form onSubmit={handleAddVaccination} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Tên vaccine *</label>
-                      <input
-                        value={vaccinationForm.vaccineName}
-                        onChange={(e) =>
-                          setVaccinationForm((p) => ({ ...p, vaccineName: e.target.value }))
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        placeholder="Ví dụ: DHPP Booster 1"
-                        disabled={!canUse}
-                      />
+                      <div className="relative">
+                        <select
+                          value={useCustomVaccinationName ? CUSTOM_VACCINE_VALUE : (vaccinationForm.vaccineCode || '')}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            if (next === CUSTOM_VACCINE_VALUE) {
+                              setUseCustomVaccinationName(true);
+                              setVaccinationForm((p) => ({ ...p, vaccineCode: '' }));
+                              return;
+                            }
+
+                            const matched = vaccineCatalog.find((v) => v.code === next);
+                            setUseCustomVaccinationName(false);
+                            setVaccinationForm((p) => ({
+                              ...p,
+                              vaccineCode: next,
+                              vaccineName: matched?.displayName || '',
+                            }));
+                          }}
+                          className="w-full h-11 appearance-none px-3 pr-10 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          disabled={!canUse}
+                        >
+                          <option value="">Chọn vaccine chuẩn</option>
+                          {vaccineCatalog.map((item) => (
+                            <option key={item.code} value={item.code}>{item.displayName}</option>
+                          ))}
+                          <option value={CUSTOM_VACCINE_VALUE}>Khác</option>
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
+
+                      {useCustomVaccinationName && (
+                        <input
+                          value={vaccinationForm.vaccineName}
+                          onChange={(e) => setVaccinationForm((p) => ({ ...p, vaccineName: e.target.value }))}
+                          className="mt-2 w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          placeholder="Nhập tên vaccine"
+                          disabled={!canUse}
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Ngày tiêm *</label>
@@ -806,13 +948,13 @@ export default function PetsPage() {
                         onChange={(e) =>
                           setVaccinationForm((p) => ({ ...p, vaccinationDate: e.target.value }))
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        className="w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         disabled={!canUse}
                       />
                     </div>
                     <button
                       type="submit"
-                      className="h-10 inline-flex items-center justify-center gap-2 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors disabled:bg-gray-400"
+                      className="h-11 inline-flex items-center justify-center gap-2 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors disabled:bg-gray-400"
                       disabled={!canUse}
                     >
                       <Plus className="w-4 h-4" />
@@ -832,6 +974,51 @@ export default function PetsPage() {
                       />
                     </div>
                   </form>
+                </section>
+
+                <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar className="w-5 h-5 text-emerald-600" />
+                    <h2 className="text-lg font-semibold text-gray-800">Lịch sử vaccine</h2>
+                  </div>
+
+                  {vaccinationHistory.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-gray-300 py-8 px-4 text-center text-sm text-gray-500">
+                      Chưa có dữ liệu lịch sử vaccine cho thú cưng này.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {vaccinationHistory.map((vaccine) => (
+                        <div key={vaccine.id} className="rounded-xl border border-gray-200 p-4 bg-gray-50">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">{vaccine.vaccineName}</p>
+                              {vaccine.vaccineCode && (
+                                <p className="text-xs text-gray-500 mt-0.5">Mã chuẩn: {vaccine.vaccineCode}</p>
+                              )}
+                            </div>
+                            <span className="text-xs font-medium text-gray-600">
+                              Ngày tiêm: {new Date(vaccine.vaccinationDate).toLocaleDateString('vi-VN')}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 text-sm text-gray-700 space-y-1">
+                            {vaccine.nextDueDate && (
+                              <p>
+                                <span className="font-medium">Lịch nhắc kế tiếp:</span>{' '}
+                                {new Date(vaccine.nextDueDate).toLocaleDateString('vi-VN')}
+                              </p>
+                            )}
+                            {vaccine.notes && (
+                              <p>
+                                <span className="font-medium">Ghi chú:</span> {vaccine.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
 
                 {/* Add Health Check */}

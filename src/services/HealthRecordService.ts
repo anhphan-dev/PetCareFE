@@ -3,6 +3,8 @@ import {
   DogRoutineSchedule,
   HealthRecordRequest,
   HealthRecordResponse,
+  VaccineCatalogItem,
+  VaccinationResponse,
 } from '../types/healthRecord';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://petcare-api-2026-bad653588c75.herokuapp.com/api';
@@ -109,5 +111,44 @@ export const healthRecordService = {
     if (!response.ok) {
       throw new Error(await parseErrorMessage(response, 'Failed to record vaccination'));
     }
+  },
+
+  async getVaccinationsByPet(petId: string): Promise<VaccinationResponse[]> {
+    const response = await fetch(`${API_BASE_URL}/health-records/pet/${petId}/vaccinations`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to fetch vaccination history'));
+    }
+
+    const payload = await response.json();
+    return unwrapApiResponse<VaccinationResponse[]>(payload);
+  },
+
+  async deleteHealthRecord(recordId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/health-records/${recordId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to delete health record'));
+    }
+  },
+
+  async getVaccineCatalog(): Promise<VaccineCatalogItem[]> {
+    const response = await fetch(`${API_BASE_URL}/health-records/vaccine-catalog`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to fetch vaccine catalog'));
+    }
+
+    const payload = await response.json();
+    return unwrapApiResponse<VaccineCatalogItem[]>(payload);
   },
 };

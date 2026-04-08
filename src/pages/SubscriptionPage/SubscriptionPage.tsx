@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
   Check,
@@ -10,11 +8,14 @@ import {
   Star,
   X,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import SubscriptionService, {
   SubscriptionPackage,
   UserSubscription,
 } from '../../services/SubscriptionService';
+import styles from './SubscriptionPage.module.css';
 
 const formatPrice = (price: number) =>
   price === 0
@@ -103,14 +104,25 @@ export default function SubscriptionPage() {
     }
   };
 
-  if (loading) {
+if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader className="w-10 h-10 text-teal-600 animate-spin" />
+      <div className={styles.page}>
+        {/* Background blobs */}
+        <div className={styles.blobContainer} aria-hidden="true">
+          <div className={`${styles.blob} ${styles.blob1}`} />
+          <div className={`${styles.blob} ${styles.blob2}`} />
+          <div className={`${styles.blob} ${styles.blob3}`} />
+        </div>
+
+        <div className={styles.container}>
+          <section className={styles.loadingState}>
+            <div className={styles.loadingIcon}>🐾</div>
+            <p className={styles.loadingText}>Đang tải...</p>
+          </section>
+        </div>
       </div>
     );
   }
-
   const colClass =
     packages.length === 1
       ? 'max-w-sm mx-auto'

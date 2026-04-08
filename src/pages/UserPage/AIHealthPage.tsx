@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import {
   AlertCircle,
   AlertTriangle,
@@ -146,8 +145,6 @@ export default function AIHealthPage() {
   const [dogRoutine, setDogRoutine] = useState<DogRoutineSchedule | null>(null);
   const [routineLoading, setRoutineLoading] = useState(false);
   const [routineError, setRoutineError] = useState<string | null>(null);
-  const [updatingVaccinationKey, setUpdatingVaccinationKey] = useState<string | null>(null);
-  const [vaccinationDates, setVaccinationDates] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const init = async () => {
@@ -263,39 +260,15 @@ export default function AIHealthPage() {
     });
   }, [dogRoutine]);
 
-  const handleMarkVaccinated = async (item: DogRoutineItem) => {
-    if (!selectedPetId) return;
+  const visibleRoutineItems = useMemo(
+    () => routineItems.filter((item) => item.category !== 'Vaccination' || item.source === 'vaccinations'),
+    [routineItems]
+  );
 
-    const itemKey = `${item.category}-${item.itemName}`;
-    if (!item.itemName?.trim()) {
-      toast.error('Không xác định được tên vaccine để cập nhật.');
-      return;
-    }
-
-    const selectedDate = vaccinationDates[itemKey] || new Date().toISOString().split('T')[0];
-    if (!selectedDate) {
-      toast.error('Vui lòng chọn ngày tiêm vaccine.');
-      return;
-    }
-
-    setUpdatingVaccinationKey(itemKey);
-
-    try {
-      await healthRecordService.addVaccination(selectedPetId, {
-        vaccineName: item.itemName.trim(),
-        vaccinationDate: selectedDate,
-        notes: `Recorded from routine reminder card on ${selectedDate}`,
-      });
-
-      toast.success('Đã cập nhật trạng thái tiêm vaccine');
-      await loadDogRoutine(selectedPetId);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Không thể cập nhật trạng thái vaccine.';
-      toast.error(msg);
-    } finally {
-      setUpdatingVaccinationKey(null);
-    }
-  };
+  const hasEstimatedVaccinations = useMemo(
+    () => routineItems.some((item) => item.category === 'Vaccination' && item.source !== 'vaccinations'),
+    [routineItems]
+  );
 
   const handleSelectHistory = async (analysisId: string) => {
     try {
@@ -546,11 +519,11 @@ export default function AIHealthPage() {
                   <p className="mt-3 text-sm text-slate-600 leading-6">
                     {dogRoutine.note || 'Hiện tại lịch nhắc mới hỗ trợ chó.'}
                   </p>
-                ) : routineItems.length === 0 ? (
+                ) : visibleRoutineItems.length === 0 ? (
                   <p className="mt-3 text-sm text-slate-500 leading-6">Chưa có mốc lịch nhắc nào cho thú cưng này.</p>
                 ) : (
                   <div className="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1">
-                    {routineItems.map((item, idx) => (
+                    {visibleRoutineItems.map((item, idx) => (
                       <div key={`${item.category}-${item.itemName}-${idx}`} className="rounded-xl border border-slate-200 p-3 bg-slate-50">
                         <div className="flex items-start justify-between gap-2">
                           <div>
@@ -567,35 +540,22 @@ export default function AIHealthPage() {
                           <p>Đã làm: {formatOptionalDate(item.lastCompletedDate)}</p>
                         </div>
 
-                        {item.category === 'Vaccination' && item.status !== 'Completed' && (
-                          <div className="mt-2 flex flex-wrap items-center gap-2">
-                            <input
-                              type="date"
-                              value={vaccinationDates[`${item.category}-${item.itemName}`] || new Date().toISOString().split('T')[0]}
-                              onChange={(e) => {
-                                const nextValue = e.target.value;
-                                setVaccinationDates((prev) => ({
-                                  ...prev,
-                                  [`${item.category}-${item.itemName}`]: nextValue,
-                                }));
-                              }}
-                              className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => void handleMarkVaccinated(item)}
-                              disabled={updatingVaccinationKey === `${item.category}-${item.itemName}`}
-                              className="inline-flex items-center justify-center rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                              {updatingVaccinationKey === `${item.category}-${item.itemName}`
-                                ? 'Đang cập nhật...'
-                                : 'Đánh dấu đã tiêm'}
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ))}
+
+                    {hasEstimatedVaccinations && (
+                      <div className="rounded-xl border border-teal-200 bg-teal-50 p-3 text-xs text-teal-800">
+                        Đang ẩn các mốc vaccine ước tính. Cập nhật lịch sử tiêm thực tế tại{' '}
+                        <button
+                          type="button"
+                          onClick={() => navigate('/thu-cung')}
+                          className="font-semibold underline"
+                        >
+                          Quản lý Thú cưng
+                        </button>
+                        {' '}để hiển thị đúng dữ liệu đã tiêm.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

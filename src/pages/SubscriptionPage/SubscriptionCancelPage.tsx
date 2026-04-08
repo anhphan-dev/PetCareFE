@@ -1,59 +1,59 @@
+// SubscriptionCancelPage.tsx
+import { Crown, Home, RefreshCw, XCircle } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { XCircle, Crown, Home, RefreshCw } from 'lucide-react';
+import styles from './SubscriptionPage.module.css';
 
 export default function SubscriptionCancelPage() {
+  // ── Logic unchanged ──────────────────────────────
   const [searchParams] = useSearchParams();
   const orderCode = searchParams.get('orderCode');
+  // ── End logic ────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
-      <div className="bg-white rounded-2xl shadow-lg p-10 max-w-md w-full text-center">
+    <div className={styles.resultPage}>
+      {/* Blobs */}
+      <div className={styles.blobContainer} aria-hidden="true">
+        <div className={`${styles.blob} ${styles.blob1}`} />
+        <div className={`${styles.blob} ${styles.blob2}`} />
+      </div>
+
+      <div className={styles.resultCard}>
         {/* Icon */}
-        <div className="flex items-center justify-center mb-6">
-          <div className="bg-orange-100 rounded-full p-5">
-            <XCircle className="w-14 h-14 text-orange-400" />
-          </div>
+        <div className={styles.resultIconWrap}>
+          <div className={`${styles.resultIconRing} ${styles.resultIconRingCancel}`} />
+          <XCircle className={`${styles.resultIcon} ${styles.resultIconCancel}`} />
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Thanh toán bị hủy</h1>
-        <p className="text-gray-500 mb-6">
+        <h1 className={styles.resultTitle}>Thanh toán bị hủy</h1>
+        <p className={styles.resultSubtitle}>
           Bạn đã hủy quá trình thanh toán. Gói thành viên chưa được kích hoạt.
-          <br />
           Bạn có thể thử lại bất kỳ lúc nào.
         </p>
 
+        {/* Order code */}
         {orderCode && (
-          <div className="bg-gray-50 rounded-xl px-5 py-3 mb-6 text-sm text-left">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Mã đơn hàng</span>
-              <span className="font-semibold text-gray-700">#{orderCode}</span>
+          <div className={styles.infoBox}>
+            <div className={styles.infoRow}>
+              <span className={styles.infoRowLabel}>Mã đơn hàng</span>
+              <span className={styles.infoRowValue}>#{orderCode}</span>
             </div>
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            to="/membership"
-            className="flex-1 bg-teal-600 text-white py-2.5 rounded-xl font-semibold hover:bg-teal-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
+        <div className={styles.resultActions}>
+          <Link to="/membership" className={styles.resultPrimaryBtn}>
+            <RefreshCw size={15} />
             Thử lại
           </Link>
-          <Link
-            to="/"
-            className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Home className="w-4 h-4" />
+          <Link to="/" className={styles.resultSecondaryBtn}>
+            <Home size={15} />
             Về trang chủ
           </Link>
         </div>
 
-        <Link
-          to="/membership"
-          className="mt-4 inline-flex items-center gap-1.5 text-sm text-teal-600 hover:underline"
-        >
-          <Crown className="w-4 h-4" />
+        <Link to="/membership" className={styles.resultFooterLink}>
+          <Crown size={14} />
           Xem các gói thành viên
         </Link>
       </div>

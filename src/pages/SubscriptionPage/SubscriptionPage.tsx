@@ -1,3 +1,4 @@
+// SubscriptionPage.tsx
 import {
   AlertCircle,
   Check,
@@ -5,8 +6,7 @@ import {
   Crown,
   Loader,
   Shield,
-  Star,
-  X,
+  X
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -46,6 +46,7 @@ export default function SubscriptionPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Logic unchanged ──────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -73,7 +74,6 @@ export default function SubscriptionPage() {
       setError(null);
       setPayingId(pkg.id);
       if (pkg.price === 0) {
-        // Free package — backend activates immediately via the same endpoint
         await SubscriptionService.createPayment(pkg.id);
         const sub = await SubscriptionService.getMySubscription();
         setMySubscription(sub);
@@ -103,98 +103,118 @@ export default function SubscriptionPage() {
       setCancelLoading(false);
     }
   };
+  // ── End logic ────────────────────────────────────
 
-if (loading) {
+  if (loading) {
     return (
       <div className={styles.page}>
-        {/* Background blobs */}
         <div className={styles.blobContainer} aria-hidden="true">
           <div className={`${styles.blob} ${styles.blob1}`} />
           <div className={`${styles.blob} ${styles.blob2}`} />
           <div className={`${styles.blob} ${styles.blob3}`} />
         </div>
-
         <div className={styles.container}>
           <section className={styles.loadingState}>
             <div className={styles.loadingIcon}>🐾</div>
-            <p className={styles.loadingText}>Đang tải...</p>
+            <p className={styles.loadingText}>Đang tải gói thành viên...</p>
           </section>
         </div>
       </div>
     );
   }
-  const colClass =
-    packages.length === 1
-      ? 'max-w-sm mx-auto'
-      : packages.length === 2
-      ? 'grid grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto gap-6'
-      : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Hero */}
-      <div className="bg-gradient-to-br from-teal-600 to-teal-800 text-white py-16 px-4">
-        <div className="container mx-auto text-center">
-          <Crown className="w-14 h-14 mx-auto mb-4 text-yellow-300" />
-          <h1 className="text-4xl font-bold mb-3">Gói Thành Viên PetCare</h1>
-          <p className="text-teal-100 text-lg max-w-xl mx-auto">
-            Nâng cấp trải nghiệm chăm sóc thú cưng với các đặc quyền dành riêng cho thành viên VIP
-          </p>
-        </div>
+    <div className={styles.page}>
+      {/* Blobs */}
+      <div className={styles.blobContainer} aria-hidden="true">
+        <div className={`${styles.blob} ${styles.blob1}`} />
+        <div className={`${styles.blob} ${styles.blob2}`} />
+        <div className={`${styles.blob} ${styles.blob3}`} />
       </div>
 
-      <div className="container mx-auto px-4 py-12">
+      {/* ── HERO ── */}
+      <section className={styles.hero}>
+        <div className={styles.heroPane} aria-hidden="true">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <span
+              key={i}
+              className={styles.heroPaw}
+              style={{
+                left: `${8 + i * 16}%`,
+                animationDelay: `${i * 0.9}s`,
+                animationDuration: `${5 + (i % 3)}s`,
+                fontSize: `${12 + (i % 3) * 5}px`,
+              }}
+            >🐾</span>
+          ))}
+        </div>
+
+        <div className={styles.heroContent}>
+          <div className={styles.crownWrap}>
+            <Crown className={styles.crownIcon} />
+          </div>
+          <span className={styles.heroEyebrow}>Gói thành viên</span>
+          <h1 className={styles.heroTitle}>
+            Nâng cấp trải nghiệm<br />
+            <span className={styles.heroTitleAccent}>chăm sóc thú cưng</span>
+          </h1>
+          <p className={styles.heroSubtitle}>
+            Đặc quyền dành riêng cho thành viên VIP — ưu đãi độc quyền, dịch vụ ưu tiên
+            và tình yêu thương không giới hạn dành cho người bạn bốn chân.
+          </p>
+        </div>
+      </section>
+
+      <div className={styles.container}>
         {/* Error banner */}
         {error && (
-          <div className="mb-8 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-700">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className={styles.errorBanner} role="alert">
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
 
         {/* Current subscription banner */}
         {mySubscription?.isActive && (
-          <div className="mb-10 bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <div className="bg-teal-600 text-white rounded-full p-3">
-                  <Crown className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm text-teal-600 font-medium">Gói hiện tại của bạn</p>
-                  <h3 className="text-xl font-bold text-gray-900">{mySubscription.packageName}</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Hết hạn: {formatDate(mySubscription.endDate)}
-                  </p>
-                </div>
+          <div className={styles.currentSubBanner}>
+            <div className={styles.currentSubLeft}>
+              <div className={styles.currentSubIconWrap}>
+                <Crown className={styles.currentSubIcon} />
               </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="bg-teal-100 text-teal-800 text-sm font-medium px-3 py-1 rounded-full">
-                  Đang hoạt động
-                </span>
-                <button
-                  onClick={handleCancel}
-                  disabled={cancelLoading}
-                  className="text-sm text-red-500 hover:text-red-700 border border-red-300 hover:border-red-500 px-4 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {cancelLoading ? 'Đang hủy...' : 'Hủy gói'}
-                </button>
+              <div>
+                <p className={styles.currentSubLabel}>Gói hiện tại của bạn</p>
+                <h3 className={styles.currentSubName}>{mySubscription.packageName}</h3>
+                <p className={styles.currentSubExpiry}>
+                  Hết hạn: {formatDate(mySubscription.endDate)}
+                </p>
               </div>
+            </div>
+            <div className={styles.currentSubRight}>
+              <span className={styles.activeBadge}>✦ Đang hoạt động</span>
+              <button
+                onClick={handleCancel}
+                disabled={cancelLoading}
+                className={styles.cancelBtn}
+              >
+                {cancelLoading ? 'Đang hủy...' : 'Hủy gói'}
+              </button>
             </div>
           </div>
         )}
 
-        <h2 className="text-2xl font-bold text-gray-800 text-center mb-8">
-          Chọn gói phù hợp với bạn
-        </h2>
+        {/* Section header */}
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Chọn gói phù hợp với bạn 🐾</h2>
+        </div>
 
+        {/* Packages */}
         {packages.length === 0 ? (
-          <div className="text-center text-gray-400 py-20">
-            <Star className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Hiện chưa có gói thành viên nào.</p>
+          <div className={styles.emptyPackages}>
+            <span className={styles.emptyIcon}>⭐</span>
+            <p className={styles.emptyText}>Hiện chưa có gói thành viên nào.</p>
           </div>
         ) : (
-          <div className={colClass}>
+          <div className={styles.packagesGrid}>
             {packages.map((pkg, idx) => {
               const isPopular = packages.length > 1 && idx === Math.floor(packages.length / 2);
               const isCurrent =
@@ -204,76 +224,58 @@ if (loading) {
               return (
                 <div
                   key={pkg.id}
-                  className={`relative rounded-2xl p-7 flex flex-col transition-shadow hover:shadow-xl ${
-                    isPopular
-                      ? 'bg-gradient-to-b from-teal-600 to-teal-700 text-white shadow-lg ring-2 ring-teal-400'
-                      : 'bg-white text-gray-800 shadow-md'
-                  }`}
+                  className={`${styles.pkgCard} ${isPopular ? styles.pkgCardPopular : styles.pkgCardDefault}`}
+                  style={{ '--idx': idx } as React.CSSProperties}
                 >
                   {isPopular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wide shadow">
-                      Phổ biến nhất
-                    </div>
+                    <div className={styles.popularBadge}>✦ Phổ biến nhất</div>
                   )}
 
-                  {/* Name & description */}
-                  <div className="mb-5">
-                    <h3
-                      className={`text-xl font-bold mb-1 ${
-                        isPopular ? 'text-white' : 'text-gray-900'
-                      }`}
-                    >
+                  {/* Head */}
+                  <div className={styles.pkgHead}>
+                    <h3 className={`${styles.pkgName} ${isPopular ? styles.pkgNamePopular : styles.pkgNameDefault}`}>
                       {pkg.name}
                     </h3>
-                    <p className={`text-sm ${isPopular ? 'text-teal-100' : 'text-gray-500'}`}>
+                    <p className={`${styles.pkgDesc} ${isPopular ? styles.pkgDescPopular : styles.pkgDescDefault}`}>
                       {pkg.description}
                     </p>
                   </div>
 
                   {/* Price */}
-                  <div className="mb-6">
-                    <span
-                      className={`text-3xl font-extrabold ${
-                        isPopular ? 'text-white' : 'text-teal-700'
-                      }`}
-                    >
+                  <div className={styles.pkgPriceRow}>
+                    <span className={`${styles.pkgPrice} ${isPopular ? styles.pkgPricePopular : styles.pkgPriceDefault}`}>
                       {formatPrice(pkg.price)}
                     </span>
                     {pkg.price > 0 && (
-                      <span
-                        className={`text-sm ml-1 ${isPopular ? 'text-teal-200' : 'text-gray-400'}`}
-                      >
+                      <span className={`${styles.pkgCycle} ${isPopular ? styles.pkgCyclePopular : styles.pkgCycleDefault}`}>
                         /{billingLabel(pkg.billingCycle)}
                       </span>
                     )}
                   </div>
 
+                  {/* Divider */}
+                  <div className={`${styles.pkgDivider} ${isPopular ? styles.pkgDividerPopular : styles.pkgDividerDefault}`} />
+
                   {/* Features */}
-                  <ul className="space-y-2.5 mb-8 flex-1">
+                  <ul className={styles.pkgFeatures}>
                     {Object.entries(pkg.features).map(([feature, included]) => (
-                      <li key={feature} className="flex items-start gap-2 text-sm">
+                      <li key={feature} className={styles.pkgFeatureItem}>
                         {included ? (
                           <Check
-                            className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                              isPopular ? 'text-yellow-300' : 'text-teal-500'
-                            }`}
+                            size={15}
+                            className={isPopular ? styles.featureCheckPopular : styles.featureCheckDefault}
                           />
                         ) : (
                           <X
-                            className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                              isPopular ? 'text-teal-400' : 'text-gray-300'
-                            }`}
+                            size={15}
+                            className={isPopular ? styles.featureXPopular : styles.featureXDefault}
                           />
                         )}
                         <span
                           className={
                             included
-                              ? isPopular
-                                ? 'text-white'
-                                : 'text-gray-700'
-                              : isPopular
-                              ? 'text-teal-300 line-through'
-                              : 'text-gray-400 line-through'
+                              ? isPopular ? styles.featureTextOnPop  : styles.featureTextOn
+                              : isPopular ? styles.featureTextOffPop : styles.featureTextOff
                           }
                         >
                           {feature}
@@ -284,34 +286,24 @@ if (loading) {
 
                   {/* CTA */}
                   {isCurrent ? (
-                    <div
-                      className={`w-full text-center py-2.5 rounded-xl font-medium border-2 ${
-                        isPopular
-                          ? 'border-white/40 text-white'
-                          : 'border-teal-500 text-teal-600'
-                      }`}
-                    >
+                    <div className={`${styles.pkgCtaCurrent} ${isPopular ? styles.pkgCtaCurrentPopular : styles.pkgCtaCurrentDefault}`}>
                       ✓ Gói hiện tại
                     </div>
                   ) : (
                     <button
                       onClick={() => handleSubscribe(pkg)}
                       disabled={isPaying || cancelLoading}
-                      className={`w-full py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${
-                        isPopular
-                          ? 'bg-white text-teal-700 hover:bg-teal-50'
-                          : 'bg-teal-600 text-white hover:bg-teal-700'
-                      }`}
+                      className={`${styles.pkgCtaBtn} ${isPopular ? styles.pkgCtaBtnPopular : styles.pkgCtaBtnDefault}`}
                     >
                       {isPaying ? (
                         <>
-                          <Loader className="w-4 h-4 animate-spin" />
+                          <Loader size={15} className={styles.spinSmall} />
                           Đang xử lý...
                         </>
                       ) : (
                         <>
                           {pkg.price === 0 ? 'Dùng miễn phí' : 'Đăng ký ngay'}
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight size={16} />
                         </>
                       )}
                     </button>
@@ -323,8 +315,8 @@ if (loading) {
         )}
 
         {/* Security note */}
-        <div className="mt-14 text-center flex items-center justify-center gap-2 text-sm text-gray-400">
-          <Shield className="w-4 h-4" />
+        <div className={styles.securityNote}>
+          <Shield size={15} />
           <span>Thanh toán an toàn qua PayOS · Hủy bất kỳ lúc nào</span>
         </div>
       </div>

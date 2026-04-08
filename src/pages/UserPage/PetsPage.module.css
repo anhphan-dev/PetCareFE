@@ -1,0 +1,222 @@
+/* PetsPage.module.css */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #F0FDFA 0%, #ffffff 50%, #CCFBF1 100%);
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 80px;
+}
+
+/* Blobs */
+.blobContainer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.18; }
+.blob1 { width: 600px; height: 600px; background: radial-gradient(circle, #14B8A6, transparent 70%); top: -120px; left: -80px; animation: blobDrift 20s ease-in-out infinite alternate; }
+.blob2 { width: 500px; height: 500px; background: radial-gradient(circle, #0D9488, transparent 70%); bottom: 5%; right: -60px; animation: blobDrift 26s ease-in-out infinite alternate-reverse; }
+@keyframes blobDrift { from { transform: translate(0,0); } to { transform: translate(45px, 35px); } }
+
+/* Container */
+.container { max-width: 1280px; margin: 0 auto; padding: 32px 24px; position: relative; z-index: 1; }
+
+/* Empty login */
+.emptyLogin { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; gap: 16px; text-align: center; position: relative; z-index: 1; }
+.emptyLoginIcon { font-size: 56px; opacity: 0.35; }
+.emptyLoginTitle { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #1C1917; margin: 0; }
+.emptyLoginText { font-size: 15px; color: #57534E; margin: 0; }
+
+/* Page header */
+.pageHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+.pageTitle { font-family: 'Playfair Display', serif; font-size: clamp(26px, 4vw, 36px); font-weight: 700; color: #1C1917; margin: 0 0 6px; }
+.pageSubtitle { font-size: 14px; color: #57534E; margin: 0; }
+.headerIconWrap { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #CCFBF1, #F0FDFA); border: 1.5px solid rgba(13,148,136,.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.headerIcon { color: #0D9488; }
+
+/* Stats */
+.statsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+.statCard { background: rgba(255,255,255,.82); backdrop-filter: blur(14px); border: 1px solid rgba(20,184,166,.16); border-radius: 16px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 18px rgba(0,0,0,.05); }
+.statIcon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.statIconBlue { background: rgba(59,130,246,.1); color: #3b82f6; }
+.statIconRed  { background: rgba(239,68,68,.1);  color: #ef4444; }
+.statLabel { font-size: 12px; color: #57534E; margin: 0 0 4px; }
+.statValue { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #1C1917; line-height: 1; margin: 0; }
+
+/* Main layout */
+.mainLayout { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+@media (max-width: 960px) { .mainLayout { grid-template-columns: 1fr; } }
+
+.leftCol, .rightCol { display: flex; flex-direction: column; gap: 20px; }
+
+/* Card */
+.card {
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(20,184,166,.16);
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 6px 28px rgba(0,0,0,.05);
+}
+
+.cardCollapseHeader { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 16px; }
+.cardHeader { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.cardHeaderLeft { display: flex; align-items: center; gap: 10px; }
+.cardHeaderIcon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cardHeaderIconTeal   { background: rgba(13,148,136,.12); color: #0D9488; }
+.cardHeaderIconPurple { background: rgba(139,92,246,.1);  color: #7c3aed; }
+.cardHeaderIconGreen  { background: rgba(34,197,94,.1);   color: #16a34a; }
+.cardHeaderIconRed    { background: rgba(239,68,68,.1);   color: #ef4444; }
+.cardHeaderIconOrange { background: rgba(249,115,22,.1);  color: #ea580c; }
+.cardTitle { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: #1C1917; margin: 0; }
+
+.collapseChevron { color: #57534E; transition: transform .25s ease; flex-shrink: 0; }
+.collapseChevronOpen { transform: rotate(180deg); }
+
+/* Form basics */
+.addForm, .vaccineForm, .healthForm { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.fieldRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.label { font-size: 12px; font-weight: 600; color: #44403c; }
+.required { color: #0D9488; }
+.mt8 { margin-top: 8px; }
+
+.input {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid rgba(13,148,136,.2);
+  border-radius: 11px;
+  background: rgba(255,255,255,.7);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: #1C1917;
+  outline: none;
+  transition: border-color .22s, box-shadow .22s;
+  box-sizing: border-box;
+}
+.input::placeholder { color: #b5b0aa; }
+.input:focus { border-color: #14B8A6; box-shadow: 0 0 0 3px rgba(20,184,166,.13); }
+.input:disabled { opacity: .45; cursor: not-allowed; }
+.textarea { resize: vertical; min-height: 72px; }
+
+.selectWrap { position: relative; }
+.select { width: 100%; padding: 10px 34px 10px 13px; border: 1.5px solid rgba(13,148,136,.2); border-radius: 11px; background: rgba(255,255,255,.8); font-family: 'DM Sans', sans-serif; font-size: 13px; color: #1C1917; outline: none; appearance: none; cursor: pointer; transition: border-color .22s, box-shadow .22s; box-sizing: border-box; }
+.select:focus { border-color: #14B8A6; box-shadow: 0 0 0 3px rgba(20,184,166,.13); }
+.select:disabled { opacity: .45; cursor: not-allowed; }
+.selectChevron { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #57534E; }
+
+/* Image upload */
+.imageUpload { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px 16px; border: 2px dashed rgba(13,148,136,.3); border-radius: 14px; cursor: pointer; transition: border-color .2s, background .2s; text-align: center; }
+.imageUpload:hover { border-color: #0D9488; background: rgba(240,253,250,.5); }
+.uploadIcon { color: #a8a29e; }
+.uploadText { font-size: 13px; color: #57534E; font-weight: 500; }
+.uploadHint { font-size: 11px; color: #a8a29e; }
+.hiddenInput { display: none; }
+.imagePreviewWrap { position: relative; }
+.imagePreview { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; border: 1.5px solid rgba(13,148,136,.2); display: block; }
+.imageRemoveBtn { position: absolute; top: 8px; right: 8px; background: #ef4444; color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
+.imageRemoveBtn:hover { background: #dc2626; }
+
+/* Vaccine init box */
+.vaccineInitBox { background: rgba(240,253,250,.6); border: 1px solid rgba(13,148,136,.18); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.checkboxLabel { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #44403c; cursor: pointer; }
+.checkbox { width: 16px; height: 16px; accent-color: #0D9488; cursor: pointer; }
+.vaccineInitFields { display: flex; flex-direction: column; gap: 10px; }
+.vaccineHint { font-size: 11px; color: #a8a29e; margin: 0; }
+
+/* Add button */
+.addBtn { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 12px; width: 100%; border: none; border-radius: 999px; background: linear-gradient(135deg, #0D9488, #14B8A6); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 18px rgba(13,148,136,.28); transition: filter .2s, transform .15s; }
+.addBtn:hover:not(:disabled) { filter: brightness(.92); transform: translateY(-1px); }
+.addBtn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Pet list */
+.emptyPets { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 32px 12px; color: #a8a29e; font-size: 13px; text-align: center; border: 2px dashed rgba(13,148,136,.15); border-radius: 14px; }
+.emptyPetsIcon { color: #d4d0cc; }
+.petList { display: flex; flex-direction: column; gap: 10px; }
+.petItem { border: 1.5px solid rgba(20,184,166,.14); border-radius: 16px; padding: 12px 14px; cursor: pointer; transition: all .25s ease; background: rgba(255,255,255,.5); }
+.petItem:hover { border-color: rgba(20,184,166,.35); background: rgba(240,253,250,.6); }
+.petItemActive { border-color: #0D9488 !important; background: rgba(240,253,250,.8) !important; box-shadow: 0 0 0 3px rgba(13,148,136,.1); }
+.petItemTop { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.petItemBody { display: flex; align-items: flex-start; gap: 10px; }
+
+/* Toggle switch */
+.toggleLabel { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.toggleInput { display: none; }
+.toggleTrack { position: relative; width: 34px; height: 19px; border-radius: 999px; background: #d4d0cc; transition: background .2s; flex-shrink: 0; }
+.toggleInput:checked + .toggleTrack { background: linear-gradient(135deg, #0D9488, #14B8A6); }
+.toggleThumb { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: left .2s; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.toggleInput:checked ~ .toggleLabel .toggleThumb,
+.toggleInput:checked + .toggleTrack .toggleThumb { left: 17px; }
+.toggleText { font-size: 11px; font-weight: 600; color: #57534E; }
+
+/* Pet avatar */
+.petAvatarWrap { flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px; overflow: hidden; cursor: zoom-in; }
+.petAvatar { width: 100%; height: 100%; object-fit: cover; transition: opacity .2s; }
+.petAvatarWrap:hover .petAvatar { opacity: .8; }
+
+.petInfo { flex: 1; min-width: 0; }
+.petName { font-weight: 700; font-size: 14px; color: #1C1917; margin: 0 0 3px; }
+.petMeta { font-size: 11px; color: #57534E; margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.petNotes { font-size: 11px; color: #a8a29e; margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.petStatus { font-size: 11px; color: #a8a29e; margin: 0; }
+.petDeleteBtn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: none; background: transparent; color: #a8a29e; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .18s, color .18s; }
+.petDeleteBtn:hover { background: rgba(239,68,68,.1); color: #ef4444; }
+
+/* Vaccine form */
+.vaccineFormTop { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .vaccineFormTop { grid-template-columns: 1fr; } }
+.vaccineSubmitBtn { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px; width: 100%; border: none; border-radius: 999px; background: linear-gradient(135deg, #0D9488, #14B8A6); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(13,148,136,.28); transition: filter .2s, transform .15s; }
+.vaccineSubmitBtn:hover:not(:disabled) { filter: brightness(.92); transform: translateY(-1px); }
+.vaccineSubmitBtn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Vaccine list */
+.emptyState { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 12px; color: #a8a29e; font-size: 13px; border: 2px dashed rgba(13,148,136,.12); border-radius: 14px; text-align: center; }
+.emptyStateIcon { font-size: 32px; opacity: .5; }
+.vaccineList { display: flex; flex-direction: column; gap: 10px; }
+.vaccineItem { background: rgba(240,253,250,.5); border: 1px solid rgba(13,148,136,.14); border-radius: 14px; padding: 13px 15px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.vaccineItemLeft { flex: 1; }
+.vaccineName { font-size: 13px; font-weight: 700; color: #1C1917; margin: 0 0 3px; }
+.vaccineCode { font-size: 11px; color: #57534E; margin: 0; }
+.vaccineItemRight { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.vaccineDate { font-size: 12px; font-weight: 600; color: #0D9488; }
+.vaccineNext { font-size: 11px; color: #a8a29e; }
+
+/* Health form */
+.statusBtnGroup { display: flex; gap: 8px; flex-wrap: wrap; }
+.statusBtn { flex: 1; min-width: 100px; padding: 9px 10px; border-radius: 10px; border: 1.5px solid rgba(13,148,136,.2); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; color: #57534E; cursor: pointer; transition: all .2s; white-space: nowrap; }
+.statusBtn:hover { border-color: rgba(13,148,136,.4); background: #F0FDFA; }
+.statusBtnActive_healthy { border-color: #16a34a !important; background: rgba(34,197,94,.08) !important; color: #15803d !important; }
+.statusBtnActive_warning { border-color: #d97706 !important; background: rgba(245,158,11,.08) !important; color: #b45309 !important; }
+.statusBtnActive_danger  { border-color: #dc2626 !important; background: rgba(239,68,68,.08) !important; color: #b91c1c !important; }
+
+.healthSubmitBtn { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 12px; width: 100%; border: none; border-radius: 999px; background: linear-gradient(135deg, #ef4444, #f87171); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 18px rgba(239,68,68,.25); transition: filter .2s, transform .15s; }
+.healthSubmitBtn:hover:not(:disabled) { filter: brightness(.92); transform: translateY(-1px); }
+.healthSubmitBtn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Health history */
+.healthList { display: flex; flex-direction: column; gap: 12px; }
+.healthItem { border-radius: 14px; border: 1.5px solid; padding: 14px 16px; transition: box-shadow .25s; }
+.healthItem:hover { box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+.healthItem_healthy { background: rgba(240,253,244,.6); border-color: rgba(34,197,94,.25); }
+.healthItem_warning { background: rgba(255,251,235,.6); border-color: rgba(245,158,11,.3); }
+.healthItem_danger  { background: rgba(254,242,242,.6); border-color: rgba(239,68,68,.3); }
+.healthItemHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+.healthDate { font-size: 13px; font-weight: 700; color: #1C1917; margin-right: 8px; }
+.healthBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.healthBadge_healthy { background: rgba(34,197,94,.15); color: #15803d; }
+.healthBadge_warning { background: rgba(245,158,11,.15); color: #b45309; }
+.healthBadge_danger  { background: rgba(239,68,68,.15);  color: #b91c1c; }
+.healthDetails { display: flex; gap: 14px; font-size: 13px; color: #57534E; margin-bottom: 6px; flex-wrap: wrap; }
+.healthNotes { font-size: 12px; color: #57534E; background: rgba(255,255,255,.5); border-radius: 8px; padding: 7px 10px; margin: 0; line-height: 1.55; }
+.healthDeleteBtn { background: transparent; border: none; color: #a8a29e; cursor: pointer; padding: 4px; border-radius: 6px; transition: background .18s, color .18s; display: flex; align-items: center; }
+.healthDeleteBtn:hover { background: rgba(239,68,68,.1); color: #ef4444; }
+
+/* No selection */
+.noSelectionCard { background: rgba(255,255,255,.82); backdrop-filter: blur(14px); border: 1px solid rgba(20,184,166,.14); border-radius: 22px; padding: 80px 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.04); }
+.noSelectionIcon { font-size: 56px; opacity: .3; }
+.noSelectionTitle { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #1C1917; margin: 0; }
+.noSelectionText { font-size: 14px; color: #57534E; margin: 0; max-width: 320px; line-height: 1.6; }
+
+/* Zoom modal */
+.zoomOverlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.78); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.zoomCloseBtn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 50%; width: 48px; height: 48px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; z-index: 201; }
+.zoomCloseBtn:hover { background: rgba(255,255,255,.25); }
+.zoomedImg { max-width: 100%; max-height: 85vh; border-radius: 16px; object-fit: contain; box-shadow: 0 20px 60px rgba(0,0,0,.5); }

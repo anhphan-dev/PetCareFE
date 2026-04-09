@@ -1,12 +1,12 @@
 // Header.tsx
 import {
-    ChevronDown, Crown, Dog, Heart, Home, List, LogOut,
-    Menu, PawPrint,
-    Search,
-    ShoppingBag,
-    ShoppingCart,
-    Sparkles, User, UserCircle,
-    X
+  ChevronDown, Crown, Dog, Heart, Home, List, LogOut,
+  Menu, PawPrint,
+  Search,
+  ShoppingBag,
+  ShoppingCart,
+  Sparkles, User, UserCircle,
+  X
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -113,7 +113,7 @@ export default function Header() {
         {/* ── Logo ── */}
         <Link to="/" className={styles.logo}>
           <PawPrint className={styles.logoIcon} />
-          <span className={styles.logoText}>PetCare</span>
+          <span className={styles.logoText}>PetSuba</span>
         </Link>
 
         {/* ── Desktop nav ── */}

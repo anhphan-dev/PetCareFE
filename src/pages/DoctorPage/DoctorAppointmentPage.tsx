@@ -5,11 +5,13 @@ import {
     CheckCircle,
     Clock,
     FileText,
+    LogOut,
     RefreshCw,
     X,
-    Zap
+    Zap,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { appointmentService } from '../../services/AppointmentService';
 import styles from './DoctorAppointmentPage.module.css';
@@ -26,8 +28,8 @@ interface DoctorAppointment {
 type FilterType = 'ALL' | 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
 
 const FILTERS: { key: FilterType; label: string }[] = [
-  { key: 'ALL',       label: 'Tất cả' },
-  { key: 'Pending',   label: 'Chờ xác nhận' },
+  { key: 'ALL', label: 'Tất cả' },
+  { key: 'Pending', label: 'Chờ xác nhận' },
   { key: 'Confirmed', label: 'Đã xác nhận' },
   { key: 'Completed', label: 'Hoàn thành' },
   { key: 'Cancelled', label: 'Đã hủy' },
@@ -44,7 +46,7 @@ function minutesUntil(date: string, time: string) {
 
 function getVariant(status: DoctorAppointment['status']) {
   switch (status) {
-    case 'Pending':   return 'pending';
+    case 'Pending': return 'pending';
     case 'Confirmed': return 'confirmed';
     case 'Completed': return 'completed';
     case 'Cancelled': return 'cancelled';
@@ -53,7 +55,7 @@ function getVariant(status: DoctorAppointment['status']) {
 
 function getStatusLabel(status: DoctorAppointment['status']) {
   switch (status) {
-    case 'Pending':   return '⏳ Chờ xác nhận';
+    case 'Pending': return '⏳ Chờ xác nhận';
     case 'Confirmed': return '✅ Đã xác nhận';
     case 'Completed': return '✔ Hoàn thành';
     case 'Cancelled': return '✕ Đã hủy';
@@ -61,13 +63,18 @@ function getStatusLabel(status: DoctorAppointment['status']) {
 }
 
 export default function DoctorAppointmentsPage() {
+  const navigate = useNavigate();
+
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [filter, setFilter] = useState<FilterType>('ALL');
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  /* ── fetch ── */
+  // Modal xác nhận đăng xuất
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  /* ── Fetch appointments ── */
   const fetchAppointments = async (date: string) => {
     try {
       setLoading(true);
@@ -80,14 +87,34 @@ export default function DoctorAppointmentsPage() {
     }
   };
 
-  useEffect(() => { fetchAppointments(selectedDate); }, [selectedDate]);
+  useEffect(() => {
+    fetchAppointments(selectedDate);
+  }, [selectedDate]);
 
-  /* ── actions ── */
+  /* ── Logout handlers ── */
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    localStorage.removeItem('authToken');
+    toast.success('Đã đăng xuất thành công');
+    setShowLogoutConfirm(false);
+    navigate('/dang-nhap');
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
+  /* ── Appointment actions ── */
   const handleConfirm = async (id: string) => {
     try {
       setProcessingId(id);
       await appointmentService.confirmAppointment(id);
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Confirmed' } : a));
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: 'Confirmed' } : a))
+      );
       toast.success('Đã xác nhận lịch hẹn.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Không thể xác nhận.');
@@ -97,11 +124,14 @@ export default function DoctorAppointmentsPage() {
   };
 
   const handleCancel = async (id: string) => {
-    if (!window.confirm('Từ chối lịch hẹn này?')) return;
+    if (!window.confirm('Bạn có chắc chắn muốn từ chối lịch hẹn này?')) return;
+
     try {
       setProcessingId(id);
       await appointmentService.cancelAppointment(id);
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: 'Cancelled' } : a))
+      );
       toast.success('Đã từ chối lịch hẹn.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Không thể từ chối.');
@@ -114,7 +144,9 @@ export default function DoctorAppointmentsPage() {
     try {
       setProcessingId(id);
       await appointmentService.completeAppointment(id);
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Completed' } : a));
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: 'Completed' } : a))
+      );
       toast.success('Đã đánh dấu hoàn thành.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Không thể cập nhật.');
@@ -123,22 +155,26 @@ export default function DoctorAppointmentsPage() {
     }
   };
 
-  /* ── filtered + sorted (by time) ── */
+  /* ── Filtered & Next upcoming ── */
   const filtered = useMemo(() => {
-    const list = filter === 'ALL' ? appointments : appointments.filter(a => a.status === filter);
+    const list = filter === 'ALL' ? appointments : appointments.filter((a) => a.status === filter);
     return [...list].sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments, filter]);
 
-  /* ── next upcoming appointment ── */
-  const nextUpcoming = useMemo(() =>
-    appointments
-      .filter(a => a.status === 'Confirmed' && minutesUntil(a.date, a.time) > 0)
-      .sort((a, b) => minutesUntil(a.date, a.time) - minutesUntil(b.date, b.time))[0]
-  , [appointments]);
+  const nextUpcoming = useMemo(() => {
+    return appointments
+      .filter((a) => a.status === 'Confirmed' && minutesUntil(a.date, a.time) > 0)
+      .sort((a, b) => minutesUntil(a.date, a.time) - minutesUntil(b.date, b.time))[0];
+  }, [appointments]);
 
   const formatDateLabel = (d: string) => {
     if (d === today) return 'Hôm nay';
-    return new Date(d).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+    return new Date(d).toLocaleDateString('vi-VN', {
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -149,15 +185,15 @@ export default function DoctorAppointmentsPage() {
         <div className={`${styles.blob} ${styles.blobB}`} />
       </div>
 
-      {/* ── Sticky header ── */}
+      {/* Sticky Header */}
       <div className={styles.stickyHeader}>
         <div className={styles.stickyInner}>
           <div className={styles.headerLeft}>
             <h1 className={styles.pageTitle}>Quản lý lịch hẹn 🐾</h1>
             <p className={styles.pageSubtitle}>{formatDateLabel(selectedDate)}</p>
           </div>
+
           <div className={styles.headerRight}>
-            {/* Date picker */}
             <div className={styles.datePicker}>
               <CalendarDays size={15} className={styles.dateIcon} />
               <input
@@ -167,6 +203,7 @@ export default function DoctorAppointmentsPage() {
                 onChange={(e) => setSelectedDate(e.target.value)}
               />
             </div>
+
             <button
               className={styles.refreshBtn}
               onClick={() => fetchAppointments(selectedDate)}
@@ -175,19 +212,29 @@ export default function DoctorAppointmentsPage() {
             >
               <RefreshCw size={15} className={loading ? styles.spinning : ''} />
             </button>
+
+            {/* Nút Đăng xuất */}
+            <button
+              className={styles.logoutBtn}
+              onClick={handleLogoutClick}
+              title="Đăng xuất"
+            >
+              <LogOut size={18} />
+              <span className={styles.logoutText}>Đăng xuất</span>
+            </button>
           </div>
         </div>
       </div>
 
       <div className={styles.container}>
-        {/* ── Stats row ── */}
+        {/* Stats row */}
         <div className={styles.statsRow}>
-          {([
-            { label: 'Tổng cộng',     count: appointments.length,                                  color: 'all' },
-            { label: 'Chờ xác nhận',  count: appointments.filter(a=>a.status==='Pending').length,   color: 'pending' },
-            { label: 'Đã xác nhận',   count: appointments.filter(a=>a.status==='Confirmed').length, color: 'confirmed' },
-            { label: 'Hoàn thành',    count: appointments.filter(a=>a.status==='Completed').length, color: 'completed' },
-          ] as const).map(s => (
+          {[
+            { label: 'Tổng cộng', count: appointments.length, color: 'all' },
+            { label: 'Chờ xác nhận', count: appointments.filter((a) => a.status === 'Pending').length, color: 'pending' },
+            { label: 'Đã xác nhận', count: appointments.filter((a) => a.status === 'Confirmed').length, color: 'confirmed' },
+            { label: 'Hoàn thành', count: appointments.filter((a) => a.status === 'Completed').length, color: 'completed' },
+          ].map((s) => (
             <div key={s.label} className={`${styles.statCard} ${styles[`stat_${s.color}`]}`}>
               <span className={styles.statCount}>{s.count}</span>
               <span className={styles.statLabel}>{s.label}</span>
@@ -195,18 +242,18 @@ export default function DoctorAppointmentsPage() {
           ))}
         </div>
 
-        {/* ── Next upcoming highlight ── */}
+        {/* Next upcoming highlight */}
         {nextUpcoming && (
           <div className={styles.nextCard}>
             <div className={styles.nextCardLeft}>
               <span className={styles.nextBadge}><Zap size={12} /> Sắp tới</span>
               <p className={styles.nextName}>{nextUpcoming.customerName}</p>
               <p className={styles.nextTime}>
-                <Clock size={13} /> {nextUpcoming.time}
-                {' — '}
+                <Clock size={13} /> {nextUpcoming.time} —{' '}
                 {(() => {
                   const mins = minutesUntil(nextUpcoming.date, nextUpcoming.time);
-                  const h = Math.floor(mins / 60); const m = Math.floor(mins % 60);
+                  const h = Math.floor(mins / 60);
+                  const m = Math.floor(mins % 60);
                   return h > 0 ? `Còn ${h}g ${m}p` : `Còn ${m} phút`;
                 })()}
               </p>
@@ -225,9 +272,9 @@ export default function DoctorAppointmentsPage() {
           </div>
         )}
 
-        {/* ── Filter ── */}
+        {/* Filter Bar */}
         <div className={styles.filterBar}>
-          {FILTERS.map(f => (
+          {FILTERS.map((f) => (
             <button
               key={f.key}
               className={`${styles.filterTab} ${filter === f.key ? styles.filterTabActive : ''}`}
@@ -235,13 +282,13 @@ export default function DoctorAppointmentsPage() {
             >
               {f.label}
               <span className={styles.filterCount}>
-                {f.key === 'ALL' ? appointments.length : appointments.filter(a => a.status === f.key).length}
+                {f.key === 'ALL' ? appointments.length : appointments.filter((a) => a.status === f.key).length}
               </span>
             </button>
           ))}
         </div>
 
-        {/* ── Appointment list ── */}
+        {/* Appointment List */}
         {loading ? (
           <div className={styles.loadingState}>
             <span className={styles.loadingPaw}>🐾</span>
@@ -259,20 +306,19 @@ export default function DoctorAppointmentsPage() {
               const variant = getVariant(appt.status);
               const isProcessing = processingId === appt.id;
               const isNext = appt.id === nextUpcoming?.id;
+
               return (
                 <div
                   key={appt.id}
                   className={`${styles.timelineItem} ${isNext ? styles.timelineItemNext : ''}`}
                   style={{ animationDelay: `${i * 0.06}s` }}
                 >
-                  {/* Time column */}
                   <div className={styles.timeCol}>
                     <span className={styles.timeLabel}>{appt.time}</span>
                     <div className={`${styles.timeDot} ${styles[`dot_${variant}`]}`} />
                     {i < filtered.length - 1 && <div className={styles.timeLine} />}
                   </div>
 
-                  {/* Card */}
                   <div className={`${styles.apptCard} ${styles[`card_${variant}`]}`}>
                     {isNext && <div className={styles.nextGlow} aria-hidden="true" />}
 
@@ -294,13 +340,11 @@ export default function DoctorAppointmentsPage() {
                       </span>
                     </div>
 
-                    {/* Reason */}
                     <div className={styles.reasonBox}>
                       <FileText size={12} className={styles.reasonIcon} />
                       <p className={styles.reasonText}>{appt.reason}</p>
                     </div>
 
-                    {/* Action buttons */}
                     {appt.status === 'Pending' && (
                       <div className={styles.actions}>
                         <button
@@ -341,6 +385,28 @@ export default function DoctorAppointmentsPage() {
           </div>
         )}
       </div>
+
+      {/* ==================== LOGOUT CONFIRM MODAL ==================== */}
+      {showLogoutConfirm && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.confirmModal}>
+            <div className={styles.confirmIcon}>🚪</div>
+            <h3 className={styles.confirmTitle}>Đăng xuất</h3>
+            <p className={styles.confirmText}>
+              Bạn có chắc chắn muốn đăng xuất khỏi hệ thống quản lý lịch hẹn?
+            </p>
+
+            <div className={styles.confirmActions}>
+              <button className={styles.confirmCancelBtn} onClick={cancelLogout}>
+                Hủy bỏ
+              </button>
+              <button className={styles.confirmLogoutBtn} onClick={confirmLogout}>
+                Đăng xuất
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

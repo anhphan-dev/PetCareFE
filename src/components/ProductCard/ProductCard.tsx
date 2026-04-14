@@ -148,9 +148,9 @@ export default function ProductCard({ product, onClick, index = 0 }: ProductCard
           <span className={styles.price}>
             {displayPrice > 0 ? formatPrice(displayPrice) : 'Liên hệ'}
           </span>
-          {hasSale && (
+          {/* {hasSale && (
             <span className={styles.originalPrice}>{formatPrice(product.price!)}</span>
-          )}
+          )} */}
         </div>
 
         {/* Stock info */}

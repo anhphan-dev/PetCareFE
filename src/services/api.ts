@@ -23,7 +23,7 @@ export const apiService = {
   },
 
   async getServices(): Promise<Service[]> {
-    const response = await fetch(`${API_BASE_URL}/Appointments/services`);
+    const response = await fetch(`${API_BASE_URL}/appointments/services`);
     if (!response.ok) throw new Error('Failed to fetch services');
 
     const payload = (await response.json()) as ServiceResponse<Service[]> | Service[];

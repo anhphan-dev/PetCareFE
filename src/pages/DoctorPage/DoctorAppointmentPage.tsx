@@ -1,36 +1,30 @@
 // DoctorAppointmentsPage.tsx
 import {
-    CalendarDays,
-    Check,
-    CheckCircle,
-    Clock,
-    FileText,
-    LogOut,
-    RefreshCw,
-    X,
-    Zap,
+  CalendarDays,
+  Check,
+  CheckCircle,
+  Clock,
+  FileText,
+  LogOut,
+  PlayCircle,
+  RefreshCw,
+  X,
+  Zap,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { appointmentService } from '../../services/AppointmentService';
+import { useAuth } from '../../contexts/AuthContext';
+import { appointmentService, type DoctorAppointmentRow } from '../../services/AppointmentService';
 import styles from './DoctorAppointmentPage.module.css';
 
-interface DoctorAppointment {
-  id: string;
-  customerName: string;
-  date: string;
-  time: string;
-  reason: string;
-  status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
-}
-
-type FilterType = 'ALL' | 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
+type FilterType = 'ALL' | DoctorAppointmentRow['status'];
 
 const FILTERS: { key: FilterType; label: string }[] = [
   { key: 'ALL', label: 'Tất cả' },
   { key: 'Pending', label: 'Chờ xác nhận' },
   { key: 'Confirmed', label: 'Đã xác nhận' },
+  { key: 'InProgress', label: 'Đang TH' },
   { key: 'Completed', label: 'Hoàn thành' },
   { key: 'Cancelled', label: 'Đã hủy' },
 ];
@@ -44,28 +38,39 @@ function minutesUntil(date: string, time: string) {
   return (d.getTime() - Date.now()) / 60000;
 }
 
-function getVariant(status: DoctorAppointment['status']) {
+function getVariant(status: DoctorAppointmentRow['status']) {
   switch (status) {
     case 'Pending': return 'pending';
     case 'Confirmed': return 'confirmed';
+    case 'InProgress': return 'inprogress';
     case 'Completed': return 'completed';
     case 'Cancelled': return 'cancelled';
   }
 }
 
-function getStatusLabel(status: DoctorAppointment['status']) {
+function getStatusLabel(status: DoctorAppointmentRow['status']) {
   switch (status) {
     case 'Pending': return '⏳ Chờ xác nhận';
     case 'Confirmed': return '✅ Đã xác nhận';
+    case 'InProgress': return '🔵 Đang thực hiện';
     case 'Completed': return '✔ Hoàn thành';
     case 'Cancelled': return '✕ Đã hủy';
   }
 }
 
+function formatAppointmentType(t?: string) {
+  if (!t) return '';
+  const v = t.toLowerCase();
+  if (v === 'at_home') return 'Tại nhà';
+  if (v === 'at_store') return 'Tại cửa hàng';
+  return t;
+}
+
 export default function DoctorAppointmentsPage() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
+  const [appointments, setAppointments] = useState<DoctorAppointmentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [filter, setFilter] = useState<FilterType>('ALL');
@@ -74,22 +79,34 @@ export default function DoctorAppointmentsPage() {
   // Modal xác nhận đăng xuất
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  /* ── Fetch appointments ── */
-  const fetchAppointments = async (date: string) => {
+  /* ── Fetch appointments (GET /api/appointments?date= — Doctor / Admin) ── */
+  const fetchAppointments = useCallback(async (date: string) => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      navigate('/dang-nhap', { replace: true, state: { from: '/doctor' } });
+      return;
+    }
     try {
       setLoading(true);
       const data = await appointmentService.getDoctorAppointments(date);
       setAppointments(data ?? []);
-    } catch {
-      toast.error('Không thể tải danh sách lịch hẹn.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.toLowerCase().includes('unauthorized') || msg.includes('401')) {
+        toast.error('Không có quyền hoặc phiên đã hết hạn. Đăng nhập lại.');
+        navigate('/dang-nhap', { replace: true });
+        return;
+      }
+      toast.error(msg || 'Không thể tải danh sách lịch hẹn.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
     fetchAppointments(selectedDate);
-  }, [selectedDate]);
+  }, [selectedDate, fetchAppointments]);
 
   /* ── Logout handlers ── */
   const handleLogoutClick = () => {
@@ -97,7 +114,7 @@ export default function DoctorAppointmentsPage() {
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem('authToken');
+    logout();
     toast.success('Đã đăng xuất thành công');
     setShowLogoutConfirm(false);
     navigate('/dang-nhap');
@@ -128,7 +145,7 @@ export default function DoctorAppointmentsPage() {
 
     try {
       setProcessingId(id);
-      await appointmentService.cancelAppointment(id);
+      await appointmentService.updateStatus(id, { status: 'cancelled' });
       setAppointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status: 'Cancelled' } : a))
       );
@@ -155,6 +172,21 @@ export default function DoctorAppointmentsPage() {
     }
   };
 
+  const handleStartInProgress = async (id: string) => {
+    try {
+      setProcessingId(id);
+      await appointmentService.startInProgress(id);
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: 'InProgress' } : a))
+      );
+      toast.success('Đã chuyển sang trạng thái đang thực hiện.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể cập nhật.');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   /* ── Filtered & Next upcoming ── */
   const filtered = useMemo(() => {
     const list = filter === 'ALL' ? appointments : appointments.filter((a) => a.status === filter);
@@ -163,7 +195,11 @@ export default function DoctorAppointmentsPage() {
 
   const nextUpcoming = useMemo(() => {
     return appointments
-      .filter((a) => a.status === 'Confirmed' && minutesUntil(a.date, a.time) > 0)
+      .filter(
+        (a) =>
+          (a.status === 'Confirmed' || a.status === 'InProgress') &&
+          minutesUntil(a.date, a.time) > 0
+      )
       .sort((a, b) => minutesUntil(a.date, a.time) - minutesUntil(b.date, b.time))[0];
   }, [appointments]);
 
@@ -233,6 +269,7 @@ export default function DoctorAppointmentsPage() {
             { label: 'Tổng cộng', count: appointments.length, color: 'all' },
             { label: 'Chờ xác nhận', count: appointments.filter((a) => a.status === 'Pending').length, color: 'pending' },
             { label: 'Đã xác nhận', count: appointments.filter((a) => a.status === 'Confirmed').length, color: 'confirmed' },
+            { label: 'Đang TH', count: appointments.filter((a) => a.status === 'InProgress').length, color: 'inprogress' },
             { label: 'Hoàn thành', count: appointments.filter((a) => a.status === 'Completed').length, color: 'completed' },
           ].map((s) => (
             <div key={s.label} className={`${styles.statCard} ${styles[`stat_${s.color}`]}`}>
@@ -260,14 +297,28 @@ export default function DoctorAppointmentsPage() {
             </div>
             <div className={styles.nextCardRight}>
               <p className={styles.nextReason}>{nextUpcoming.reason}</p>
-              <button
-                className={styles.completeBtn}
-                onClick={() => handleComplete(nextUpcoming.id)}
-                disabled={processingId === nextUpcoming.id}
-              >
-                <CheckCircle size={14} />
-                Đánh dấu hoàn thành
-              </button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {nextUpcoming.status === 'Confirmed' && (
+                  <button
+                    type="button"
+                    className={styles.startProgressBtn}
+                    onClick={() => handleStartInProgress(nextUpcoming.id)}
+                    disabled={processingId === nextUpcoming.id}
+                  >
+                    <PlayCircle size={14} />
+                    Bắt đầu TH
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={styles.completeBtn}
+                  onClick={() => handleComplete(nextUpcoming.id)}
+                  disabled={processingId === nextUpcoming.id}
+                >
+                  <CheckCircle size={14} />
+                  Hoàn thành
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -340,6 +391,40 @@ export default function DoctorAppointmentsPage() {
                       </span>
                     </div>
 
+                    {(appt.serviceName || appt.petName || appt.appointmentType || appt.branchName || appt.serviceAddress) && (
+                      <p className={styles.serviceMeta}>
+                        {appt.serviceName && (
+                          <>
+                            <strong>Dịch vụ:</strong> {appt.serviceName}
+                          </>
+                        )}
+                        {appt.petName && (
+                          <>
+                            {appt.serviceName ? ' · ' : ''}
+                            <strong>Thú cưng:</strong> {appt.petName}
+                          </>
+                        )}
+                        {formatAppointmentType(appt.appointmentType) && (
+                          <>
+                            {' · '}
+                            <strong>Hình thức:</strong> {formatAppointmentType(appt.appointmentType)}
+                          </>
+                        )}
+                        {appt.branchName && (
+                          <>
+                            {' · '}
+                            <strong>Chi nhánh:</strong> {appt.branchName}
+                          </>
+                        )}
+                        {appt.serviceAddress && (
+                          <>
+                            <br />
+                            <strong>Địa chỉ:</strong> {appt.serviceAddress}
+                          </>
+                        )}
+                      </p>
+                    )}
+
                     <div className={styles.reasonBox}>
                       <FileText size={12} className={styles.reasonIcon} />
                       <p className={styles.reasonText}>{appt.reason}</p>
@@ -369,12 +454,36 @@ export default function DoctorAppointmentsPage() {
                     {appt.status === 'Confirmed' && (
                       <div className={styles.actions}>
                         <button
+                          type="button"
+                          className={styles.startProgressBtn}
+                          onClick={() => handleStartInProgress(appt.id)}
+                          disabled={isProcessing}
+                        >
+                          <PlayCircle size={14} />
+                          {isProcessing ? 'Đang xử lý...' : 'Bắt đầu thực hiện'}
+                        </button>
+                        <button
+                          type="button"
                           className={styles.completeApptBtn}
                           onClick={() => handleComplete(appt.id)}
                           disabled={isProcessing}
                         >
                           <CheckCircle size={14} />
-                          {isProcessing ? 'Đang cập nhật...' : 'Đánh dấu hoàn thành'}
+                          {isProcessing ? 'Đang cập nhật...' : 'Hoàn thành'}
+                        </button>
+                      </div>
+                    )}
+
+                    {appt.status === 'InProgress' && (
+                      <div className={styles.actions}>
+                        <button
+                          type="button"
+                          className={styles.completeApptBtn}
+                          onClick={() => handleComplete(appt.id)}
+                          disabled={isProcessing}
+                        >
+                          <CheckCircle size={14} />
+                          {isProcessing ? 'Đang cập nhật...' : 'Hoàn thành dịch vụ'}
                         </button>
                       </div>
                     )}

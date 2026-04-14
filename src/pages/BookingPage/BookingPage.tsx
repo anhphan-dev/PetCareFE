@@ -5,21 +5,20 @@ import {
   ChevronDown,
   Clock,
   FileText,
+  Home,
   Mail,
+  MapPin,
   Send,
-  User
+  Store,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import PetAPI, { type Pet } from '../../services/PetAPI';
 import { appointmentService } from '../../services/AppointmentService';
+import type { AppointmentCatalogService } from '../../types/appointment';
+import { incrementAppointmentBadgeCount } from '../../utils/appointmentBadgeStorage';
 import styles from './BookingPage.module.css';
-
-interface Doctor {
-  id: string;
-  name: string;
-  specialty?: string;
-}
 
 const TIME_SLOTS = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
@@ -29,61 +28,112 @@ const TIME_SLOTS = [
 
 const today = new Date().toISOString().split('T')[0];
 
+function addMinutesToTimeSlot(timeHhMm: string, addMinutes: number): string {
+  const [h, m] = timeHhMm.split(':').map(Number);
+  let totalMin = h * 60 + m + addMinutes;
+  totalMin %= 24 * 60;
+  if (totalMin < 0) totalMin += 24 * 60;
+  const eh = Math.floor(totalMin / 60);
+  const em = totalMin % 60;
+  return `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}:00`;
+}
+
 export default function BookingPage() {
   const navigate = useNavigate();
 
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [services, setServices] = useState<AppointmentCatalogService[]>([]);
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
-    doctorId: '',
+    serviceId: '',
+    petId: '',
+    appointmentType: 'at_store' as 'at_store' | 'at_home',
+    serviceAddress: '',
     date: '',
     time: '',
-    reason: '',
+    notes: '',
   });
 
-  const [errors, setErrors] = useState<Partial<typeof form>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
-  /* ── fetch doctor list ── */
   useEffect(() => {
     (async () => {
       try {
-        setLoadingDoctors(true);
-        const list = await appointmentService.getDoctors?.() ?? [];
-        setDoctors(list);
+        setLoadingCatalog(true);
+        const [svcList, petList] = await Promise.all([
+          appointmentService.getServices(),
+          PetAPI.getActivePets().catch(() => [] as Pet[]),
+        ]);
+        setServices(svcList ?? []);
+        setPets(petList ?? []);
       } catch {
-        setDoctors([]);
+        toast.error('Không tải được danh sách dịch vụ. Vui lòng thử lại sau.');
+        setServices([]);
       } finally {
-        setLoadingDoctors(false);
+        setLoadingCatalog(false);
       }
     })();
   }, []);
 
-  /* ── validation ── */
   const validate = () => {
-    const errs: Partial<typeof form> = {};
-    if (!form.doctorId)  errs.doctorId = 'Vui lòng chọn bác sĩ';
-    if (!form.date)      errs.date = 'Vui lòng chọn ngày';
-    if (!form.time)      errs.time = 'Vui lòng chọn giờ';
-    if (!form.reason.trim()) errs.reason = 'Vui lòng nhập lý do khám';
+    const errs: Partial<Record<keyof typeof form, string>> = {};
+    if (!form.serviceId) errs.serviceId = 'Vui lòng chọn dịch vụ';
+    if (!form.date) errs.date = 'Vui lòng chọn ngày';
+    if (!form.time) errs.time = 'Vui lòng chọn giờ';
+    if (!form.notes.trim()) errs.notes = 'Vui lòng nhập ghi chú / lý do';
+    if (form.appointmentType === 'at_home' && !form.serviceAddress.trim()) {
+      errs.serviceAddress = 'Vui lòng nhập địa chỉ khi chọn dịch vụ tại nhà';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!localStorage.getItem('authToken')) {
+      toast.error('Vui lòng đăng nhập để đặt lịch.');
+      navigate('/dang-nhap');
+      return;
+    }
     if (!validate()) return;
+
+    const svc = services.find((s) => s.id === form.serviceId);
+    if (!svc) {
+      toast.error('Dịch vụ không hợp lệ.');
+      return;
+    }
+
     try {
       setSubmitting(true);
+      const when = new Date(`${form.date}T${form.time}:00`);
+      const startTime = `${form.time}:00`;
+      const endTime = addMinutesToTimeSlot(form.time, svc.durationMinutes);
+
       await appointmentService.createAppointment({
-        doctorId: form.doctorId,
-        date: form.date,
-        time: form.time,
-        reason: form.reason.trim(),
+        serviceId: form.serviceId,
+        ...(form.petId ? { petId: form.petId } : {}),
+        appointmentType: form.appointmentType,
+        appointmentDate: when.toISOString(),
+        startTime,
+        endTime,
+        ...(form.appointmentType === 'at_home' && form.serviceAddress.trim()
+          ? { serviceAddress: form.serviceAddress.trim() }
+          : {}),
+        notes: form.notes.trim(),
       });
+      incrementAppointmentBadgeCount();
       toast.success('Đặt lịch thành công! 🐾');
-      setForm({ doctorId: '', date: '', time: '', reason: '' });
+      setForm({
+        serviceId: '',
+        petId: '',
+        appointmentType: 'at_store',
+        serviceAddress: '',
+        date: '',
+        time: '',
+        notes: '',
+      });
       setErrors({});
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Đặt lịch thất bại. Vui lòng thử lại.');
@@ -92,18 +142,16 @@ export default function BookingPage() {
     }
   };
 
-  const selectedDoctor = doctors.find(d => d.id === form.doctorId);
+  const selectedService = services.find((s) => s.id === form.serviceId);
 
   return (
     <div className={styles.page}>
-      {/* Blobs */}
       <div className={styles.blobs} aria-hidden="true">
         <div className={`${styles.blob} ${styles.blobA}`} />
         <div className={`${styles.blob} ${styles.blobB}`} />
         <div className={`${styles.blob} ${styles.blobC}`} />
       </div>
 
-      {/* ── HERO ── */}
       <section className={styles.hero}>
         <div className={styles.pawsLayer} aria-hidden="true">
           {Array.from({ length: 7 }).map((_, i) => (
@@ -123,16 +171,14 @@ export default function BookingPage() {
             <span className={styles.heroAccent}>thú cưng 🐾</span>
           </h1>
           <p className={styles.heroSubtitle}>
-            Chọn thời gian phù hợp cho bé — đội ngũ bác sĩ tận tâm luôn sẵn sàng.
+            Chọn dịch vụ và thời gian phù hợp — đội ngũ luôn sẵn sàng hỗ trợ bạn.
           </p>
         </div>
       </section>
 
       <div className={styles.container}>
-        {/* ── FORM CARD ── */}
         <div className={styles.formWrap}>
-          {/* Back link */}
-          <button className={styles.backBtn} onClick={() => navigate(-1)}>
+          <button type="button" className={styles.backBtn} onClick={() => navigate(-1)}>
             <ArrowLeft size={15} />
             Quay lại
           </button>
@@ -143,53 +189,129 @@ export default function BookingPage() {
               <h2 className={styles.cardTitle}>Thông tin đặt lịch</h2>
             </div>
 
-            {/* Doctor */}
             <div className={styles.field}>
               <label className={styles.label}>
-                <User size={13} />
-                Bác sĩ <span className={styles.req}>*</span>
+                <Store size={13} />
+                Dịch vụ <span className={styles.req}>*</span>
               </label>
               <div className={styles.selectWrap}>
                 <select
-                  className={`${styles.select} ${errors.doctorId ? styles.inputError : ''}`}
-                  value={form.doctorId}
-                  onChange={(e) => { setForm(f => ({ ...f, doctorId: e.target.value })); setErrors(er => ({ ...er, doctorId: '' })); }}
-                  disabled={loadingDoctors}
+                  className={`${styles.select} ${errors.serviceId ? styles.inputError : ''}`}
+                  value={form.serviceId}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, serviceId: e.target.value }));
+                    setErrors((er) => ({ ...er, serviceId: undefined }));
+                  }}
+                  disabled={loadingCatalog}
                 >
-                  <option value="">{loadingDoctors ? 'Đang tải...' : 'Chọn bác sĩ'}</option>
-                  {doctors.map(d => (
-                    <option key={d.id} value={d.id}>{d.name}{d.specialty ? ` — ${d.specialty}` : ''}</option>
+                  <option value="">{loadingCatalog ? 'Đang tải...' : 'Chọn dịch vụ'}</option>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.serviceName}
+                      {s.categoryName ? ` — ${s.categoryName}` : ''}
+                      {typeof s.price === 'number' ? ` (${s.price.toLocaleString('vi-VN')}đ)` : ''}
+                    </option>
                   ))}
                 </select>
                 <ChevronDown size={14} className={styles.selectChevron} />
               </div>
-              {errors.doctorId && <p className={styles.errMsg}>{errors.doctorId}</p>}
+              {errors.serviceId && <p className={styles.errMsg}>{errors.serviceId}</p>}
             </div>
 
-            {/* Selected doctor card */}
-            {selectedDoctor && (
+            {selectedService && (
               <div className={styles.doctorPreview}>
-                <div className={styles.doctorAvatar}>{selectedDoctor.name.charAt(0)}</div>
+                <div className={styles.doctorAvatar}>{selectedService.serviceName.charAt(0)}</div>
                 <div>
-                  <p className={styles.doctorPreviewName}>{selectedDoctor.name}</p>
-                  {selectedDoctor.specialty && <p className={styles.doctorPreviewSpec}>{selectedDoctor.specialty}</p>}
+                  <p className={styles.doctorPreviewName}>{selectedService.serviceName}</p>
+                  <p className={styles.doctorPreviewSpec}>
+                    {selectedService.durationMinutes} phút
+                    {selectedService.isHomeService ? ' · Có thể tại nhà' : ''}
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* Date + Time */}
+            <div className={styles.field}>
+              <label className={styles.label}>
+                <Calendar size={13} />
+                Hình thức <span className={styles.req}>*</span>
+              </label>
+              <div className={styles.timeGrid} style={{ gridTemplateColumns: '1fr 1fr' }}>
+                <button
+                  type="button"
+                  className={`${styles.timeSlot} ${form.appointmentType === 'at_store' ? styles.timeSlotActive : ''}`}
+                  onClick={() => setForm((f) => ({ ...f, appointmentType: 'at_store' }))}
+                >
+                  <Store size={14} /> Tại cửa hàng
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.timeSlot} ${form.appointmentType === 'at_home' ? styles.timeSlotActive : ''}`}
+                  onClick={() => setForm((f) => ({ ...f, appointmentType: 'at_home' }))}
+                  disabled={selectedService != null && !selectedService.isHomeService}
+                  title={selectedService && !selectedService.isHomeService ? 'Dịch vụ này không hỗ trợ tại nhà' : undefined}
+                >
+                  <Home size={14} /> Tại nhà
+                </button>
+              </div>
+            </div>
+
+            {form.appointmentType === 'at_home' && (
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  <MapPin size={13} />
+                  Địa chỉ <span className={styles.req}>*</span>
+                </label>
+                <textarea
+                  className={`${styles.input} ${styles.textarea} ${errors.serviceAddress ? styles.inputError : ''}`}
+                  value={form.serviceAddress}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, serviceAddress: e.target.value }));
+                    setErrors((er) => ({ ...er, serviceAddress: undefined }));
+                  }}
+                  placeholder="Số nhà, đường, phường..."
+                  rows={2}
+                />
+                {errors.serviceAddress && <p className={styles.errMsg}>{errors.serviceAddress}</p>}
+              </div>
+            )}
+
+            <div className={styles.field}>
+              <label className={styles.label}>
+                <Calendar size={13} />
+                Thú cưng (tuỳ chọn)
+              </label>
+              <div className={styles.selectWrap}>
+                <select
+                  className={styles.select}
+                  value={form.petId}
+                  onChange={(e) => setForm((f) => ({ ...f, petId: e.target.value }))}
+                  disabled={loadingCatalog}
+                >
+                  <option value="">— Không chọn —</option>
+                  {pets.map((p) => (
+                    <option key={p.id} value={p.id}>{p.petName}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className={styles.selectChevron} />
+              </div>
+            </div>
+
             <div className={styles.fieldRow}>
               <div className={styles.field}>
                 <label className={styles.label}>
                   <Calendar size={13} />
-                  Ngày khám <span className={styles.req}>*</span>
+                  Ngày <span className={styles.req}>*</span>
                 </label>
                 <input
                   type="date"
                   className={`${styles.input} ${errors.date ? styles.inputError : ''}`}
                   value={form.date}
                   min={today}
-                  onChange={(e) => { setForm(f => ({ ...f, date: e.target.value })); setErrors(er => ({ ...er, date: '' })); }}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, date: e.target.value }));
+                    setErrors((er) => ({ ...er, date: undefined }));
+                  }}
                 />
                 {errors.date && <p className={styles.errMsg}>{errors.date}</p>}
               </div>
@@ -197,15 +319,18 @@ export default function BookingPage() {
               <div className={styles.field}>
                 <label className={styles.label}>
                   <Clock size={13} />
-                  Giờ khám <span className={styles.req}>*</span>
+                  Giờ <span className={styles.req}>*</span>
                 </label>
                 <div className={styles.timeGrid}>
-                  {TIME_SLOTS.map(slot => (
+                  {TIME_SLOTS.map((slot) => (
                     <button
                       key={slot}
                       type="button"
                       className={`${styles.timeSlot} ${form.time === slot ? styles.timeSlotActive : ''}`}
-                      onClick={() => { setForm(f => ({ ...f, time: slot })); setErrors(er => ({ ...er, time: '' })); }}
+                      onClick={() => {
+                        setForm((f) => ({ ...f, time: slot }));
+                        setErrors((er) => ({ ...er, time: undefined }));
+                      }}
                     >
                       {slot}
                     </button>
@@ -215,31 +340,31 @@ export default function BookingPage() {
               </div>
             </div>
 
-            {/* Reason */}
             <div className={styles.field}>
               <label className={styles.label}>
                 <FileText size={13} />
-                Lý do khám <span className={styles.req}>*</span>
+                Ghi chú / lý do <span className={styles.req}>*</span>
               </label>
               <textarea
-                className={`${styles.input} ${styles.textarea} ${errors.reason ? styles.inputError : ''}`}
-                value={form.reason}
-                onChange={(e) => { setForm(f => ({ ...f, reason: e.target.value })); setErrors(er => ({ ...er, reason: '' })); }}
-                placeholder="Mô tả triệu chứng hoặc lý do muốn khám..."
+                className={`${styles.input} ${styles.textarea} ${errors.notes ? styles.inputError : ''}`}
+                value={form.notes}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, notes: e.target.value }));
+                  setErrors((er) => ({ ...er, notes: undefined }));
+                }}
+                placeholder="Mô tả nhu cầu hoặc triệu chứng..."
                 rows={4}
               />
-              {errors.reason && <p className={styles.errMsg}>{errors.reason}</p>}
+              {errors.notes && <p className={styles.errMsg}>{errors.notes}</p>}
             </div>
 
-            {/* Email reminder info */}
             <div className={styles.reminderBox}>
               <Mail size={15} className={styles.reminderIcon} />
               <p className={styles.reminderText}>
-                Bạn sẽ nhận <strong>email nhắc lịch</strong> trước 1 giờ tự động.
+                Bạn sẽ nhận <strong>email nhắc lịch</strong> trước 1 giờ tự động (nếu hệ thống bật).
               </p>
             </div>
 
-            {/* Submit */}
             <button type="submit" className={styles.submitBtn} disabled={submitting}>
               {submitting ? (
                 <span className={styles.submittingDots}>Đang xử lý<span>...</span></span>

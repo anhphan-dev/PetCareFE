@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useDropdown } from '../hooks/useDropdown';
 import { getImageUrl } from '../utils/imageUtils';
+import { getAppointmentBadgeCount } from '../utils/appointmentBadgeStorage';
 import styles from './Header.module.css';
 
 const homeDropdownItems = [
@@ -45,6 +46,7 @@ export default function Header() {
   const [searchVal, setSearchVal]     = useState('');
   const [mobileHomeOpen, setMobileHomeOpen] = useState(false);
   const [mobileUserOpen, setMobileUserOpen] = useState(false);
+  const [appointmentBadge, setAppointmentBadge] = useState(0);
 
   const homeDropdown = useDropdown();
   const userDropdown = useDropdown();
@@ -62,6 +64,17 @@ export default function Header() {
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
+
+  useEffect(() => {
+    const syncBadge = () => setAppointmentBadge(getAppointmentBadgeCount());
+    syncBadge();
+    window.addEventListener('petcare-appointment-badge-change', syncBadge);
+    window.addEventListener('storage', syncBadge);
+    return () => {
+      window.removeEventListener('petcare-appointment-badge-change', syncBadge);
+      window.removeEventListener('storage', syncBadge);
+    };
+  }, [user?.id]);
 
   /* close dropdown on outside click */
   useEffect(() => {
@@ -241,6 +254,11 @@ export default function Header() {
                   </span>
                 )}
                 <span className={styles.avatarOnline} />
+                {appointmentBadge > 0 && (
+                  <span className={styles.appointmentBadge} aria-label={`${appointmentBadge} lịch mới`}>
+                    {appointmentBadge > 9 ? '9+' : appointmentBadge}
+                  </span>
+                )}
               </button>
 
               {userDropdown.isOpen && (
@@ -354,11 +372,18 @@ export default function Header() {
                 className={styles.mobileUserToggle}
                 onClick={() => setMobileUserOpen((v) => !v)}
               >
-                {user.avatarUrl ? (
-                  <img src={getImageUrl(user.avatarUrl)} alt={user.fullName} className={styles.mobileAvatar} />
-                ) : (
-                  <span className={styles.mobileAvatarFallback}><User size={16} /></span>
-                )}
+                <span className={styles.mobileAvatarWrap}>
+                  {user.avatarUrl ? (
+                    <img src={getImageUrl(user.avatarUrl)} alt={user.fullName} className={styles.mobileAvatar} />
+                  ) : (
+                    <span className={styles.mobileAvatarFallback}><User size={16} /></span>
+                  )}
+                  {appointmentBadge > 0 && (
+                    <span className={styles.mobileAppointmentBadge} aria-hidden="true">
+                      {appointmentBadge > 9 ? '9+' : appointmentBadge}
+                    </span>
+                  )}
+                </span>
                 <span className={styles.mobileUserName}>{user.fullName}</span>
                 <ChevronDown
                   size={14}

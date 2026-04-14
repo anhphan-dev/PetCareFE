@@ -10,7 +10,13 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { appointmentService } from '../../services/AppointmentService';
+import { clearAppointmentBadgeForCurrentUser } from '../../utils/appointmentBadgeStorage';
+import {
+  appointmentService,
+  formatAppointmentCalendarDate,
+  formatAppointmentTime,
+} from '../../services/AppointmentService';
+import type { AppointmentResponse } from '../../types/appointment';
 import styles from './MyAppointmentPage.module.css';
 
 interface Appointment {
@@ -52,6 +58,29 @@ function getStatusLabel(status: Appointment['status']) {
   }
 }
 
+function mapApiStatusToMyUi(s: string | undefined): Appointment['status'] {
+  const v = (s || 'pending').toLowerCase();
+  if (v === 'pending') return 'Pending';
+  if (v === 'confirmed' || v === 'in-progress') return 'Confirmed';
+  if (v === 'completed') return 'Completed';
+  if (v === 'cancelled') return 'Cancelled';
+  return 'Pending';
+}
+
+function mapResponseToAppointment(a: AppointmentResponse): Appointment {
+  const serviceTitle = a.serviceName?.trim() || 'Dịch vụ';
+  return {
+    id: a.id,
+    doctorId: a.assignedStaffId || a.serviceId || '',
+    doctorName: serviceTitle,
+    date: formatAppointmentCalendarDate(a.appointmentDate),
+    time: formatAppointmentTime(a.startTime),
+    reason: (a.notes || '').trim() || '—',
+    status: mapApiStatusToMyUi(a.appointmentStatus || a.status),
+    createdAt: a.createdAt || '',
+  };
+}
+
 /* Returns minutes until appointment. Negative = past */
 function minutesUntil(date: string, time: string) {
   const [h, m] = time.split(':').map(Number);
@@ -88,7 +117,7 @@ export default function MyAppointmentsPage() {
     try {
       setLoading(true);
       const data = await appointmentService.getMyAppointments();
-      setAppointments(data ?? []);
+      setAppointments((data ?? []).map(mapResponseToAppointment));
     } catch {
       toast.error('Không thể tải danh sách lịch hẹn.');
     } finally {
@@ -96,7 +125,10 @@ export default function MyAppointmentsPage() {
     }
   };
 
-  useEffect(() => { fetchAppointments(); }, []);
+  useEffect(() => {
+    clearAppointmentBadgeForCurrentUser();
+    fetchAppointments();
+  }, []);
 
   /* ── cancel ── */
   const handleCancel = async (id: string) => {

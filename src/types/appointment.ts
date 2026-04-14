@@ -2,14 +2,26 @@ export interface TimeSpan {
   ticks: number;
 }
 
+/** Dịch vụ lấy từ GET /api/appointments/services */
+export interface AppointmentCatalogService {
+  id: string;
+  serviceName: string;
+  description?: string;
+  price: number;
+  durationMinutes: number;
+  isHomeService: boolean;
+  categoryName?: string;
+}
+
 export interface AppointmentRequest {
-  petId: string;
+  petId?: string;
   serviceId: string;
-  appointmentType: string;
+  appointmentType: 'at_home' | 'at_store';
   branchId?: string;
-  appointmentDate: string; // ISO 8601 string
-  startTime: TimeSpan;
-  endTime: TimeSpan;
+  appointmentDate: string; // ISO 8601
+  /** Gửi dạng chuỗi "HH:mm:ss" (TimeSpan) */
+  startTime: string;
+  endTime: string;
   serviceAddress?: string;
   notes?: string;
 }

@@ -280,6 +280,27 @@
   transform: scale(1.05);
 }
 
+.appointmentBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ea580c, #f97316);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.45);
+  border: 2px solid #fff;
+  z-index: 2;
+}
+
 .cartBadge {
   position: absolute;
   top: -5px;
@@ -644,6 +665,32 @@
   white-space: nowrap;
 }
 
+.mobileAvatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mobileAppointmentBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ea580c, #f97316);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(234, 88, 12, 0.4);
+  z-index: 1;
+}
+
 .mobileAvatar {
   width: 32px;
   height: 32px;
@@ -651,6 +698,7 @@
   object-fit: cover;
   border: 2px solid rgba(13, 148, 136, 0.25);
   flex-shrink: 0;
+  display: block;
 }
 
 .mobileAvatarFallback {

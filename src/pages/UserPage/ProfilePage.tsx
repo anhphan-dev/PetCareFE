@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar,
+  Clock,
   Mail,
   MapPin,
   Phone,
@@ -18,6 +19,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { ProfileService } from '../../services/ProfileAPI';
 import PetAPI, { type Pet } from '../../services/PetAPI';
+import {
+  appointmentService,
+  formatAppointmentTime,
+} from '../../services/AppointmentService';
+import type { AppointmentResponse } from '../../types/appointment';
+import { clearAppointmentBadgeForCurrentUser } from '../../utils/appointmentBadgeStorage';
 import { getImageUrl } from '../../utils/imageUtils';
 
 
@@ -28,6 +35,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [pets, setPets] = useState<Pet[]>([]);
   const [loadingPets, setLoadingPets] = useState(false);
+  const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -77,6 +86,50 @@ export default function ProfilePage() {
       }
     })();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setAppointments([]);
+      return;
+    }
+    clearAppointmentBadgeForCurrentUser();
+    (async () => {
+      try {
+        setLoadingAppointments(true);
+        const list = await appointmentService.getMyAppointments();
+        const sorted = [...(list ?? [])].sort(
+          (a, b) =>
+            new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime()
+        );
+        setAppointments(sorted);
+      } catch {
+        setAppointments([]);
+      } finally {
+        setLoadingAppointments(false);
+      }
+    })();
+  }, [user?.id]);
+
+  const appointmentStatusLabel = (raw: string | undefined) => {
+    const v = (raw || 'pending').toLowerCase();
+    if (v === 'pending') return 'Chờ xác nhận';
+    if (v === 'confirmed') return 'Đã xác nhận';
+    if (v === 'in-progress') return 'Đang thực hiện';
+    if (v === 'completed') return 'Hoàn thành';
+    if (v === 'cancelled') return 'Đã hủy';
+    return raw || '—';
+  };
+
+  const formatApptDate = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('vi-VN', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -559,20 +612,98 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <Link
-                  to="/dich-vu"
-                  className="text-xs font-medium text-teal-600 hover:text-teal-700"
-                >
-                  Xem tất cả dịch vụ
-                </Link>
+                <div className="flex flex-wrap items-center gap-2 justify-end">
+                  <Link
+                    to="/lich-hen"
+                    className="text-xs font-medium text-teal-600 hover:text-teal-700"
+                  >
+                    Lịch hẹn của tôi
+                  </Link>
+                  <span className="text-gray-300 hidden sm:inline">|</span>
+                  <Link
+                    to="/dat-lich"
+                    className="text-xs font-medium text-teal-600 hover:text-teal-700"
+                  >
+                    Đặt lịch mới
+                  </Link>
+                </div>
               </div>
 
-              <div className="rounded-xl border border-dashed border-gray-200 py-6 px-4 text-center text-sm text-gray-500">
-                <p className="mb-1">Hiện chưa có dữ liệu dịch vụ.</p>
-                <p>
-                  Khi bạn đặt lịch hoặc sử dụng dịch vụ, thông tin sẽ hiển thị tại đây.
-                </p>
-              </div>
+              {loadingAppointments ? (
+                <div className="rounded-xl border border-dashed border-gray-200 py-6 px-4 text-center text-sm text-gray-500">
+                  Đang tải lịch hẹn...
+                </div>
+              ) : appointments.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-200 py-6 px-4 text-center text-sm text-gray-500">
+                  <p className="mb-1">Bạn chưa có lịch hẹn nào.</p>
+                  <p className="mb-3">
+                    Khi bạn đặt lịch dịch vụ, thông tin sẽ hiển thị tại đây.
+                  </p>
+                  <Link
+                    to="/dat-lich"
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors"
+                  >
+                    Đặt lịch ngay
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {appointments.slice(0, 5).map((appt) => {
+                    const status = appt.appointmentStatus || appt.status || 'pending';
+                    return (
+                      <button
+                        key={appt.id}
+                        type="button"
+                        onClick={() => navigate('/lich-hen')}
+                        className="w-full text-left rounded-xl border border-gray-200 bg-gray-50 p-3 hover:border-teal-300 hover:bg-teal-50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-800 truncate">
+                              {appt.serviceName?.trim() || 'Dịch vụ'}
+                            </div>
+                            <div className="text-xs text-gray-600 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="inline-flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-teal-600 shrink-0" />
+                                {formatApptDate(appt.appointmentDate)}
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-teal-600 shrink-0" />
+                                {formatAppointmentTime(appt.startTime)}
+                              </span>
+                            </div>
+                            {appt.notes?.trim() && (
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{appt.notes}</p>
+                            )}
+                          </div>
+                          <span
+                            className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${
+                              status.toLowerCase() === 'pending'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : status.toLowerCase() === 'cancelled'
+                                  ? 'bg-red-50 text-red-700 border-red-200'
+                                  : status.toLowerCase() === 'completed'
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                    : 'bg-teal-50 text-teal-800 border-teal-200'
+                            }`}
+                          >
+                            {appointmentStatusLabel(status)}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {appointments.length > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/lich-hen')}
+                      className="text-xs font-medium text-teal-700 hover:text-teal-800 w-full text-center py-1"
+                    >
+                      Xem thêm {appointments.length - 5} lịch hẹn…
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         </div>

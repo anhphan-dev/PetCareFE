@@ -146,6 +146,18 @@ export default function AIHealthPage() {
   const [routineLoading, setRoutineLoading] = useState(false);
   const [routineError, setRoutineError] = useState<string | null>(null);
 
+  const hasPaidActiveSubscription = (
+    subscription: Awaited<ReturnType<typeof SubscriptionService.getMySubscription>>,
+    packagePrice?: number
+  ) => {
+    if (!subscription?.isActive || subscription.status !== 'Active') return false;
+    if (subscription.endDate) {
+      const end = new Date(subscription.endDate);
+      if (!Number.isNaN(end.getTime()) && end <= new Date()) return false;
+    }
+    return (packagePrice ?? 0) > 0;
+  };
+
   useEffect(() => {
     const init = async () => {
       if (!isLoggedIn) {
@@ -155,12 +167,14 @@ export default function AIHealthPage() {
 
       try {
         setError(null);
-        const [mySub, myPets] = await Promise.all([
+        const [mySub, packages, myPets] = await Promise.all([
           SubscriptionService.getMySubscription(),
+          SubscriptionService.getPackages(),
           PetAPI.getActivePets(),
         ]);
 
-        setMembershipActive(!!mySub?.isActive);
+        const currentPackage = packages.find((pkg) => pkg.id === mySub?.subscriptionPackageId);
+        setMembershipActive(hasPaidActiveSubscription(mySub, currentPackage?.price));
         setPets(myPets);
 
         if (myPets.length > 0) {

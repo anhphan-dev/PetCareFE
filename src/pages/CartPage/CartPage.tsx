@@ -1,190 +1,393 @@
-import { ArrowLeft, Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useCart } from "../../contexts/CartContext";
+import { Minus, Plus, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../../components/ui/alert-dialog';
+import { cartService } from '../../services/CartService/cartService';
+import { CartItem } from '../../types/cart';
+import styles from './CartPage.module.css';
 
 const formatPrice = (price: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
 export default function CartPage() {
-  const {
-    cartItems,
-    cartCount,
-    loading,
-    updateQuantity,
-    removeItem,
-    clearCart,
-  } = useCart();
-
-  const { refreshCart } = useCart();
-
-  useEffect(() => {
-  refreshCart();
-}, []);
-
   const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
 
-  const totalPrice = cartItems.reduce((sum, item) => {
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ── Fetch cart on mount ── */
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  const fetchCart = useCallback(async () => {
+    setLoading(true);
+    const items = await cartService.getCart();
+    setCartItems(items || []);
+    setLoading(false);
+  }, []);
+
+  /* ── Update quantity with debounce ── */
+  const updateQuantity = useCallback(async (cartItemId: string, newQuantity: number) => {
+    if (newQuantity < 1) {
+      await removeItem(cartItemId);
+      return;
+    }
+
+    // Update UI immediately
+    setCartItems(prev =>
+      prev.map(item =>
+        item.id === cartItemId ? { ...item, quantity: newQuantity } : item
+      )
+    );
+
+    // Debounce API call
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      const success = await cartService.updateCartItem(cartItemId, newQuantity);
+      if (!success) {
+        // Revert on failure
+        await fetchCart();
+      }
+    }, 300);
+  }, [fetchCart]);
+
+  /* ── Remove item ── */
+  const handleConfirmRemoveItem = useCallback(async () => {
+  if (!selectedItemId) return;
+
+  setOpenConfirm(false);
+
+  // Update UI trước
+  setCartItems(prev => prev.filter(item => item.id !== selectedItemId));
+
+  const success = await cartService.removeCartItem(selectedItemId);
+  const selectedItem = cartItems.find(i => i.id === selectedItemId);
+
+  if (success) {
+    toast.success(`Đã xóa sản phẩm ${selectedItem?.productName ?? ''} khỏi giỏ hàng!`);
+  } else {
+    toast.error('Xóa sản phẩm thất bại!');
+    await fetchCart();
+  }
+
+
+  setSelectedItemId(null);
+}, [selectedItemId, fetchCart]);
+
+  /* ── Clear cart ── */
+  const clearCart = useCallback(async () => {
+    setCartItems([]);
+    const success = await cartService.clearCart();
+    if (success) {
+      toast.success('Đã xóa toàn bộ giỏ hàng!');
+    } else {
+      toast.error('Xóa giỏ hàng thất bại!');
+      await fetchCart();
+    }
+    setIsClearDialogOpen(false);
+  }, [fetchCart]);
+
+  /* ── Calculations ── */
+  const subtotal = cartItems.reduce((sum, item) => {
     const price = item.salePrice && item.salePrice > 0 ? item.salePrice : item.price ?? 0;
     return sum + price * item.quantity;
   }, 0);
 
-  const handleCheckout = () => {
-    navigate("/thanh-toan");
-  };
+  const shipping = 0; // Free shipping
+  const total = subtotal + shipping;
+  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleClearCart = () => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?")) {
-      clearCart();
-    }
-  };
+  /* ── Handlers ── */
+  const handleCheckout = () => navigate('/thanh-toan');
+  const handleContinueShopping = () => navigate('/cua-hang');
+  const handleProductClick = (productId: string) => navigate(`/san-pham/${productId}`);
 
+  /* ── Loading state ── */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-12 h-12 animate-spin text-[#5DD3B6]" />
-      </div>
-    );
-  }
-
-  if (cartItems.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-16 flex flex-col items-center justify-center">
-        <ShoppingBag className="w-24 h-24 text-gray-300 mb-6" />
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">Giỏ hàng của bạn đang trống</h2>
-        <Link
-          to="/cua-hang"
-          className="inline-flex items-center gap-2 px-8 py-4 bg-[#5DD3B6] text-white rounded-xl hover:bg-[#3EBFA0] transition shadow-md"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Tiếp tục mua sắm
-        </Link>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Giỏ hàng ({cartCount} sản phẩm)
-          </h1>
-          <button
-            onClick={handleClearCart}
-            className="text-red-600 hover:text-red-800 flex items-center gap-2 font-medium"
-          >
-            <Trash2 className="w-5 h-5" />
-            Xóa toàn bộ
-          </button>
+      <div className={styles.page}>
+        {/* Background blobs */}
+        <div className={styles.blobContainer} aria-hidden="true">
+          <div className={`${styles.blob} ${styles.blob1}`} />
+          <div className={`${styles.blob} ${styles.blob2}`} />
+          <div className={`${styles.blob} ${styles.blob3}`} />
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-6">
+        <div className={styles.container}>
+          <section className={styles.loadingState}>
+            <div className={styles.loadingIcon}>🐾</div>
+            <p className={styles.loadingText}>Đang tải giỏ hàng...</p>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Empty state ── */
+  if (cartItems.length === 0) {
+    return (
+      <div className={styles.page}>
+        {/* Background blobs */}
+        <div className={styles.blobContainer} aria-hidden="true">
+          <div className={`${styles.blob} ${styles.blob1}`} />
+          <div className={`${styles.blob} ${styles.blob2}`} />
+          <div className={`${styles.blob} ${styles.blob3}`} />
+        </div>
+
+        {/* Floating paws */}
+        <div className={styles.pawsContainer} aria-hidden="true">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span
+              key={i}
+              className={styles.floatingPaw}
+              style={{
+                left: `${15 + i * 18}%`,
+                animationDelay: `${i * 1.2}s`,
+                animationDuration: `${6 + (i % 2) * 2}s`,
+                fontSize: `${16 + (i % 2) * 4}px`,
+              }}
+            >
+              🐾
+            </span>
+          ))}
+        </div>
+
+        <div className={styles.container}>
+          <section className={styles.emptyState}>
+            <span className={styles.emptyIcon} role="img" aria-label="Empty cart">🐾</span>
+            <h2 className={styles.emptyTitle}>Giỏ hàng của bạn đang trống</h2>
+            <p className={styles.emptyText}>
+              Hãy thêm một số sản phẩm yêu thích cho người bạn bốn chân của bạn!
+            </p>
+            <button
+              className={styles.emptyBtn}
+              onClick={handleContinueShopping}
+              aria-label="Tiếp tục mua sắm"
+            >
+              Tiếp tục mua sắm
+            </button>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Main cart view ── */
+  return (
+    <div className={styles.page}>
+      {/* Background blobs */}
+      <div className={styles.blobContainer} aria-hidden="true">
+        <div className={`${styles.blob} ${styles.blob1}`} />
+        <div className={`${styles.blob} ${styles.blob2}`} />
+        <div className={`${styles.blob} ${styles.blob3}`} />
+      </div>
+
+      {/* Floating paws */}
+      <div className={styles.pawsContainer} aria-hidden="true">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <span
+            key={i}
+            className={styles.floatingPaw}
+            style={{
+              left: `${10 + i * 13}%`,
+              animationDelay: `${i * 0.9}s`,
+              animationDuration: `${5 + (i % 3)}s`,
+              fontSize: `${14 + (i % 3) * 6}px`,
+            }}
+          >
+            🐾
+          </span>
+        ))}
+      </div>
+
+      <div className={styles.container}>
+        {/* Header */}
+        <header className={styles.header}>
+          <h1 className={styles.headerTitle}>
+            Giỏ hàng của bạn 🐾
+          </h1>
+          <p className={styles.headerSubtitle}>
+            Kiểm tra và hoàn tất đơn hàng của bạn
+          </p>
+        </header>
+
+        {/* Main content */}
+        <div className={styles.mainContent}>
+          {/* Cart items */}
+          <section className={styles.cartItems} aria-label="Các sản phẩm trong giỏ hàng">
             {cartItems.map((item) => {
               const price = item.salePrice && item.salePrice > 0 ? item.salePrice : item.price ?? 0;
-              const itemTotal = price * item.quantity;
+              const itemSubtotal = price * item.quantity;
 
               return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex gap-6 hover:shadow-xl transition"
-                >
-                  <Link to={`/san-pham/${item.productId}`} className="w-28 h-28 flex-shrink-0">
-                    <img
-                      src={item.imageUrl || "https://via.placeholder.com/150"}
-                      alt={item.productName}
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                  </Link>
+                <article key={item.id} className={styles.cartItem}>
+                  <img
+                    src={item.imageUrl || 'https://via.placeholder.com/150'}
+                    alt={item.productName}
+                    className={styles.itemImage}
+                    onClick={() => handleProductClick(item.productId)}
+                    loading="lazy"
+                  />
 
-                  <div className="flex-1 flex flex-col">
-                    <Link
-                      to={`/san-pham/${item.productId}`}
-                      className="font-semibold text-lg text-gray-900 hover:text-[#5DD3B6] mb-1"
+                  <div className={styles.itemDetails}>
+                    <h3
+                      className={styles.itemName}
+                      onClick={() => handleProductClick(item.productId)}
                     >
                       {item.productName}
-                    </Link>
+                    </h3>
 
-                    <p className="text-[#2C2C2C] font-bold text-xl mb-2">
+                    <p className={styles.itemPrice}>
                       {formatPrice(price)}
                       {item.salePrice && item.price && item.salePrice < item.price && (
-                        <span className="text-sm text-gray-400 line-through ml-3">
+                        <span style={{ color: '#57534E', textDecoration: 'line-through', marginLeft: '8px', fontSize: '12px' }}>
                           {formatPrice(item.price)}
                         </span>
                       )}
                     </p>
 
-                    <p className="text-sm text-gray-500 mb-4">
-                      Thành tiền: {formatPrice(itemTotal)}
+                    <p className={styles.itemSubtotal}>
+                      Thành tiền: {formatPrice(itemSubtotal)}
                     </p>
 
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+                    <div className={styles.itemControls}>
+                      <div className={styles.quantityControls}>
                         <button
+                          className={styles.quantityBtn}
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="px-4 py-2 hover:bg-gray-100"
+                          disabled={item.quantity <= 1}
+                          aria-label={`Giảm số lượng ${item.productName}`}
                         >
-                          <Minus className="w-4 h-4" />
+                          <Minus size={16} />
                         </button>
-                        <span className="px-6 py-2 bg-gray-50 font-medium min-w-[3rem] text-center">
+
+                        <span className={styles.quantityDisplay} aria-label={`Số lượng: ${item.quantity}`}>
                           {item.quantity}
                         </span>
+
                         <button
+                          className={styles.quantityBtn}
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="px-4 py-2 hover:bg-gray-100"
+                          disabled={item.quantity >= item.stockQuantity}
+                          aria-label={`Tăng số lượng ${item.productName}`}
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus size={16} />
                         </button>
                       </div>
 
                       <button
-                        onClick={() => removeItem(item.id, item.quantity)}  // Xóa hết số lượng của item
-                        className="text-red-500 hover:text-red-700 p-2"
+                        onClick={() => {
+                        setSelectedItemId(item.id);
+                        setOpenConfirm(true);
+                      }}
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 size={16} />
                       </button>
+                      
                     </div>
                   </div>
-                </div>
+                </article>
               );
             })}
-          </div>
+          </section>
 
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 sticky top-10">
-              <h3 className="text-xl font-bold mb-6">Tổng thanh toán</h3>
+          {/* Cart summary */}
+          <aside className={styles.cartSummary}>
+            <h2 className={styles.summaryTitle}>Tổng thanh toán</h2>
 
-              <div className="space-y-4 mb-8">
-                <div className="flex justify-between text-gray-600">
-                  <span>Tạm tính ({cartCount} sản phẩm)</span>
-                  <span>{formatPrice(totalPrice)}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Phí vận chuyển</span>
-                  <span className="text-green-600">Miễn phí</span>
-                </div>
-                <div className="border-t pt-4 flex justify-between text-xl font-bold">
-                  <span>Tổng cộng</span>
-                  <span className="text-[#2C2C2C]">{formatPrice(totalPrice)}</span>
-                </div>
+            <div className={styles.summaryBreakdown}>
+              <div className={styles.summaryRow}>
+                <span className={styles.summaryLabel}>Tạm tính ({itemCount} sản phẩm)</span>
+                <span className={styles.summaryValue}>{formatPrice(subtotal)}</span>
               </div>
 
-              <button
-                onClick={handleCheckout}
-                className="w-full bg-[#5DD3B6] text-white py-4 rounded-xl hover:bg-[#3EBFA0] transition font-semibold shadow-md text-lg"
-              >
-                Tiến hành thanh toán
-              </button>
-
-              <Link
-                to="/cua-hang"
-                className="block text-center mt-6 text-[#5DD3B6] hover:underline"
-              >
-                Tiếp tục mua sắm →
-              </Link>
+              <div className={styles.summaryRow}>
+                <span className={styles.summaryLabel}>Phí vận chuyển</span>
+                <span className={styles.summaryValue} style={{ color: '#059669' }}>
+                  {shipping === 0 ? 'Miễn phí' : formatPrice(shipping)}
+                </span>
+              </div>
             </div>
-          </div>
+
+            <div className={styles.summaryDivider} />
+
+            <div className={styles.summaryTotal}>
+              <span className={styles.summaryTotalLabel}>Tổng cộng</span>
+              <span className={styles.summaryTotalValue}>{formatPrice(total)}</span>
+            </div>
+
+            <button
+              className={styles.checkoutBtn}
+              onClick={handleCheckout}
+              aria-label="Thanh toán ngay"
+            >
+              Thanh toán ngay
+            </button>
+
+            {/* Xóa lẻ từng Item */}
+            <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Xóa sản phẩm?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-500 hover:bg-red-600"
+                      onClick={handleConfirmRemoveItem}
+                    >
+                      Xóa
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+            {/* Xóa toàn bộ Item */}
+            <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <button
+                  className={styles.clearCartBtn}
+                  aria-label="Xóa toàn bộ giỏ hàng"
+                >
+                  Xóa giỏ hàng
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xác nhận xóa giỏ hàng</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng? Hành động này không thể hoàn tác.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction onClick={clearCart}>Xóa giỏ hàng</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </aside>
         </div>
       </div>
     </div>

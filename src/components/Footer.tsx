@@ -1,58 +1,127 @@
-import { PawPrint, Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react';
+// Footer.tsx
+import { Clock, Facebook, Instagram, Mail, MapPin, MessageCircle, PawPrint, Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import styles from './Footer.module.css';
+
+const QUICK_LINKS = [
+  { label: 'Trang chủ',  path: '/' },
+  { label: 'Cửa hàng',  path: '/cua-hang' },
+  { label: 'Dịch vụ',   path: '/dat-lich' },
+  { label: 'Thú cưng',  path: '/thu-cung' },
+  { label: 'Thành viên', path: '/membership' },
+  { label: 'Tin tức',   path: '/tin-tuc' },
+];
+
+const CATEGORIES = [
+  '🍖 Thức ăn',
+  '🎾 Đồ chơi',
+  '🧣 Phụ kiện',
+  '👕 Quần áo',
+  '💊 Thuốc & Vitamin',
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-white py-12 border-t" id="liên hệ">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <div className="flex flex-col items-center md:items-start">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="bg-teal-100 p-3 rounded-full">
-                <PawPrint className="w-12 h-12 text-teal-600" />
-              </div>
+    <footer className={styles.footer} id="lien-he">
+      {/* Wave divider */}
+      <div className={styles.wave} aria-hidden="true">
+        <svg viewBox="0 0 1440 60" preserveAspectRatio="none" fill="#0F766E">
+          <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" />
+        </svg>
+      </div>
+
+      <div className={styles.container}>
+        <div className={styles.grid}>
+          {/* Col 1: Brand */}
+          <div className={styles.brandCol}>
+            <Link to="/" className={styles.logo}>
+              <PawPrint className={styles.logoIcon} />
+              <span className={styles.logoText}>PetCare</span>
+            </Link>
+            <p className={styles.tagline}>
+              Tình yêu thương và sự chuyên nghiệp — mang đến điều tốt nhất cho người bạn bốn chân của bạn.
+            </p>
+            {/* Social */}
+            <div className={styles.socials}>
+              <a href="https://www.facebook.com/share/18HSAxL2Ee/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className={styles.social} aria-label="Facebook">
+                <Facebook size={17} />
+              </a>
+              <a href="https://www.threads.com/@pettsuba" target="_blank" rel="noopener noreferrer" className={styles.social} aria-label="Threads">
+                <Instagram size={17} />
+              </a>
+              <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className={styles.social} aria-label="TikTok">
+                {/* TikTok SVG */}
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.3 6.34 6.34 0 0 0 9.49 21.64a6.34 6.34 0 0 0 6.34-6.34V9.14a8.26 8.26 0 0 0 4.83 1.55V7.24a4.85 4.85 0 0 1-1.07-.55Z"/>
+                </svg>
+              </a>
             </div>
-            <h3 className="text-xl font-bold text-gray-800">PetCare Clinic</h3>
           </div>
 
-          <div>
-            <h4 className="font-bold text-gray-800 mb-4">LIÊN HỆ VỚI CHÚNG TÔI</h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 text-gray-600">
-                <MapPin className="w-5 h-5 text-teal-600 flex-shrink-0 mt-1" />
-                <p className="text-sm">
-                  123 Đường ABC, Quận 1, TP. Hồ Chí Minh
-                </p>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <Phone className="w-5 h-5 text-teal-600 flex-shrink-0" />
-                <p className="text-sm">0123 456 789</p>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <Mail className="w-5 h-5 text-teal-600 flex-shrink-0" />
-                <p className="text-sm">contact@petcare.com</p>
-              </div>
-            </div>
+          {/* Col 2: Quick links */}
+          <div className={styles.col}>
+            <h4 className={styles.colTitle}>Điều hướng</h4>
+            <ul className={styles.linkList}>
+              {QUICK_LINKS.map((l) => (
+                <li key={l.path}>
+                  <Link to={l.path} className={styles.footerLink}>{l.label}</Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div>
-            <h4 className="font-bold text-gray-800 mb-4">GIỜ LÀM VIỆC</h4>
-            <div className="flex items-start gap-3 text-gray-600">
-              <Clock className="w-5 h-5 text-teal-600 flex-shrink-0 mt-1" />
-              <div className="text-sm">
-                <p>Thứ 2 - Thứ 6: 8:00 - 20:00</p>
-                <p>Thứ 7 - Chủ nhật: 8:00 - 18:00</p>
-              </div>
-            </div>
+          {/* Col 3: Categories */}
+          <div className={styles.col}>
+            <h4 className={styles.colTitle}>Danh mục</h4>
+            <ul className={styles.linkList}>
+              {CATEGORIES.map((cat) => (
+                <li key={cat}>
+                  <Link to="/cua-hang" className={styles.footerLink}>{cat}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Col 4: Contact */}
+          <div className={styles.col}>
+            <h4 className={styles.colTitle}>Liên hệ</h4>
+            <ul className={styles.contactList}>
+              <li className={styles.contactItem}>
+                <MapPin size={15} className={styles.contactIcon} />
+                <span>7 Đ. D1, Long Thạnh Mỹ, Tăng Nhơn Phú, Hồ Chí Minh</span>
+              </li>
+              <li className={styles.contactItem}>
+                <Phone size={15} className={styles.contactIcon} />
+                <a href="tel:0123456789" className={styles.contactLink}>0702 290 548</a>
+              </li>
+              <li className={styles.contactItem}>
+                <Mail size={15} className={styles.contactIcon} />
+                <a href="mailto:contact@petcare.com" className={styles.contactLink}>petsuba@gmail.com</a>
+              </li>
+              <li className={styles.contactItem}>
+                <Clock size={15} className={styles.contactIcon} />
+                <div>
+                  <div>T2–T6: 8:00 – 20:00</div>
+                  <div>T7–CN: 8:00 – 18:00</div>
+                </div>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="border-t mt-8 pt-8 text-center text-sm text-gray-600">
-          <p>&copy; 2024 PetCare Clinic. All rights reserved.</p>
+        {/* Bottom bar */}
+        <div className={styles.bottom}>
+          <p className={styles.copyright}>© 2026 PetCare. All rights reserved. Made with 🐾</p>
+          <div className={styles.bottomLinks}>
+            <Link to="/chinh-sach-bao-mat" className={styles.bottomLink}>Chính sách bảo mật</Link>
+            <Link to="/dieu-khoan" className={styles.bottomLink}>Điều khoản</Link>
+          </div>
         </div>
       </div>
 
-      <button className="fixed bottom-6 right-6 bg-teal-600 text-white p-4 rounded-full shadow-lg hover:bg-teal-700 transition-all hover:scale-110">
-        <MessageCircle className="w-6 h-6" />
+      {/* Live chat FAB */}
+      <button className={styles.fab} aria-label="Chat với chúng tôi">
+        <MessageCircle size={22} />
       </button>
     </footer>
   );

@@ -1,0 +1,100 @@
+/* Page */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #F0FDFA 0%, #FFFFFF 50%, #CCFBF1 100%);
+  position: relative;
+  overflow: hidden;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Center container */
+.container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Loading box */
+.loadingBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Icon */
+.loadingIcon {
+  font-size: 48px;
+  color: #14B8A6;
+  animation: spin 1s linear infinite;
+}
+
+/* Text */
+.loadingText {
+  font-size: 16px;
+  color: #57534E;
+}
+
+/* Spin animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Blob background ─── */
+.blobContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.25;
+}
+
+/* Blob 1 */
+.blob1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, #14B8A6, transparent 70%);
+  top: -120px;
+  left: -100px;
+  animation: blobMove 18s ease-in-out infinite alternate;
+}
+
+/* Blob 2 */
+.blob2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #0D9488, transparent 70%);
+  bottom: 20%;
+  right: -80px;
+  animation: blobMove 22s ease-in-out infinite alternate-reverse;
+}
+
+/* Blob 3 */
+.blob3 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #CCFBF1, transparent 70%);
+  top: 40%;
+  left: 35%;
+  animation: blobMove 26s ease-in-out infinite alternate;
+}
+
+/* Animation */
+@keyframes blobMove {
+  from {
+    transform: translateY(0px) scale(1);
+  }
+  to {
+    transform: translateY(40px) scale(1.1);
+  }
+}

@@ -1,0 +1,344 @@
+/* CheckoutSuccessPage.module.css */
+
+/* ─── Page ───────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #F0FDFA 0%, #ffffff 50%, #CCFBF1 100%);
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─── Blobs ──────────────────────────────────────── */
+.blobContainer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.18;
+}
+
+.blob1 {
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, #14B8A6, transparent 70%);
+  top: -120px;
+  right: -80px;
+  animation: blobDrift 20s ease-in-out infinite alternate;
+}
+
+.blob2 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, #0D9488, transparent 70%);
+  bottom: 0;
+  left: -100px;
+  animation: blobDrift 25s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes blobDrift {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(45px, 35px); }
+}
+
+/* ─── Floating paw prints ────────────────────────── */
+.pawsContainer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.floatingPaw {
+  position: absolute;
+  bottom: -30px;
+  opacity: 0;
+  animation: floatPaw linear infinite;
+}
+
+@keyframes floatPaw {
+  0%   { opacity: 0;    transform: translateY(0)   rotate(-15deg); }
+  10%  { opacity: 0.15; }
+  85%  { opacity: 0.1; }
+  100% { opacity: 0;    transform: translateY(-110vh) rotate(30deg); }
+}
+
+/* ─── Container ──────────────────────────────────── */
+.container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 520px;
+}
+
+/* ─── Card ───────────────────────────────────────── */
+.card {
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: 28px;
+  padding: 44px 36px 36px;
+  box-shadow: 0 16px 56px rgba(13, 148, 136, 0.14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: cardEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ─── Icon ───────────────────────────────────────── */
+.iconWrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.iconRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0D9488, #14B8A6);
+  opacity: 0.14;
+  animation: ringPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1);    opacity: 0.14; }
+  50%       { transform: scale(1.12); opacity: 0.08; }
+}
+
+.checkIcon {
+  width: 52px;
+  height: 52px;
+  color: #0D9488;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 12px rgba(13, 148, 136, 0.3));
+  animation: checkBounce 0.55s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes checkBounce {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Text ───────────────────────────────────────── */
+.title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(24px, 4vw, 30px);
+  font-weight: 700;
+  color: #1C1917;
+  margin: 0 0 10px;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: #57534E;
+  line-height: 1.65;
+  margin: 0 0 28px;
+}
+
+.subtitle strong {
+  color: #0D9488;
+}
+
+/* ─── Details card ───────────────────────────────── */
+.detailsCard {
+  width: 100%;
+  background: rgba(240, 253, 250, 0.7);
+  border: 1px solid rgba(13, 148, 136, 0.18);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.detailLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #57534E;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.detailValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1C1917;
+  text-align: right;
+  word-break: break-all;
+}
+
+.detailPrice {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0D9488;
+}
+
+.detailDivider {
+  height: 1px;
+  background: rgba(13, 148, 136, 0.1);
+  margin: 10px 0;
+}
+
+/* Sync status */
+.syncPending {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #57534E;
+  font-weight: 500;
+}
+
+.syncSuccess {
+  color: #0F766E;
+  font-weight: 600;
+}
+
+.syncFail {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.spinSmall {
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Info box ───────────────────────────────────── */
+.infoBox {
+  width: 100%;
+  background: rgba(204, 251, 241, 0.5);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+}
+
+.infoText {
+  font-size: 13px;
+  color: #0F766E;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.infoText strong {
+  font-weight: 700;
+}
+
+/* ─── Actions ────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.22s ease;
+  letter-spacing: 0.01em;
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, #0D9488, #14B8A6);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.3);
+}
+
+.primaryBtn:hover {
+  filter: brightness(0.9);
+  box-shadow: 0 8px 26px rgba(13, 148, 136, 0.44);
+  transform: translateY(-1px);
+}
+
+.secondaryBtn {
+  background: transparent;
+  color: #0D9488;
+  border: 1.5px solid rgba(13, 148, 136, 0.4);
+}
+
+.secondaryBtn:hover {
+  background: #F0FDFA;
+  border-color: #0D9488;
+  transform: translateY(-1px);
+}
+
+/* ─── Secure note ────────────────────────────────── */
+.secureNote {
+  margin: 20px 0 0;
+  font-size: 11px;
+  color: #a8a29e;
+}
+
+/* ─── Responsive ─────────────────────────────────── */
+@media (max-width: 480px) {
+  .card {
+    padding: 32px 20px 28px;
+    border-radius: 20px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primaryBtn,
+  .secondaryBtn {
+    justify-content: center;
+  }
+}

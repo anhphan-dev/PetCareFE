@@ -1,8 +1,10 @@
+// SubscriptionSuccessPage.tsx
+import { CheckCircle, Crown, Home, Loader } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CheckCircle, Crown, Home, Loader } from 'lucide-react';
-import SubscriptionService, { UserSubscription } from '../../services/SubscriptionService';
 import { useAuth } from '../../contexts/AuthContext';
+import SubscriptionService, { UserSubscription } from '../../services/SubscriptionService';
+import styles from './SubscriptionPage.module.css';
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('vi-VN', {
@@ -19,12 +21,12 @@ export default function SubscriptionSuccessPage() {
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // ── Logic unchanged ──────────────────────────────
   useEffect(() => {
     if (!isLoggedIn) {
       setLoading(false);
       return;
     }
-    // Give the webhook a moment to process before fetching status
     const timer = setTimeout(async () => {
       try {
         const parsedOrderCode = orderCode ? Number(orderCode) : NaN;
@@ -39,72 +41,95 @@ export default function SubscriptionSuccessPage() {
     }, 1500);
     return () => clearTimeout(timer);
   }, [isLoggedIn]);
+  // ── End logic ────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.blobContainer} aria-hidden="true">
+          <div className={`${styles.blob} ${styles.blob1}`} />
+          <div className={`${styles.blob} ${styles.blob2}`} />
+          <div className={`${styles.blob} ${styles.blob3}`} />
+        </div>
+        <div className={styles.container}>
+          <section className={styles.loadingState}>
+            <div className={styles.loadingIcon}>🐾</div>
+            <p className={styles.loadingText}>Đang kích hoạt gói thành viên...</p>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
-      <div className="bg-white rounded-2xl shadow-lg p-10 max-w-md w-full text-center">
+    <div className={styles.resultPage}>
+      {/* Blobs */}
+      <div className={styles.blobContainer} aria-hidden="true">
+        <div className={`${styles.blob} ${styles.blob1}`} />
+        <div className={`${styles.blob} ${styles.blob2}`} />
+      </div>
+
+      <div className={styles.resultCard}>
         {loading ? (
-          <Loader className="w-12 h-12 text-teal-600 animate-spin mx-auto" />
+          <Loader size={44} style={{ color: '#0D9488', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
         ) : (
           <>
             {/* Icon */}
-            <div className="flex items-center justify-center mb-6">
-              <div className="bg-green-100 rounded-full p-5">
-                <CheckCircle className="w-14 h-14 text-green-500" />
-              </div>
+            <div className={styles.resultIconWrap}>
+              <div className={`${styles.resultIconRing} ${styles.resultIconRingSuccess}`} />
+              <CheckCircle className={`${styles.resultIcon} ${styles.resultIconSuccess}`} />
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Thanh toán thành công!</h1>
-            <p className="text-gray-500 mb-6">
-              Gói thành viên của bạn đã được kích hoạt. Cảm ơn bạn đã tin tưởng PetCare!
+            <h1 className={styles.resultTitle}>Thanh toán thành công!</h1>
+            <p className={styles.resultSubtitle}>
+              Gói thành viên đã được kích hoạt. Cảm ơn bạn đã tin tưởng&nbsp;
+              <strong style={{ color: '#0D9488' }}>PetCare</strong>! 🐾
             </p>
 
             {/* Order info */}
-            {orderCode && (
-              <div className="bg-gray-50 rounded-xl px-5 py-4 mb-6 text-left space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Mã đơn hàng</span>
-                  <span className="font-semibold text-gray-800">#{orderCode}</span>
-                </div>
+            {(orderCode || subscription) && (
+              <div className={styles.infoBox}>
+                {orderCode && (
+                  <>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoRowLabel}>Mã đơn hàng</span>
+                      <span className={styles.infoRowValue}>#{orderCode}</span>
+                    </div>
+                    {subscription && <div className={styles.infoRowDivider} />}
+                  </>
+                )}
                 {subscription && (
                   <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Gói đã đăng ký</span>
-                      <span className="font-semibold text-gray-800">{subscription.packageName}</span>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoRowLabel}>Gói đã đăng ký</span>
+                      <span className={styles.infoRowValue}>{subscription.packageName}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Hết hạn</span>
-                      <span className="font-semibold text-gray-800">
-                        {formatDate(subscription.endDate)}
-                      </span>
+                    <div className={styles.infoRowDivider} />
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoRowLabel}>Hết hạn</span>
+                      <span className={styles.infoRowValue}>{formatDate(subscription.endDate)}</span>
                     </div>
                   </>
                 )}
               </div>
             )}
 
-            {/* Subscription active badge */}
+            {/* Active badge */}
             {subscription?.isActive && (
-              <div className="flex items-center justify-center gap-2 bg-teal-50 border border-teal-200 rounded-xl py-3 mb-6 text-teal-700 font-medium text-sm">
-                <Crown className="w-4 h-4 text-yellow-500" />
+              <div className={styles.subActiveBadge}>
+                <Crown size={16} style={{ color: '#F59E0B' }} />
                 {subscription.packageName} — Đang hoạt động
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/membership"
-                className="flex-1 bg-teal-600 text-white py-2.5 rounded-xl font-semibold hover:bg-teal-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Crown className="w-4 h-4" />
+            <div className={styles.resultActions}>
+              <Link to="/membership" className={styles.resultPrimaryBtn}>
+                <Crown size={15} />
                 Xem gói thành viên
               </Link>
-              <Link
-                to="/"
-                className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-              >
-                <Home className="w-4 h-4" />
+              <Link to="/" className={styles.resultSecondaryBtn}>
+                <Home size={15} />
                 Về trang chủ
               </Link>
             </div>

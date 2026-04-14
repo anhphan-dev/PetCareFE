@@ -10,16 +10,13 @@ import { CartProvider } from './contexts/CartContext';
 import './index.css';
 import AboutPage from './pages/AboutPage';
 import DashBoard from './pages/AdminPage/DashBoard';
-import UsersPage from './pages/AdminPage/UsersPage';
-import VouchersPage from './pages/AdminPage/VouchersPage';
-import AdminPlaceholderPage from './pages/AdminPage/AdminPlaceholderPage';
-import AdminProductsPage from './pages/AdminPage/ProductsPage';
-import BookingPage from './pages/BookingPage';
+import BookingPage from './pages/BookingPage/BookingPage';
+import MyAppointmentsPage from './pages/BookingPage/MyAppointmentPage';
 import CartPage from './pages/CartPage/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
+import CheckoutPage from './pages/CheckoutPage/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutPage/CheckoutSuccessPage';
 import ContactPage from './pages/ContactPage';
-import DoctorDashBoard from './pages/DoctorPage/DashBoard';
+import DoctorAppointmentsPage from './pages/DoctorPage/DoctorAppointmentPage';
 import HomePage from './pages/homePage';
 import ProductDetailPage from './pages/ProductsPage/ProductDetailPage';
 import ProductsPage from './pages/ProductsPage/ProductsPage';
@@ -53,10 +50,15 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="dich-vu" element={<ServicePage />} />
                 <Route path="tin-tuc" element={<NewsPage />} />
                 <Route path="lien-he" element={<ContactPage />} />
-                <Route path="dat-lich" element={<BookingPage />} />
+                
                 <Route path="dang-nhap" element={<LoginPage />} />
                 <Route path="dang-ky" element={<RegisterPage />} />
                 <Route path="quen-mat-khau" element={<ForgotPasswordPage />} />
+
+                {/*Booking ROUTE*/}
+                <Route path="dat-lich" element={<BookingPage />} />
+                <Route path="lich-hen" element={<MyAppointmentsPage />} />
+                
 
                 {/*SHOP ROUTE*/}
                 <Route path="cua-hang" element={<ProductsPage />} />
@@ -84,7 +86,7 @@ createRoot(document.getElementById('root')!).render(
 
               {/*PROVIDER ROUTE*/}
               <Route path="/provider" element={<ProviderDashBoard />} />
-              <Route path="/doctor" element={<DoctorDashBoard />} />
+              <Route path="/doctor" element={<DoctorAppointmentsPage />} />
             </Routes>
           </CartProvider>
         </AuthProvider>

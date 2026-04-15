@@ -83,7 +83,7 @@ export default function SubscriptionSuccessPage() {
             <h1 className={styles.resultTitle}>Thanh toán thành công!</h1>
             <p className={styles.resultSubtitle}>
               Gói thành viên đã được kích hoạt. Cảm ơn bạn đã tin tưởng&nbsp;
-              <strong style={{ color: '#0D9488' }}>PetCare</strong>! 🐾
+              <strong style={{ color: '#0D9488' }}>PettSuba</strong>! 🐾
             </p>
 
             {/* Order info */}

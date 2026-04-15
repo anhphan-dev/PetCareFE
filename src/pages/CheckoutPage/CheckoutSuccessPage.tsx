@@ -76,7 +76,7 @@ export default function CheckoutSuccessPage() {
           {/* Heading */}
           <h1 className={styles.title}>Đặt hàng thành công!</h1>
           <p className={styles.subtitle}>
-            Cảm ơn bạn đã tin tưởng mua sắm tại <strong>PetCare</strong> 🐾<br />
+            Cảm ơn bạn đã tin tưởng mua sắm tại <strong>PettSuba</strong> 🐾<br />
             Chúng tôi sẽ giao hàng đến bạn sớm nhất có thể.
           </p>
 

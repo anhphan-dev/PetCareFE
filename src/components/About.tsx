@@ -24,7 +24,7 @@ export default function About() {
           <div className={styles.imageGrid}>
             {TEAM_IMAGES.map((src, i) => (
               <div key={i} className={styles.imageCard} style={{ '--i': i } as React.CSSProperties}>
-                <img src={src} alt="Đội ngũ PetCare" className={styles.img} loading="lazy" />
+                <img src={src} alt="Đội ngũ PettSuba" className={styles.img} loading="lazy" />
               </div>
             ))}
           </div>
@@ -40,7 +40,7 @@ export default function About() {
           <span className={styles.eyebrow}>Về chúng tôi</span>
           <h2 className={styles.title}>Chúng tôi yêu thú cưng<br />như chính gia đình</h2>
           <p className={styles.body}>
-            Với hơn 10 năm kinh nghiệm trong lĩnh vực chăm sóc sức khỏe thú cưng, PetCare tự hào là người bạn đồng hành tin cậy của hàng nghìn gia đình Việt. Đội ngũ bác sĩ và chuyên gia của chúng tôi luôn cập nhật phương pháp điều trị tiên tiến nhất.
+            Với hơn 10 năm kinh nghiệm trong lĩnh vực chăm sóc sức khỏe thú cưng, PettSuba tự hào là người bạn đồng hành tin cậy của hàng nghìn gia đình Việt. Đội ngũ bác sĩ và chuyên gia của chúng tôi luôn cập nhật phương pháp điều trị tiên tiến nhất.
           </p>
           <ul className={styles.points}>
             {POINTS.map((p, i) => (

@@ -9,7 +9,12 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import './index.css';
 import AboutPage from './pages/AboutPage';
+import AdminBlogPage from './pages/AdminPage/AdminBlogPage';
+import AdminPlaceholderPage from './pages/AdminPage/AdminPlaceholderPage';
 import DashBoard from './pages/AdminPage/DashBoard';
+import ProductsPageAdmin from './pages/AdminPage/ProductsPage';
+import UsersPage from './pages/AdminPage/UsersPage';
+import VouchersPage from './pages/AdminPage/VouchersPage';
 import BookingPage from './pages/BookingPage/BookingPage';
 import MyAppointmentsPage from './pages/BookingPage/MyAppointmentPage';
 import CartPage from './pages/CartPage/CartPage';
@@ -29,6 +34,7 @@ import SubscriptionSuccessPage from './pages/SubscriptionPage/SubscriptionSucces
 import AIHealthPage from './pages/UserPage/AIHealthPage';
 import ForgotPasswordPage from './pages/UserPage/ForgotPasswordPage';
 import LoginPage from './pages/UserPage/LoginPage';
+import NewsDetailPage from './pages/UserPage/NewsDetailPage';
 import NewsPage from './pages/UserPage/NewsPage';
 import PetsPage from './pages/UserPage/PetsPage';
 import ProfilePage from './pages/UserPage/ProfilePage';
@@ -49,6 +55,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="gioi-thieu" element={<AboutPage />} />
                 <Route path="dich-vu" element={<ServicePage />} />
                 <Route path="tin-tuc" element={<NewsPage />} />
+                <Route path="tin-tuc/:slug" element={<NewsDetailPage />} />
                 <Route path="lien-he" element={<ContactPage />} />
                 
                 <Route path="dang-nhap" element={<LoginPage />} />
@@ -79,6 +86,28 @@ createRoot(document.getElementById('root')!).render(
 
               </Route>
               <Route path="/admin" element={<DashBoard />} />
+              <Route path="/admin/khach-hang" element={<UsersPage />} />
+              <Route path="/admin/san-pham" element={<ProductsPageAdmin />} />
+              <Route path="/admin/tin-tuc" element={<AdminBlogPage />} />
+              <Route path="/admin/vouchers" element={<VouchersPage />} />
+              <Route
+                path="/admin/lich-hen"
+                element={
+                  <AdminPlaceholderPage
+                    title="Lịch hẹn"
+                    description="Module quản trị lịch hẹn dịch vụ đang được hoàn thiện. Bạn có thể theo dõi lịch từ trang dành cho bác sĩ hoặc cập nhật sau khi backend bổ sung API."
+                  />
+                }
+              />
+              <Route
+                path="/admin/cai-dat"
+                element={
+                  <AdminPlaceholderPage
+                    title="Cài đặt"
+                    description="Khu vực cấu hình hệ thống sẽ được bổ sung trong phiên bản sau."
+                  />
+                }
+              />
 
               <Route path="/staff" element={<StaffDashBoard />} />
               <Route path="/staff/them-san-pham" element={<AddProductPage />} />

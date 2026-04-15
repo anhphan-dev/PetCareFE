@@ -126,7 +126,7 @@ export default function Header() {
         {/* ── Logo ── */}
         <Link to="/" className={styles.logo}>
           <PawPrint className={styles.logoIcon} />
-          <span className={styles.logoText}>PetSuba</span>
+          <span className={styles.logoText}>PettSuba</span>
         </Link>
 
         {/* ── Desktop nav ── */}

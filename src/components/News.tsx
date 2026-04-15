@@ -1,42 +1,46 @@
-// News.tsx
-import { ArrowRight, Calendar } from 'lucide-react';
+// News.tsx — tin nổi bật trên trang chủ (API /blogs)
+import { ArrowRight, Calendar, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import BlogService, { type BlogPostDto } from '../services/BlogService';
+import { getImageUrl } from '../utils/imageUtils';
 import styles from './News.module.css';
 
-interface NewsArticle {
-  id: string;
-  title: string;
-  image: string;
-  date: string;
-  summary: string;
-  slug?: string;
+function formatPostDate(value: string) {
+  try {
+    return new Date(value).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return value;
+  }
 }
 
-const NEWS_ARTICLES: NewsArticle[] = [
-  {
-    id: '1',
-    title: 'Chuẩn bị gì trước khi đưa chó đi khám bệnh',
-    image: 'https://images.pexels.com/photos/1458925/pexels-photo-1458925.jpeg?auto=compress&cs=tinysrgb&w=600',
-    date: '15/12/2024',
-    summary: 'Một số lưu ý quan trọng khi chuẩn bị đưa thú cưng đi khám để buổi khám diễn ra thuận lợi và hiệu quả nhất.',
-  },
-  {
-    id: '2',
-    title: 'Phòng chống dị ứng thức ăn ở mèo',
-    image: 'https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg?auto=compress&cs=tinysrgb&w=600',
-    date: '12/12/2024',
-    summary: 'Dị ứng thức ăn là vấn đề phổ biến ở mèo. Tìm hiểu cách nhận biết triệu chứng và phòng ngừa hiệu quả.',
-  },
-  {
-    id: '3',
-    title: 'Vệ sinh răng miệng cho chó đúng cách',
-    image: 'https://images.pexels.com/photos/2253275/pexels-photo-2253275.jpeg?auto=compress&cs=tinysrgb&w=600',
-    date: '10/12/2024',
-    summary: 'Hướng dẫn chi tiết cách vệ sinh răng miệng cho chó tại nhà, giúp phòng ngừa các bệnh về nướu và răng.',
-  },
-];
+const HOME_LIMIT = 3;
 
 export default function News() {
+  const [articles, setArticles] = useState<BlogPostDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await BlogService.getPublishedPosts();
+        if (!cancelled) setArticles(list.slice(0, HOME_LIMIT));
+      } catch {
+        if (!cancelled) setArticles([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className={styles.section}>
       <div className={styles.container}>
@@ -50,32 +54,47 @@ export default function News() {
           </Link>
         </div>
 
-        <div className={styles.grid}>
-          {NEWS_ARTICLES.map((article, i) => (
-            <Link
-              key={article.id}
-              to={`/tin-tuc/${article.slug ?? article.id}`}
-              className={styles.card}
-              style={{ '--index': i } as React.CSSProperties}
-            >
-              <div className={styles.imageWrap}>
-                <img src={article.image} alt={article.title} className={styles.image} loading="lazy" />
-                <div className={styles.imageOverlay} aria-hidden="true" />
-              </div>
-              <div className={styles.content}>
-                <div className={styles.meta}>
-                  <Calendar size={12} />
-                  {article.date}
-                </div>
-                <h3 className={styles.cardTitle}>{article.title}</h3>
-                <p className={styles.summary}>{article.summary}</p>
-                <span className={styles.readMore}>
-                  Đọc thêm <ArrowRight size={13} />
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex min-h-[200px] items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+          </div>
+        ) : articles.length === 0 ? (
+          <p className="py-8 text-center text-slate-600">Chưa có bài viết nào. Hãy thêm tin tức trong trang quản trị.</p>
+        ) : (
+          <div className={styles.grid}>
+            {articles.map((article, i) => {
+              const href = `/tin-tuc/${encodeURIComponent(article.slug?.trim() || article.id)}`;
+              const img = article.featuredImageUrl
+                ? getImageUrl(article.featuredImageUrl)
+                : 'https://images.pexels.com/photos/406014/pexels-photo-406014.jpeg?auto=compress&cs=tinysrgb&w=600';
+              const summary = article.excerpt?.trim() || 'Đọc thêm về chủ đề này...';
+              return (
+                <Link
+                  key={article.id}
+                  to={href}
+                  className={styles.card}
+                  style={{ '--index': i } as React.CSSProperties}
+                >
+                  <div className={styles.imageWrap}>
+                    <img src={img} alt="" className={styles.image} loading="lazy" />
+                    <div className={styles.imageOverlay} aria-hidden="true" />
+                  </div>
+                  <div className={styles.content}>
+                    <div className={styles.meta}>
+                      <Calendar size={12} />
+                      {formatPostDate(article.publishedAt ?? article.createdAt)}
+                    </div>
+                    <h3 className={styles.cardTitle}>{article.title}</h3>
+                    <p className={styles.summary}>{summary}</p>
+                    <span className={styles.readMore}>
+                      Đọc thêm <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );

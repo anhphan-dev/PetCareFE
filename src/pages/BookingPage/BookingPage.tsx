@@ -10,13 +10,16 @@ import {
   MapPin,
   Send,
   Store,
+  Syringe,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import PetAPI, { type Pet } from '../../services/PetAPI';
 import { appointmentService } from '../../services/AppointmentService';
+import { healthRecordService } from '../../services/HealthRecordService';
 import type { AppointmentCatalogService } from '../../types/appointment';
+import type { VaccinationReminderStatus } from '../../types/healthRecord';
 import { incrementAppointmentBadgeCount } from '../../utils/appointmentBadgeStorage';
 import styles from './BookingPage.module.css';
 
@@ -40,6 +43,15 @@ function addMinutesToTimeSlot(timeHhMm: string, addMinutes: number): string {
 
 export default function BookingPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const reminderSource = searchParams.get('source') ?? '';
+  const reminderPetId = searchParams.get('petId') ?? '';
+  const reminderVaccinationId = searchParams.get('vaccinationId') ?? '';
+  const reminderVaccineName = searchParams.get('vaccine') ?? '';
+  const isVaccinationReminderFlow = reminderSource === 'vaccination_reminder'
+    && reminderPetId.length > 0
+    && reminderVaccinationId.length > 0;
 
   const [services, setServices] = useState<AppointmentCatalogService[]>([]);
   const [pets, setPets] = useState<Pet[]>([]);
@@ -57,6 +69,7 @@ export default function BookingPage() {
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
+  const [reminderActionLoading, setReminderActionLoading] = useState<VaccinationReminderStatus | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -76,6 +89,63 @@ export default function BookingPage() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!isVaccinationReminderFlow) {
+      return;
+    }
+
+    setForm((prev) => {
+      const shouldSetPet = reminderPetId && !prev.petId;
+      const shouldSetNote = reminderVaccineName && !prev.notes.trim();
+
+      if (!shouldSetPet && !shouldSetNote) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        petId: shouldSetPet ? reminderPetId : prev.petId,
+        notes: shouldSetNote
+          ? `Nhắc lịch tiêm vaccine ${reminderVaccineName} theo email reminder.`
+          : prev.notes,
+      };
+    });
+  }, [isVaccinationReminderFlow, reminderPetId, reminderVaccineName]);
+
+  const handleReminderStatus = async (status: VaccinationReminderStatus) => {
+    if (!isVaccinationReminderFlow) {
+      return;
+    }
+
+    if (!localStorage.getItem('authToken')) {
+      toast.error('Vui lòng đăng nhập để cập nhật trạng thái nhắc lịch tiêm.');
+      navigate('/dang-nhap');
+      return;
+    }
+
+    try {
+      setReminderActionLoading(status);
+      await healthRecordService.updateVaccinationReminderStatus(
+        reminderPetId,
+        reminderVaccinationId,
+        status,
+        'Updated from booking reminder deep-link'
+      );
+
+      const messageByStatus: Record<VaccinationReminderStatus, string> = {
+        booked: 'Đã đánh dấu: đã đặt lịch tiêm.',
+        done: 'Đã đánh dấu: đã tiêm xong.',
+        remind_later: 'Đã đánh dấu: nhắc lại sau.',
+      };
+
+      toast.success(messageByStatus[status]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể cập nhật trạng thái nhắc lịch.');
+    } finally {
+      setReminderActionLoading(null);
+    }
+  };
 
   const validate = () => {
     const errs: Partial<Record<keyof typeof form, string>> = {};
@@ -188,6 +258,43 @@ export default function BookingPage() {
               <Calendar size={18} className={styles.cardHeaderIcon} />
               <h2 className={styles.cardTitle}>Thông tin đặt lịch</h2>
             </div>
+
+            {isVaccinationReminderFlow && (
+              <div className={styles.reminderBox}>
+                <Syringe size={15} className={styles.reminderIcon} />
+                <div style={{ width: '100%' }}>
+                  <p className={styles.reminderText}>
+                    Bạn đang mở từ email nhắc tiêm vaccine {reminderVaccineName ? <strong>{reminderVaccineName}</strong> : null}.
+                  </p>
+                  <div className={styles.timeGrid} style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', marginTop: 10 }}>
+                    <button
+                      type="button"
+                      className={styles.timeSlot}
+                      onClick={() => handleReminderStatus('booked')}
+                      disabled={reminderActionLoading !== null}
+                    >
+                      Đã đặt lịch
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.timeSlot}
+                      onClick={() => handleReminderStatus('done')}
+                      disabled={reminderActionLoading !== null}
+                    >
+                      Đã tiêm xong
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.timeSlot}
+                      onClick={() => handleReminderStatus('remind_later')}
+                      disabled={reminderActionLoading !== null}
+                    >
+                      Nhắc lại sau
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className={styles.field}>
               <label className={styles.label}>

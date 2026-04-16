@@ -1,5 +1,5 @@
 // src/services/ProductService/productService.ts
-import { Product } from '../../types';
+import { Product } from '../../types/product';
 import httpClient from '../httpClient';
 
 interface PaginatedResponse<T> {
@@ -10,7 +10,38 @@ interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+interface ProductCategoryDto {
+  id: string;
+  categoryName: string;
+  isActive: boolean;
+}
+
+const unwrapPayload = (payload: any) => {
+  if (payload && typeof payload === 'object' && 'data' in payload && payload.data != null) {
+    return payload.data;
+  }
+  return payload;
+};
+
 export const productService = {
+  async getProductCategories(): Promise<ProductCategoryDto[]> {
+    try {
+      const response = await httpClient.get<any>('/ProductCategories');
+      const data = unwrapPayload(response);
+
+      const raw = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+      return raw.filter((item: ProductCategoryDto) => item?.isActive ?? true);
+    } catch (error: any) {
+      console.error('Lỗi lấy danh mục sản phẩm:', error.message);
+      return [];
+    }
+  },
+
   /**
    * Lấy tất cả sản phẩm (phân trang)
    */
@@ -19,11 +50,11 @@ export const productService = {
     pageSize: number = 8
   ): Promise<PaginatedResponse<Product> | null> {
     try {
-      const response = await httpClient.get('/Products', {
+      const response = await httpClient.get<any>('/Products', {
         params: { page, pageSize },
       });
 
-      const data = response.data;
+      const data = unwrapPayload(response);
 
       if (data?.items && Array.isArray(data.items)) {
         return {
@@ -63,11 +94,11 @@ export const productService = {
     pageSize: number = 8
   ): Promise<PaginatedResponse<Product> | null> {
     try {
-      const response = await httpClient.get(`/Products/category/${categoryId}`, {
+      const response = await httpClient.get<any>(`/Products/category/${categoryId}`, {
         params: { page, pageSize },
       });
 
-      const data = response.data;
+      const data = unwrapPayload(response);
 
       if (data?.items && Array.isArray(data.items)) {
         return {
@@ -106,11 +137,11 @@ export const productService = {
     pageSize: number = 8
   ): Promise<PaginatedResponse<Product> | null> {
     try {
-      const response = await httpClient.get('/Products/search', {
+      const response = await httpClient.get<any>('/Products/search', {
         params: { searchTerm, page, pageSize },
       });
 
-      const data = response.data;
+      const data = unwrapPayload(response);
 
       if (data?.items && Array.isArray(data.items)) {
         return {
@@ -145,8 +176,9 @@ export const productService = {
    */
   async getProductById(id: string): Promise<Product | null> {
     try {
-      const response = await httpClient.get(`/Products/${id}`);
-      return response.data ?? null;
+      const response = await httpClient.get<any>(`/Products/${id}`);
+      const data = unwrapPayload(response);
+      return data ?? null;
     } catch (error: any) {
       console.error(`Lỗi lấy sản phẩm ID ${id}:`, error.message);
       return null;

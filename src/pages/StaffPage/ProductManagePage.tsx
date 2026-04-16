@@ -2,7 +2,6 @@
 import {
     AlertCircle,
     ArrowLeft,
-    Calendar,
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
@@ -16,7 +15,6 @@ import {
     PawPrint,
     Pencil,
     PlusCircle,
-    Scissors,
     Search,
     Trash2,
     X
@@ -67,8 +65,8 @@ interface PaginationState {
 // ============ STAFF MENU ITEMS ============
 const staffMenuItems = [
   { icon: LayoutDashboard, label: 'Tổng quan', path: '/staff' },
-  { icon: Calendar, label: 'Lịch đặt dịch vụ', path: '/staff/lich-dat' },
-  { icon: Scissors, label: 'Dịch vụ của tôi', path: '/staff/dich-vu' },
+//   { icon: Calendar, label: 'Lịch đặt dịch vụ', path: '/staff/lich-dat' },
+//   { icon: Scissors, label: 'Dịch vụ của tôi', path: '/staff/dich-vu' },
   { icon: PlusCircle, label: 'Thêm sản phẩm', path: '/staff/them-san-pham' },
   { icon: PackageSearch, label: 'Quản lý sản phẩm', path: '/staff/quan-li-san-pham' },
 ];

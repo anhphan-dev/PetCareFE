@@ -1,14 +1,12 @@
 // src/pages/StaffPage/AddProductPage.tsx
 import {
   ArrowLeft,
-  Calendar,
   LayoutDashboard,
   Loader2,
   LogOut,
   PackageSearch,
   PawPrint,
   PlusCircle,
-  Scissors,
   Upload,
   X
 } from 'lucide-react';
@@ -46,8 +44,8 @@ interface FormErrors {
 // ============ STAFF MENU (Must match Dashboard) ============
 const staffMenuItems = [
   { icon: LayoutDashboard, label: 'Tổng quan', path: '/staff' },
-  { icon: Calendar, label: 'Lịch đặt dịch vụ', path: '/staff/lich-dat' },
-  { icon: Scissors, label: 'Dịch vụ của tôi', path: '/staff/dich-vu' },
+  // { icon: Calendar, label: 'Lịch đặt dịch vụ', path: '/staff/lich-dat' },
+  // { icon: Scissors, label: 'Dịch vụ của tôi', path: '/staff/dich-vu' },
   { icon: PlusCircle, label: 'Thêm sản phẩm', path: '/staff/them-san-pham' },
   { icon: PackageSearch, label: 'Quản lý sản phẩm', path: '/staff/quan-li-san-pham' },
 ];

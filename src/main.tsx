@@ -25,9 +25,9 @@ import DoctorAppointmentsPage from './pages/DoctorPage/DoctorAppointmentPage';
 import HomePage from './pages/homePage';
 import ProductDetailPage from './pages/ProductsPage/ProductDetailPage';
 import ProductsPage from './pages/ProductsPage/ProductsPage';
-import ProviderDashBoard from './pages/ProviderPage/DashBoard';
 import AddProductPage from './pages/StaffPage/AddProductPage';
 import StaffDashBoard from './pages/StaffPage/DashBoard';
+import ProductManagePage from './pages/StaffPage/ProductManagePage';
 import SubscriptionCancelPage from './pages/SubscriptionPage/SubscriptionCancelPage';
 import SubscriptionPage from './pages/SubscriptionPage/SubscriptionPage';
 import SubscriptionSuccessPage from './pages/SubscriptionPage/SubscriptionSuccessPage';
@@ -111,10 +111,10 @@ createRoot(document.getElementById('root')!).render(
 
               <Route path="/staff" element={<StaffDashBoard />} />
               <Route path="/staff/them-san-pham" element={<AddProductPage />} />
+              <Route path="/staff/quan-li-san-pham" element={<ProductManagePage />} />
 
 
-              {/*PROVIDER ROUTE*/}
-              <Route path="/provider" element={<ProviderDashBoard />} />
+
               <Route path="/doctor" element={<DoctorAppointmentsPage />} />
             </Routes>
           </CartProvider>

@@ -1,5 +1,5 @@
 // Footer.tsx
-import { Clock, Facebook, Instagram, Mail, MapPin, MessageCircle, PawPrint, Phone } from 'lucide-react';
+import { Clock, Facebook, Instagram, Mail, MapPin, PawPrint, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './Footer.module.css';
 
@@ -118,11 +118,6 @@ export default function Footer() {
           </div>
         </div>
       </div>
-
-      {/* Live chat FAB */}
-      <button className={styles.fab} aria-label="Chat với chúng tôi">
-        <MessageCircle size={22} />
-      </button>
     </footer>
   );
 }

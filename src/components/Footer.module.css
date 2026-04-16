@@ -101,22 +101,3 @@
 .bottomLink { font-size: 12px; color: rgba(255,255,255,.45); text-decoration: none; transition: color .2s; }
 .bottomLink:hover { color: #5EEAD4; }
 
-/* FAB */
-.fab {
-  position: fixed;
-  bottom: 28px; right: 28px;
-  width: 54px; height: 54px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, #0D9488, #14B8A6);
-  color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 8px 28px rgba(13,148,136,.45);
-  transition: transform .25s ease, box-shadow .25s;
-  z-index: 90;
-}
-.fab:hover {
-  transform: scale(1.1) translateY(-2px);
-  box-shadow: 0 12px 36px rgba(13,148,136,.55);
-}

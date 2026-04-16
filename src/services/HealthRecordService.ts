@@ -4,6 +4,7 @@ import {
   HealthRecordRequest,
   HealthRecordResponse,
   VaccineCatalogItem,
+  VaccinationReminderStatus,
   VaccinationResponse,
 } from '../types/healthRecord';
 
@@ -150,5 +151,25 @@ export const healthRecordService = {
 
     const payload = await response.json();
     return unwrapApiResponse<VaccineCatalogItem[]>(payload);
+  },
+
+  async updateVaccinationReminderStatus(
+    petId: string,
+    vaccinationId: string,
+    status: VaccinationReminderStatus,
+    note?: string
+  ): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/health-records/pet/${petId}/vaccinations/${vaccinationId}/reminder-status`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status, note }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(await parseErrorMessage(response, 'Failed to update vaccination reminder status'));
+    }
   },
 };

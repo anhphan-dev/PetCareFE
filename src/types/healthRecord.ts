@@ -80,3 +80,5 @@ export interface VaccineCatalogItem {
   aliases: string[];
   defaultIntervalDays?: number;
 }
+
+export type VaccinationReminderStatus = 'booked' | 'done' | 'remind_later';

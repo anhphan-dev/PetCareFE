@@ -35,7 +35,6 @@ const menuItems = [
   { icon: Users, label: 'Khách hàng', path: '/admin/khach-hang' },
   { icon: Box, label: 'Sản phẩm', path: '/admin/san-pham' },
   { icon: Calendar, label: 'Lịch hẹn', path: '/admin/lich-hen' },
-  { icon: FileText, label: 'Tin tức', path: '/admin/tin-tuc' },
   { icon: TicketPercent, label: 'Voucher', path: '/admin/vouchers' },
   { icon: Settings, label: 'Cài đặt', path: '/admin/cai-dat' },
 ];

@@ -1,5 +1,5 @@
 // Footer.tsx
-import { Clock, Facebook, Instagram, Mail, MapPin, MessageCircle, PawPrint, Phone } from 'lucide-react';
+import { Clock, Facebook, Instagram, Mail, MapPin, PawPrint, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './Footer.module.css';
 
@@ -36,7 +36,7 @@ export default function Footer() {
           <div className={styles.brandCol}>
             <Link to="/" className={styles.logo}>
               <PawPrint className={styles.logoIcon} />
-              <span className={styles.logoText}>PetCare</span>
+              <span className={styles.logoText}>PettSuba</span>
             </Link>
             <p className={styles.tagline}>
               Tình yêu thương và sự chuyên nghiệp — mang đến điều tốt nhất cho người bạn bốn chân của bạn.
@@ -111,18 +111,13 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className={styles.bottom}>
-          <p className={styles.copyright}>© 2026 PetCare. All rights reserved. Made with 🐾</p>
+          <p className={styles.copyright}>© 2026 PettSuba. All rights reserved. Made with 🐾</p>
           <div className={styles.bottomLinks}>
             <Link to="/chinh-sach-bao-mat" className={styles.bottomLink}>Chính sách bảo mật</Link>
             <Link to="/dieu-khoan" className={styles.bottomLink}>Điều khoản</Link>
           </div>
         </div>
       </div>
-
-      {/* Live chat FAB */}
-      <button className={styles.fab} aria-label="Chat với chúng tôi">
-        <MessageCircle size={22} />
-      </button>
     </footer>
   );
 }

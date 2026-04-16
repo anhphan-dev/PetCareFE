@@ -35,7 +35,6 @@ const menuItems = [
   { icon: Users, label: 'Khách hàng', path: '/admin/khach-hang' },
   { icon: Box, label: 'Sản phẩm', path: '/admin/san-pham' },
   { icon: Calendar, label: 'Lịch hẹn', path: '/admin/lich-hen' },
-  { icon: FileText, label: 'Tin tức', path: '/admin/tin-tuc' },
   { icon: TicketPercent, label: 'Voucher', path: '/admin/vouchers' },
   { icon: Settings, label: 'Cài đặt', path: '/admin/cai-dat' },
 ];
@@ -210,7 +209,7 @@ export default function DashBoard() {
 
   const heroSummary = useMemo(() => {
     if (!dashboardData) {
-      return 'Đang kết nối dữ liệu quản trị từ hệ thống PetCare.';
+      return 'Đang kết nối dữ liệu quản trị từ hệ thống PettSuba.';
     }
 
     return `Hiện có ${dashboardData.totals.users} người dùng, ${dashboardData.totals.products} sản phẩm và ${dashboardData.totals.blogs} bài viết trong hệ thống.`;
@@ -296,7 +295,7 @@ export default function DashBoard() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-teal-200/70">Admin Panel</p>
-                <p className="mt-1 text-xl font-black tracking-tight">PetCare Control</p>
+                <p className="mt-1 text-xl font-black tracking-tight">PettSuba Control</p>
               </div>
             </div>
 

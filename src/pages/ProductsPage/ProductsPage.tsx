@@ -11,8 +11,14 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 
 import ProductCard from '../../components/ProductCard/ProductCard';
 import { productService } from '../../services/ProductService/productService';
-import { Product } from '../../types';
+import { Product } from '../../types/product';
 import styles from './Productspage.module.css';
+
+type CategoryPill = {
+  id: string;
+  emoji: string;
+  label: string;
+};
 
 interface PaginatedResponse<T> {
   items: T[];
@@ -22,15 +28,18 @@ interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-const CATEGORIES = [
-  { id: '',           emoji: '🐾', label: 'Tất cả' },
-  { id: '75805fdd-c08c-4648-a343-0ac435979448', emoji: '🍖', label: 'Thức ăn' },
-  { id: 'fec1fb2e-fbeb-45d6-852a-212ba8da4279', emoji: '🎾', label: 'Đồ chơi' },
-  { id: '54c43f9d-dd67-4006-bfb5-aa2573f95c55', emoji: '🧣', label: 'Phụ kiện' },
-  { id: 'a05a54c0-44c4-4476-841f-961273c6775f', emoji: '👕', label: 'Quần áo' },
-  { id: 'a845248b-9299-4a5d-8c86-fed3afcb2a3b', emoji: '💊', label: 'Thuốc & Vitamin' },
-  { id: '80647ffa-cc53-4216-8176-940f3ec460e3', emoji: '🧼', label: 'Vệ sinh' },
-];
+const DEFAULT_CATEGORIES: CategoryPill[] = [{ id: '', emoji: '🐾', label: 'Tất cả' }];
+
+const getCategoryEmoji = (categoryName: string) => {
+  const normalized = categoryName.toLowerCase();
+  if (normalized.includes('thức ăn')) return '🍖';
+  if (normalized.includes('đồ chơi')) return '🎾';
+  if (normalized.includes('phụ kiện')) return '🧣';
+  if (normalized.includes('quần áo')) return '👕';
+  if (normalized.includes('thuốc') || normalized.includes('vitamin')) return '💊';
+  if (normalized.includes('vệ sinh')) return '🧼';
+  return '🐾';
+};
 
 const PAGE_SIZE = 8;
 const FEATURED_COUNT = 6;
@@ -58,6 +67,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [result, setResult] = useState<PaginatedResponse<Product> | null>(null);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategoryPill[]>(DEFAULT_CATEGORIES);
   const [loading, setLoading] = useState(false);
   const [featuredLoading, setFeaturedLoading] = useState(true);
 
@@ -71,6 +81,25 @@ export default function ProductsPage() {
       const res = await productService.getAllProducts(1, FEATURED_COUNT);
       if (res?.items) setFeaturedProducts(res.items);
       setFeaturedLoading(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const categoryList = await productService.getProductCategories();
+      if (!categoryList?.length) {
+        setCategories(DEFAULT_CATEGORIES);
+        return;
+      }
+
+      setCategories([
+        ...DEFAULT_CATEGORIES,
+        ...categoryList.map((cat) => ({
+          id: cat.id,
+          emoji: getCategoryEmoji(cat.categoryName),
+          label: cat.categoryName,
+        })),
+      ]);
     })();
   }, []);
 
@@ -262,7 +291,7 @@ export default function ProductsPage() {
         <nav className={styles.filterBar} aria-label="Danh mục sản phẩm">
           <SlidersHorizontal size={16} className={styles.filterIcon} aria-hidden="true" />
           <div className={styles.filterPills}>
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 className={`${styles.pill} ${activeCategory === cat.id ? styles.pillActive : ''}`}
@@ -286,9 +315,9 @@ export default function ProductsPage() {
               <h2 className={styles.sectionTitle}>
                 {searchTerm
                   ? `Kết quả cho "${searchTerm}"`
-                  : CATEGORIES.find((c) => c.id === activeCategory)?.label === 'Tất cả'
+                  : categories.find((c) => c.id === activeCategory)?.label === 'Tất cả'
                     ? 'Tất cả sản phẩm'
-                    : CATEGORIES.find((c) => c.id === activeCategory)?.label}
+                    : categories.find((c) => c.id === activeCategory)?.label}
               </h2>
               {result && (
                 <p className={styles.sectionSubtitle}>

@@ -26,6 +26,7 @@ function HomePage() {
       <Hero />
       <Services />
       <About />
+      {/* <News /> */}
     </div>
   );
 }

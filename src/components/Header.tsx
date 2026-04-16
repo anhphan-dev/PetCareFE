@@ -1,6 +1,7 @@
 // Header.tsx
 import {
-  ChevronDown, Crown, Dog, Heart, Home, List, LogOut,
+  ChevronDown, Crown, Dog,
+  LogOut,
   Menu, PawPrint,
   Search,
   ShoppingBag,
@@ -13,15 +14,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useDropdown } from '../hooks/useDropdown';
-import { getImageUrl } from '../utils/imageUtils';
 import { getAppointmentBadgeCount } from '../utils/appointmentBadgeStorage';
+import { getImageUrl } from '../utils/imageUtils';
 import styles from './Header.module.css';
 
-const homeDropdownItems = [
-  { label: 'Giới thiệu', path: '/gioi-thieu', icon: Home },
-  { label: 'Tin tức', path: '/tin-tuc', icon: List },
-  { label: 'Liên hệ', path: '/lien-he', icon: Heart },
-];
+
 
 const userMenuItems = [
   { icon: UserCircle, label: 'Hồ sơ của tôi', path: '/tai-khoan' },
@@ -144,34 +141,10 @@ export default function Header() {
                   onClick={() => homeDropdown.toggle()}
                 >
                   {link.label}
-                  <ChevronDown
-                    size={14}
-                    className={`${styles.chevron} ${homeDropdown.isOpen ? styles.chevronOpen : ''}`}
-                  />
+                  
                 </button>
 
-                {homeDropdown.isOpen && (
-                  <div
-                    className={styles.dropdown}
-                    onMouseEnter={() => homeDropdown.open()}
-                    onMouseLeave={() => homeDropdown.closeWithDelay()}
-                  >
-                    {homeDropdownItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className={styles.dropdownItem}
-                          onClick={() => homeDropdown.close()}
-                        >
-                          <Icon size={15} className={styles.dropdownIcon} />
-                          {item.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
+               
               </div>
             ) : (
               <Link
@@ -319,25 +292,9 @@ export default function Header() {
               onClick={() => setMobileHomeOpen((v) => !v)}
             >
               Trang chủ
-              <ChevronDown
-                size={14}
-                className={`${styles.chevron} ${mobileHomeOpen ? styles.chevronOpen : ''}`}
-              />
+              
             </button>
-            {mobileHomeOpen && (
-              <div className={styles.mobileSubMenu}>
-                {homeDropdownItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={styles.mobileSubLink}
-                    onClick={closeAllMobile}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
+            
           </div>
 
           {[

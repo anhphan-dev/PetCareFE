@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import About from '../components/About';
 import Hero from '../components/Hero';
-import News from '../components/News';
 import Services from '../components/Services';
 import Loading from '../components/ui/Loading';
 
@@ -27,7 +26,6 @@ function HomePage() {
       <Hero />
       <Services />
       <About />
-      <News />
     </div>
   );
 }

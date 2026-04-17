@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../../components/ui/alert-dialog';
+import { useCart } from '../../contexts/CartContext';
 import { cartService } from '../../services/CartService/cartService';
 import { CartItem } from '../../types/cart';
 import styles from './CartPage.module.css';
@@ -22,6 +23,7 @@ const formatPrice = (price: number) =>
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const { refreshCart } = useCart();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
@@ -63,9 +65,11 @@ export default function CartPage() {
       if (!success) {
         // Revert on failure
         await fetchCart();
+      } else {
+        await refreshCart();
       }
     }, 300);
-  }, [fetchCart]);
+  }, [fetchCart, refreshCart]);
 
   /* ── Remove item ── */
   const handleConfirmRemoveItem = useCallback(async () => {
@@ -81,6 +85,7 @@ export default function CartPage() {
 
   if (success) {
     toast.success(`Đã xóa sản phẩm ${selectedItem?.productName ?? ''} khỏi giỏ hàng!`);
+    await refreshCart();
   } else {
     toast.error('Xóa sản phẩm thất bại!');
     await fetchCart();
@@ -88,7 +93,7 @@ export default function CartPage() {
 
 
   setSelectedItemId(null);
-}, [selectedItemId, fetchCart]);
+}, [selectedItemId, fetchCart, refreshCart, cartItems]);
 
   /* ── Clear cart ── */
   const clearCart = useCallback(async () => {
@@ -96,12 +101,13 @@ export default function CartPage() {
     const success = await cartService.clearCart();
     if (success) {
       toast.success('Đã xóa toàn bộ giỏ hàng!');
+      await refreshCart();
     } else {
       toast.error('Xóa giỏ hàng thất bại!');
       await fetchCart();
     }
     setIsClearDialogOpen(false);
-  }, [fetchCart]);
+    }, [fetchCart, refreshCart]);
 
   /* ── Calculations ── */
   const subtotal = cartItems.reduce((sum, item) => {

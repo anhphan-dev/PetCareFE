@@ -16,6 +16,9 @@ export interface AdminUserSummary {
   city?: string | null;
   district?: string | null;
   roleName?: string | null;
+  membershipStatus?: string | null;
+  membershipPackageName?: string | null;
+  membershipEndDate?: string | null;
   isActive: boolean;
   createdAt: string;
 }

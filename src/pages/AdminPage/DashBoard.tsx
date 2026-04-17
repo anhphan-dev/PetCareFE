@@ -6,11 +6,8 @@ import {
   Box,
   ChevronRight,
   Clock3,
-  Eye,
   Loader2,
   LayoutDashboard,
-  Calendar,
-  FileText,
   LogOut,
   PawPrint,
   RefreshCw,
@@ -23,7 +20,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminDashboardService, {
-  AdminBlogSummary,
   AdminDashboardData,
   AdminProductSummary,
   AdminUserSummary,
@@ -34,7 +30,6 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Tổng quan', path: '/admin' },
   { icon: Users, label: 'Khách hàng', path: '/admin/khach-hang' },
   { icon: Box, label: 'Sản phẩm', path: '/admin/san-pham' },
-  { icon: Calendar, label: 'Lịch hẹn', path: '/admin/lich-hen' },
   { icon: TicketPercent, label: 'Voucher', path: '/admin/vouchers' },
   { icon: Settings, label: 'Cài đặt', path: '/admin/cai-dat' },
 ];
@@ -54,14 +49,6 @@ const formatCurrencyVnd = (value: number) =>
   }).format(value);
 
 const normalizeRole = (roleName?: string | null) => roleName?.trim().toLowerCase() ?? '';
-
-const getPostStatusLabel = (status: string) => {
-  const normalized = status.trim().toLowerCase();
-
-  if (normalized === 'published') return 'Đã xuất bản';
-  if (normalized === 'draft') return 'Bản nháp';
-  return status;
-};
 
 function StatCard({
   label,
@@ -149,29 +136,6 @@ function ProductRow({ product }: { product: AdminProductSummary }) {
   );
 }
 
-function PostRow({ post }: { post: AdminBlogSummary }) {
-  return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="line-clamp-2 text-sm font-semibold text-slate-900">{post.title}</p>
-          <p className="mt-1 text-xs text-slate-500">{post.authorName || 'Chưa rõ tác giả'}</p>
-        </div>
-        <div className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-          {getPostStatusLabel(post.status)}
-        </div>
-      </div>
-      <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          <Eye className="h-3.5 w-3.5" />
-          {post.viewCount}
-        </span>
-        <span>{formatCompactDate(post.createdAt)}</span>
-      </div>
-    </div>
-  );
-}
-
 function VoucherRow({ voucher }: { voucher: AdminVoucherSummary }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
@@ -212,7 +176,7 @@ export default function DashBoard() {
       return 'Đang kết nối dữ liệu quản trị từ hệ thống PettSuba.';
     }
 
-    return `Hiện có ${dashboardData.totals.users} người dùng, ${dashboardData.totals.products} sản phẩm và ${dashboardData.totals.blogs} bài viết trong hệ thống.`;
+    return `Hiện có ${dashboardData.totals.users} người dùng, ${dashboardData.totals.products} sản phẩm và ${dashboardData.totals.activeVouchers} voucher đang hoạt động.`;
   }, [dashboardData]);
 
   useEffect(() => {
@@ -425,13 +389,6 @@ export default function DashBoard() {
                     accent="bg-orange-500"
                   />
                   <StatCard
-                    label="Bài viết nội dung"
-                    value={String(totals?.publishedBlogs ?? 0)}
-                    detail={`${totals?.blogs ?? 0} bài viết tổng cộng trong hệ thống`}
-                    icon={FileText}
-                    accent="bg-sky-500"
-                  />
-                  <StatCard
                     label="Doanh thu đã ghi nhận"
                     value={formatCurrencyVnd(totals?.totalRevenue ?? 0)}
                     detail={`Tháng này ${formatCurrencyVnd(totals?.revenueThisMonth ?? 0)} từ ${totals?.paidOrders ?? 0}/${totals?.totalOrders ?? 0} đơn`}
@@ -458,7 +415,7 @@ export default function DashBoard() {
                       </div>
                     }
                   >
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                       <div className="rounded-[26px] bg-[linear-gradient(135deg,#0f766e,#14b8a6)] p-5 text-white shadow-[0_20px_50px_rgba(20,184,166,0.28)]">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Users</p>
@@ -477,24 +434,12 @@ export default function DashBoard() {
                         <p className="mt-3 text-sm text-white/80">Sản phẩm, tồn kho và nội dung hình ảnh đã có thể theo dõi.</p>
                       </div>
 
-                      <div className="rounded-[26px] bg-[linear-gradient(135deg,#ea580c,#fb923c)] p-5 text-white shadow-[0_20px_50px_rgba(251,146,60,0.28)]">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Content</p>
-                          <Sparkles className="h-5 w-5 text-white/80" />
-                        </div>
-                        <p className="mt-6 text-4xl font-black">{totals?.blogs ?? 0}</p>
-                        <p className="mt-3 text-sm text-white/80">Tin tức, lượt xem và trạng thái xuất bản đang hiển thị trực tiếp.</p>
-                      </div>
                     </div>
 
-                    <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Tài khoản kích hoạt</p>
                         <p className="mt-2 text-2xl font-black text-slate-950">{totals?.activeUsers ?? 0}</p>
-                      </div>
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Bài viết đã xuất bản</p>
-                        <p className="mt-2 text-2xl font-black text-slate-950">{totals?.publishedBlogs ?? 0}</p>
                       </div>
                       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Cảnh báo tồn kho</p>
@@ -509,9 +454,8 @@ export default function DashBoard() {
                   >
                     <div className="space-y-3">
                       {[
-                        'Bổ sung endpoint dashboard tổng hợp cho lịch hẹn và hiệu suất dịch vụ.',
                         'Thêm bảng quản trị đơn hàng để theo dõi checkout và thanh toán PayOS.',
-                        'Thêm module lịch hẹn dịch vụ để thay thế thẻ placeholder hiện tại.',
+                        'Bổ sung endpoint dashboard tổng hợp cho biến động đơn hàng theo ngày/tuần.',
                         'Bổ sung route bảo vệ frontend cho toàn bộ các trang /admin/*.',
                       ].map((item) => (
                         <div key={item} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
@@ -562,29 +506,7 @@ export default function DashBoard() {
                   </SectionShell>
                 </section>
 
-                <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                  <SectionShell
-                    title="Bài viết nổi bật"
-                    subtitle="Xếp hạng theo tổng ảnh hưởng từ lượt xem và tương tác"
-                  >
-                    <div className="space-y-3">
-                      {(dashboardData?.topPosts ?? []).map((post) => (
-                        <PostRow key={post.id} post={post} />
-                      ))}
-                    </div>
-                  </SectionShell>
-
-                  <SectionShell
-                    title="Nội dung mới cập nhật"
-                    subtitle="Theo dõi luồng xuất bản nội dung gần đây"
-                  >
-                    <div className="space-y-3">
-                      {(dashboardData?.latestPosts ?? []).map((post) => (
-                        <PostRow key={post.id} post={post} />
-                      ))}
-                    </div>
-                  </SectionShell>
-
+                <section className="grid grid-cols-1 gap-6">
                   <SectionShell
                     title="Voucher hiệu quả"
                     subtitle="Top voucher theo số lượt sử dụng"

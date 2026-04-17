@@ -339,6 +339,7 @@ export default function UsersPage() {
                     <th className="px-2 py-3">Tên</th>
                     <th className="px-2 py-3">Email</th>
                     <th className="px-2 py-3">Vai trò</th>
+                    <th className="px-2 py-3">Membership</th>
                     <th className="px-2 py-3">Trạng thái</th>
                     <th className="px-2 py-3">Ngày tạo</th>
                     <th className="px-2 py-3 text-right">Thao tác</th>
@@ -347,7 +348,7 @@ export default function UsersPage() {
                 <tbody className="divide-y divide-slate-100">
                   {users.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-2 py-6 text-center text-sm text-slate-500">
+                      <td colSpan={7} className="px-2 py-6 text-center text-sm text-slate-500">
                         Chưa có người dùng nào.
                       </td>
                     </tr>
@@ -357,6 +358,23 @@ export default function UsersPage() {
                         <td className="px-2 py-3 font-medium text-slate-900">{item.fullName}</td>
                         <td className="px-2 py-3 text-slate-700">{item.email}</td>
                         <td className="px-2 py-3 text-slate-700">{item.roleName || 'User'}</td>
+                        <td className="px-2 py-3">
+                          {item.membershipStatus ? (
+                            <div className="space-y-0.5">
+                              <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
+                                {item.membershipStatus}
+                              </span>
+                              <p className="text-xs text-slate-500">{item.membershipPackageName || 'N/A'}</p>
+                              {item.membershipEndDate && (
+                                <p className="text-xs text-slate-500">Hết hạn: {formatDate(item.membershipEndDate)}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                              No membership
+                            </span>
+                          )}
+                        </td>
                         <td className="px-2 py-3">
                           <span
                             className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${

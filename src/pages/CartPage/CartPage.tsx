@@ -2,17 +2,6 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '../../components/ui/alert-dialog';
 import { cartService } from '../../services/CartService/cartService';
 import { CartItem } from '../../types/cart';
 import styles from './CartPage.module.css';
@@ -341,7 +330,7 @@ export default function CartPage() {
             </button>
 
             {/* Xóa lẻ từng Item */}
-            <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
+            {/* <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
@@ -362,10 +351,10 @@ export default function CartPage() {
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
-              </AlertDialog>
+              </AlertDialog> */}
 
             {/* Xóa toàn bộ Item */}
-            <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+            {/* <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
               <AlertDialogTrigger asChild>
                 <button
                   className={styles.clearCartBtn}
@@ -386,7 +375,7 @@ export default function CartPage() {
                   <AlertDialogAction onClick={clearCart}>Xóa giỏ hàng</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
-            </AlertDialog>
+            </AlertDialog> */}
           </aside>
         </div>
       </div>

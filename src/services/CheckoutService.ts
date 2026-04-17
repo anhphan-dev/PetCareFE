@@ -53,6 +53,19 @@ export type PlaceOrderResult = {
   orderCode?: number | null;
 };
 
+export type ActiveVoucher = {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  discountType: string;
+  discountValue: number;
+  minimumOrderAmount?: number | null;
+  maximumDiscountAmount?: number | null;
+  validTo: string;
+  remainingUses?: number | null;
+};
+
 type ApiResponse<T> = {
   success: boolean;
   message?: string;
@@ -70,6 +83,11 @@ export const CheckoutService = {
   async placeOrder(payload: PlaceOrderPayload): Promise<PlaceOrderResult> {
     const response = await httpClient.post<ApiResponse<PlaceOrderResult>>('/Checkout/place-order', payload);
     return response.data;
+  },
+
+  async getActiveVouchers(limit = 6): Promise<ActiveVoucher[]> {
+    const response = await httpClient.get<ApiResponse<ActiveVoucher[]>>(`/Checkout/active-vouchers?limit=${limit}`);
+    return response.data ?? [];
   },
 
   async confirmPayment(orderCode?: number, orderNumber?: string): Promise<boolean> {

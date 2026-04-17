@@ -11,7 +11,7 @@ import {
   X
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import httpClient from '../../services/httpClient';
 
@@ -41,6 +41,20 @@ interface FormErrors {
   [key: string]: string;
 }
 
+type ApiEnvelope<T> = {
+  success?: boolean;
+  message?: string;
+  data?: T;
+};
+
+const unwrap = <T,>(response: T | ApiEnvelope<T>): T => {
+  if (response && typeof response === 'object' && 'data' in (response as ApiEnvelope<T>)) {
+    return ((response as ApiEnvelope<T>).data as T) ?? (response as T);
+  }
+
+  return response as T;
+};
+
 // ============ STAFF MENU (Must match Dashboard) ============
 const staffMenuItems = [
   { icon: LayoutDashboard, label: 'Tổng quan', path: '/staff' },
@@ -63,9 +77,12 @@ const GlassCard: React.FC<{ children: React.ReactNode; className?: string }> = (
 // ============ MAIN COMPONENT ============
 export default function StaffAddProductPage() {
   const navigate = useNavigate();
+  const { id: editingProductId } = useParams<{ id?: string }>();
+  const isEditMode = Boolean(editingProductId);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingProduct, setLoadingProduct] = useState(false);
 
   const [formData, setFormData] = useState<ProductFormData>({
     productName: '',
@@ -90,16 +107,9 @@ export default function StaffAddProductPage() {
     const fetchCategories = async () => {
       try {
         setLoadingCategories(true);
-        const response = await httpClient.get<any>('/ProductCategories');
-
-        let catData: Category[] = [];
-        if (response?.success && Array.isArray(response.data)) {
-          catData = response.data;
-        } else if (Array.isArray(response?.data?.data)) {
-          catData = response.data.data;
-        } else if (Array.isArray(response)) {
-          catData = response;
-        }
+        const response = await httpClient.get<ApiEnvelope<Category[]> | Category[]>('/ProductCategories');
+        const raw = unwrap(response);
+        const catData = Array.isArray(raw) ? raw : [];
 
         setCategories(catData.filter((c: Category) => c.isActive));
       } catch (err: any) {
@@ -112,6 +122,51 @@ export default function StaffAddProductPage() {
 
     fetchCategories();
   }, []);
+
+  // Fetch product detail when editing
+  useEffect(() => {
+    if (!editingProductId) return;
+
+    const fetchProductDetail = async () => {
+      try {
+        setLoadingProduct(true);
+        const response = await httpClient.get<ApiEnvelope<any> | any>(`/Products/${editingProductId}`);
+        const raw = unwrap(response);
+
+        if (!raw || !raw.id) {
+          throw new Error('Không tìm thấy sản phẩm cần chỉnh sửa.');
+        }
+
+        const rawImages = Array.isArray(raw.imageUrls)
+          ? raw.imageUrls
+          : Array.isArray(raw.images)
+            ? raw.images
+            : [];
+
+        setFormData({
+          productName: raw.productName ?? '',
+          description: raw.description ?? '',
+          categoryId: raw.categoryId ?? raw.category?.id ?? '',
+          price: raw.price != null ? String(raw.price) : '',
+          salePrice: raw.salePrice != null ? String(raw.salePrice) : '',
+          stockQuantity: raw.stockQuantity != null ? String(raw.stockQuantity) : '',
+          sku: raw.sku ?? '',
+          weight: raw.weight != null ? String(raw.weight) : '',
+          dimensions: raw.dimensions ?? '',
+          imageUrls: rawImages.length ? rawImages : [''],
+          isActive: Boolean(raw.isActive ?? true),
+        });
+      } catch (err: any) {
+        console.error('Lỗi tải chi tiết sản phẩm:', err);
+        toast.error(err?.message || 'Không thể tải chi tiết sản phẩm');
+        navigate('/staff/quan-li-san-pham');
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
+    fetchProductDetail();
+  }, [editingProductId, navigate]);
 
   // Form Handlers
   const handleChange = (
@@ -237,36 +292,39 @@ export default function StaffAddProductPage() {
         isActive: formData.isActive,
       };
 
-      const response = await httpClient.post('/Products', payload);
-
-      if (response?.success || response?.status === 200 || response?.status === 201) {
+      if (isEditMode && editingProductId) {
+        const { imageUrls, ...updatePayload } = payload;
+        await httpClient.put(`/Products/${editingProductId}`, updatePayload);
+        toast.success('Cập nhật sản phẩm thành công!');
+      } else {
+        await httpClient.post('/Products', payload);
         toast.success('Tạo sản phẩm thành công!');
-
-        // Reset form
-        setFormData({
-          productName: '',
-          description: '',
-          categoryId: '',
-          price: '',
-          salePrice: '',
-          stockQuantity: '',
-          sku: '',
-          weight: '',
-          dimensions: '',
-          imageUrls: [''],
-          isActive: true,
-        });
-
-        setFormErrors({});
-
-        // Optionally redirect after success
-        setTimeout(() => {
-          navigate('/staff/quan-li-san-pham');
-        }, 1500);
       }
+
+      // Reset form
+      setFormData({
+        productName: '',
+        description: '',
+        categoryId: '',
+        price: '',
+        salePrice: '',
+        stockQuantity: '',
+        sku: '',
+        weight: '',
+        dimensions: '',
+        imageUrls: [''],
+        isActive: true,
+      });
+
+      setFormErrors({});
+
+      // Optionally redirect after success
+      setTimeout(() => {
+        navigate('/staff/quan-li-san-pham');
+      }, 1500);
     } catch (err: any) {
-      console.error('Lỗi POST:', err);
-      const errMsg = err.response?.data?.message || err.message || 'Tạo sản phẩm thất bại.';
+      console.error('Lỗi lưu sản phẩm:', err);
+      const errMsg = err?.message || (isEditMode ? 'Cập nhật sản phẩm thất bại.' : 'Tạo sản phẩm thất bại.');
       toast.error(errMsg);
     } finally {
       setLoading(false);
@@ -320,8 +378,14 @@ export default function StaffAddProductPage() {
         <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-100 px-8 py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Thêm sản phẩm mới</h1>
-              <p className="text-gray-500 text-sm">Tạo sản phẩm để bán trong hệ thống PetCare</p>
+              <h1 className="text-2xl font-bold text-gray-800">
+                {isEditMode ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
+              </h1>
+              <p className="text-gray-500 text-sm">
+                {isEditMode
+                  ? 'Cập nhật thông tin sản phẩm trong hệ thống PetCare'
+                  : 'Tạo sản phẩm để bán trong hệ thống PetCare'}
+              </p>
             </div>
             <Link
               to="/staff/quan-li-san-pham"
@@ -335,10 +399,12 @@ export default function StaffAddProductPage() {
 
         {/* Page Content */}
         <main className="p-8 max-w-4xl mx-auto">
-          {loadingCategories ? (
+          {loadingCategories || loadingProduct ? (
             <GlassCard className="p-10 text-center">
               <Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-600 mb-3" />
-              <p className="text-gray-600">Đang tải danh sách danh mục...</p>
+              <p className="text-gray-600">
+                {loadingProduct ? 'Đang tải thông tin sản phẩm...' : 'Đang tải danh sách danh mục...'}
+              </p>
             </GlassCard>
           ) : (
             <GlassCard className="p-8">
@@ -631,12 +697,12 @@ export default function StaffAddProductPage() {
                     {loading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        Đang tạo...
+                        {isEditMode ? 'Đang cập nhật...' : 'Đang tạo...'}
                       </>
                     ) : (
                       <>
                         <PlusCircle className="w-5 h-5" />
-                        Tạo sản phẩm
+                        {isEditMode ? 'Cập nhật sản phẩm' : 'Tạo sản phẩm'}
                       </>
                     )}
                   </button>

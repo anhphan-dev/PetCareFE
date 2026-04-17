@@ -19,7 +19,7 @@ import {
     Trash2,
     X
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import httpClient from '../../services/httpClient';
@@ -817,38 +817,65 @@ export default function ProductManagePage() {
     try {
       setLoading(true);
 
-      const params: Record<string, string | number> = {
+      const params: Record<string, string | number | boolean> = {
         page: pagination.page,
-        limit: pagination.limit,
+        pageSize: pagination.limit,
+        includeInactive: true,
       };
 
       if (debouncedSearch.trim()) {
-        params.search = debouncedSearch.trim();
+        params.searchTerm = debouncedSearch.trim();
       }
+
       if (filters.categoryId) {
         params.categoryId = filters.categoryId;
       }
+
       if (filters.status !== 'all') {
         params.isActive = filters.status === 'active';
       }
 
       const response = await httpClient.get<any>('/Products', { params });
 
-      // ✅ Fix: Handle different API response structures
-      let productsData: Product[] = [];
-      let total = 0;
+      let rawItems: any[] = [];
 
       if (response?.success) {
         if (Array.isArray(response.data)) {
-          productsData = response.data;
+          rawItems = response.data;
         } else if (response.data?.items && Array.isArray(response.data.items)) {
-          productsData = response.data.items;
+          rawItems = response.data.items;
         } else if (response.data?.data && Array.isArray(response.data.data)) {
-          productsData = response.data.data;
+          rawItems = response.data.data;
         }
-        
-        total = response.pagination?.total || response.data?.total || response.data?.pagination?.total || productsData.length;
       }
+
+      // Normalize response fields from different endpoints before filtering.
+      const normalized = rawItems.map((item) => {
+        const derivedCategoryId = item.categoryId
+          || item.category?.id
+          || categories.find(
+            (c) => c.categoryName?.toLowerCase() === String(item.categoryName ?? '').toLowerCase()
+          )?.id
+          || '';
+
+        return {
+          ...item,
+          categoryId: derivedCategoryId,
+          imageUrls: Array.isArray(item.imageUrls)
+            ? item.imageUrls
+            : Array.isArray(item.images)
+              ? item.images
+              : [],
+        } as Product;
+      });
+
+      const productsData = normalized;
+      const total = Number(
+        response?.data?.totalCount
+          ?? response?.data?.total
+          ?? response?.pagination?.total
+          ?? productsData.length
+      );
 
       setProducts(productsData);
       setPagination((prev) => ({
@@ -892,7 +919,7 @@ export default function ProductManagePage() {
   }, []);
 
   const handleEditProduct = useCallback((product: Product) => {
-    navigate(`/staff/products/edit/${product.id}`);
+    navigate(`/staff/sua-san-pham/${product.id}`);
   }, [navigate]);
 
   const handleDeleteClick = useCallback((product: Product) => {
@@ -921,12 +948,6 @@ export default function ProductManagePage() {
     setPagination((prev) => ({ ...prev, page }));
   }, []);
 
-  // Filtered categories for display
-  const activeCategories = useMemo(() => 
-    categories.filter((c) => c.isActive), 
-    [categories]
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
       {/* Sidebar */}
@@ -939,7 +960,7 @@ export default function ProductManagePage() {
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {staffMenuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.path === '/staff/products';
+            const isActive = item.path === '/staff/quan-li-san-pham';
             return (
               <Link
                 key={item.path}
@@ -1048,7 +1069,7 @@ export default function ProductManagePage() {
                       : 'Chưa có sản phẩm nào trong hệ thống'}
                   </p>
                   <Link
-                    to="/staff/products/create"
+                    to="/staff/them-san-pham"
                     className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 
                              hover:bg-teal-700 text-white rounded-lg font-medium 
                              transition-colors"

@@ -93,7 +93,11 @@ export default function LoginPage() {
             Đăng nhập
           </h1>
           <p className="text-center text-gray-500 text-sm mb-6">
+<<<<<<< HEAD
             Chào mừng bạn trở lại PetSuba
+=======
+            Chào mừng bạn trở lại PettSuba
+>>>>>>> main
           </p>
 
           {error && (

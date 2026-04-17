@@ -16,11 +16,23 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
-import { CheckoutService, CheckoutSummary } from '../../services/CheckoutService';
+import { ActiveVoucher, CheckoutService, CheckoutSummary } from '../../services/CheckoutService';
 import styles from './Checkoutpage.module.css';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+
+const formatVoucherPreview = (voucher: ActiveVoucher): string => {
+  const baseDiscount = voucher.discountType?.toLowerCase() === 'fixed'
+    ? `Giảm ${formatPrice(voucher.discountValue)}`
+    : `Giảm ${voucher.discountValue}%`;
+
+  if ((voucher.maximumDiscountAmount ?? 0) > 0) {
+    return `${baseDiscount} (tối đa ${formatPrice(voucher.maximumDiscountAmount ?? 0)})`;
+  }
+
+  return baseDiscount;
+};
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -32,6 +44,7 @@ export default function CheckoutPage() {
   const [applyingVoucher, setApplyingVoucher] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<CheckoutSummary | null>(null);
+  const [activeVouchers, setActiveVouchers] = useState<ActiveVoucher[]>([]);
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
 
@@ -50,9 +63,13 @@ export default function CheckoutPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await CheckoutService.getSummary(voucherCode);
-        setSummary(data);
-        setVoucherMessage(data.voucherMessage || null);
+        const [summaryData, activeVoucherData] = await Promise.all([
+          CheckoutService.getSummary(voucherCode),
+          CheckoutService.getActiveVouchers(),
+        ]);
+        setSummary(summaryData);
+        setVoucherMessage(summaryData.voucherMessage || null);
+        setActiveVouchers(activeVoucherData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Không thể tải thông tin thanh toán.');
       } finally {
@@ -73,6 +90,11 @@ export default function CheckoutPage() {
     } finally {
       setApplyingVoucher(false);
     }
+  };
+
+  const useVoucherFromList = (code: string) => {
+    setVoucherCode(code);
+    setVoucherMessage(`Đã chọn voucher ${code}. Bấm "Áp dụng" để sử dụng.`);
   };
 
   const canSubmit = useMemo(() => {
@@ -295,6 +317,32 @@ export default function CheckoutPage() {
                 <p className={`${styles.voucherMsg} ${summary?.hasVoucherDiscount ? styles.voucherSuccess : styles.voucherInfo}`}>
                   {summary?.hasVoucherDiscount ? '✅' : 'ℹ️'} {voucherMessage}
                 </p>
+              )}
+
+              {activeVouchers.length > 0 && (
+                <div className={styles.activeVoucherList}>
+                  <p className={styles.activeVoucherTitle}>Voucher đang hoạt động</p>
+                  {activeVouchers.map((voucher) => (
+                    <div key={voucher.id} className={styles.activeVoucherItem}>
+                      <div className={styles.activeVoucherInfo}>
+                        <p className={styles.activeVoucherCode}>{voucher.code}</p>
+                        <p className={styles.activeVoucherMeta}>{formatVoucherPreview(voucher)}</p>
+                        {(voucher.minimumOrderAmount ?? 0) > 0 && (
+                          <p className={styles.activeVoucherHint}>
+                            Đơn tối thiểu: {formatPrice(voucher.minimumOrderAmount ?? 0)}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.useVoucherBtn}
+                        onClick={() => useVoucherFromList(voucher.code)}
+                      >
+                        Dùng mã
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 

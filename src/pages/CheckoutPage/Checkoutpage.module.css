@@ -342,6 +342,67 @@
   color: #57534E;
 }
 
+.activeVoucherList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.activeVoucherTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F766E;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.activeVoucherItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(20, 184, 166, 0.25);
+  border-radius: 10px;
+  background: rgba(240, 253, 250, 0.65);
+}
+
+.activeVoucherInfo {
+  min-width: 0;
+}
+
+.activeVoucherCode {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #134E4A;
+}
+
+.activeVoucherMeta,
+.activeVoucherHint {
+  margin: 0;
+  font-size: 12px;
+  color: #57534E;
+}
+
+.useVoucherBtn {
+  flex-shrink: 0;
+  border: 1px solid rgba(13, 148, 136, 0.5);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #ffffff;
+  color: #0F766E;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.useVoucherBtn:hover {
+  background: #F0FDFA;
+}
+
 /* Payment method */
 .paymentGrid {
   display: grid;

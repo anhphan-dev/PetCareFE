@@ -29,7 +29,7 @@ const userMenuItems = [
 ];
 
 const navLinks = [
-  { label: 'Trang chủ', path: '/',         hasDropdown: true },
+  { label: 'Trang chủ', path: '/',         hasDropdown: false },
   { label: 'Cửa hàng',  path: '/cua-hang', hasDropdown: false },
   { label: 'Dịch vụ',   path: '/dat-lich', hasDropdown: false },
   { label: 'Thú cưng',  path: '/thu-cung', hasDropdown: false },
@@ -41,13 +41,10 @@ export default function Header() {
   const [scrolled, setScrolled]       = useState(false);
   const [searchOpen, setSearchOpen]   = useState(false);
   const [searchVal, setSearchVal]     = useState('');
-  const [mobileHomeOpen, setMobileHomeOpen] = useState(false);
   const [mobileUserOpen, setMobileUserOpen] = useState(false);
   const [appointmentBadge, setAppointmentBadge] = useState(0);
 
-  const homeDropdown = useDropdown();
   const userDropdown = useDropdown();
-  const navRef       = useRef<HTMLDivElement>(null);
   const searchRef    = useRef<HTMLInputElement>(null);
 
   const navigate    = useNavigate();
@@ -73,17 +70,6 @@ export default function Header() {
     };
   }, [user?.id]);
 
-  /* close dropdown on outside click */
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        homeDropdown.close();
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [homeDropdown]);
-
   /* focus search input when opened */
   useEffect(() => {
     if (searchOpen) searchRef.current?.focus();
@@ -99,7 +85,6 @@ export default function Header() {
 
   const closeAllMobile = () => {
     setIsMenuOpen(false);
-    setMobileHomeOpen(false);
     setMobileUserOpen(false);
   };
 
@@ -127,35 +112,16 @@ export default function Header() {
         </Link>
 
         {/* ── Desktop nav ── */}
-        <nav className={styles.desktopNav} ref={navRef} aria-label="Điều hướng chính">
+        <nav className={styles.desktopNav} aria-label="Điều hướng chính">
           {navLinks.map((link) => (
-            link.hasDropdown ? (
-              <div
-                key={link.path}
-                className={styles.navItemWrapper}
-                onMouseEnter={() => homeDropdown.open()}
-                onMouseLeave={() => homeDropdown.closeWithDelay()}
-              >
-                <button
-                  className={`${styles.navLink} ${isActive(link.path) ? styles.navLinkActive : ''}`}
-                  onClick={() => homeDropdown.toggle()}
-                >
-                  {link.label}
-                  
-                </button>
-
-               
-              </div>
-            ) : (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`${styles.navLink} ${isActive(link.path) ? styles.navLinkActive : ''}`}
-              >
-                {link.icon && <link.icon size={14} className={styles.navIcon} />}
-                {link.label}
-              </Link>
-            )
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`${styles.navLink} ${isActive(link.path) ? styles.navLinkActive : ''}`}
+            >
+              {link.icon && <link.icon size={14} className={styles.navIcon} />}
+              {link.label}
+            </Link>
           ))}
         </nav>
 
@@ -285,19 +251,8 @@ export default function Header() {
       {/* ════ Mobile drawer ════ */}
       <div className={`${styles.mobileDrawer} ${isMenuOpen ? styles.mobileDrawerOpen : ''}`}>
         <div className={styles.mobileDrawerInner}>
-          {/* Trang chủ + dropdown */}
-          <div className={styles.mobileGroup}>
-            <button
-              className={styles.mobileLinkToggle}
-              onClick={() => setMobileHomeOpen((v) => !v)}
-            >
-              Trang chủ
-              
-            </button>
-            
-          </div>
-
           {[
+            { label: 'Trang chủ', path: '/' },
             { label: 'Cửa hàng', path: '/cua-hang' },
             { label: 'Dịch vụ',  path: '/dat-lich' },
             { label: 'Thú cưng', path: '/thu-cung' },

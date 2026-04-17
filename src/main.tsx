@@ -111,6 +111,7 @@ createRoot(document.getElementById('root')!).render(
 
               <Route path="/staff" element={<StaffDashBoard />} />
               <Route path="/staff/them-san-pham" element={<AddProductPage />} />
+              <Route path="/staff/sua-san-pham/:id" element={<AddProductPage />} />
               <Route path="/staff/quan-li-san-pham" element={<ProductManagePage />} />
 
 

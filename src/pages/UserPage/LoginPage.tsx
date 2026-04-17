@@ -1,7 +1,7 @@
+import { GoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, Lock, Mail, PawPrint } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthService } from '../../services/AuthAPI';
 import { clearTokenRevocation } from '../../utils/tokenRevocation';
@@ -93,7 +93,7 @@ export default function LoginPage() {
             Đăng nhập
           </h1>
           <p className="text-center text-gray-500 text-sm mb-6">
-            Chào mừng bạn trở lại VetCare
+            Chào mừng bạn trở lại PettSuba
           </p>
 
           {error && (

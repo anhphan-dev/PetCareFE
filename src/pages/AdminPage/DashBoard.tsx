@@ -6,12 +6,12 @@ import {
   Box,
   ChevronRight,
   Clock3,
+  Home,
   Loader2,
   LayoutDashboard,
   LogOut,
   PawPrint,
   RefreshCw,
-  Settings,
   ShieldCheck,
   Sparkles,
   TicketPercent,
@@ -31,7 +31,6 @@ const menuItems = [
   { icon: Users, label: 'Khách hàng', path: '/admin/khach-hang' },
   { icon: Box, label: 'Sản phẩm', path: '/admin/san-pham' },
   { icon: TicketPercent, label: 'Voucher', path: '/admin/vouchers' },
-  { icon: Settings, label: 'Cài đặt', path: '/admin/cai-dat' },
 ];
 
 const formatCompactDate = (value: string) =>
@@ -328,6 +327,14 @@ export default function DashBoard() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
+                >
+                  <Home className="h-4 w-4" />
+                  Trang chủ
+                </Link>
+
                 <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Hôm nay</p>
                   <p className="mt-1 text-sm font-semibold text-slate-800">

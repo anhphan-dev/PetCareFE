@@ -99,15 +99,6 @@ createRoot(document.getElementById('root')!).render(
                   />
                 }
               />
-              <Route
-                path="/admin/cai-dat"
-                element={
-                  <AdminPlaceholderPage
-                    title="Cài đặt"
-                    description="Khu vực cấu hình hệ thống sẽ được bổ sung trong phiên bản sau."
-                  />
-                }
-              />
 
               <Route path="/staff" element={<StaffDashBoard />} />
               <Route path="/staff/them-san-pham" element={<AddProductPage />} />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Home, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminDashboardService, {
   type AdminProductCategory,
@@ -226,6 +226,13 @@ export default function ProductsPage() {
             >
               <ArrowLeft className="h-4 w-4" />
               Về dashboard
+            </Link>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              <Home className="h-4 w-4" />
+              Trang chủ
             </Link>
             <button
               type="button"
